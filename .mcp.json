@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "shieldlabs": {
+      "command": "npx",
+      "args": ["-y", "@shieldlabs/mcp"],
+      "env": {
+        "SHIELDLABS_API_KEY": "${SHIELDLABS_API_KEY:-}",
+        "SHIELDLABS_SECRET_KEY": "${SHIELDLABS_SECRET_KEY:-}",
+        "SHIELDLABS_DOMAIN": "${SHIELDLABS_DOMAIN:-}",
+        "SHIELDLABS_WEBHOOK_SECRET": "${SHIELDLABS_WEBHOOK_SECRET:-}"
+      }
+    }
+  }
+}

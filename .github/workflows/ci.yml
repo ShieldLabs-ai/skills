@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1" # weekly external link check
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate (Python ${{ matrix.python }})
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install PyYAML for the frontmatter cross-check
+        run: python -m pip install --disable-pip-version-check pyyaml
+      - name: Validate skills, manifests, relative links and anchors
+        run: python scripts/validate_skills.py
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+
+  links:
+    name: External links
+    runs-on: ubuntu-latest
+    # Reported, not blocking: package pages and repositories go live when they are published.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check external links
+        run: python scripts/check_links.py

@@ -1,0 +1,25 @@
+{
+  "name": "shieldlabs",
+  "version": "1.0.0",
+  "description": "Integrate ShieldLabs device intelligence and fraud detection into your app: browser identification, server-side verdicts, signed webhooks, risk decisions, account-abuse checks and investigations with the ShieldLabs MCP server.",
+  "author": {
+    "name": "ShieldLabs",
+    "email": "contact@shieldlabs.ai",
+    "url": "https://shieldlabs.ai"
+  },
+  "homepage": "https://shieldlabs.ai",
+  "repository": "https://github.com/ShieldLabs-ai/shieldlabs-skills",
+  "license": "MIT",
+  "keywords": [
+    "shieldlabs",
+    "fraud-detection",
+    "device-intelligence",
+    "risk-score",
+    "identification",
+    "webhooks",
+    "account-abuse",
+    "multi-accounting",
+    "mcp",
+    "agent-skills"
+  ]
+}

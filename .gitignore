@@ -1,0 +1,17 @@
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Release packaging output
+dist/
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,20 @@
+{
+  "name": "shieldlabs",
+  "interface": {
+    "displayName": "ShieldLabs"
+  },
+  "plugins": [
+    {
+      "name": "shieldlabs",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/ShieldLabs-ai/shieldlabs-skills.git"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
