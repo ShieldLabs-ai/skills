@@ -1,6 +1,6 @@
 # Account-abuse helpers in Node.js
 
-Built on `history.iterate(type, value, { pageSize?, maxItems? })` of `@shieldlabs/node`, which
+Built on `history.iterate(type, value, { pageSize?, maxItems? })` of `@shieldlabs-ai/node`, which
 yields `Identification` objects newest first and skips rows repeated between pages. Start
 `account-abuse.ts` with `isAccount` and `accountsOn` from the skill's [Helpers](../SKILL.md#helpers)
 block, add `isRateLimited` and `type Identification` to its import, then add the other recipes:
@@ -118,7 +118,7 @@ export async function mayRedeem(
 ## At the action
 
 ```ts
-import { NIL_UUID, type Identification, type ShieldLabs } from '@shieldlabs/node';
+import { NIL_UUID, type Identification, type ShieldLabs } from '@shieldlabs-ai/node';
 import { devicesOfAccount, impossibleTravel, mayRedeem, takeoverCheck } from './account-abuse';
 
 // Seat check for a subscription account: its devices of the last 30 days, and this one.

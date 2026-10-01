@@ -30,7 +30,7 @@ about 10 seconds. `identifications.get` waits for it with backoff.
 
 | Language | Install | Client | Read one verdict | Policy helper | Reference |
 |---|---|---|---|---|---|
-| Node.js 18+, Bun, Deno, edge runtimes | `npm install @shieldlabs/node` | `new ShieldLabs({ apiKey })` | `await shieldlabs.identifications.get(requestId)` | `evaluateIdentification(identification, options)` | [node.md](references/node.md) |
+| Node.js 18+, Bun, Deno, edge runtimes | `npm install @shieldlabs-ai/node` | `new ShieldLabs({ apiKey })` | `await shieldlabs.identifications.get(requestId)` | `evaluateIdentification(identification, options)` | [node.md](references/node.md) |
 | Python 3.9+ | `pip install shieldlabs` | `ShieldLabs()` or `AsyncShieldLabs()` | `client.identifications.get(request_id)` | `evaluate_identification(identification, ...)` | [python.md](references/python.md) |
 | Go 1.23+ | `go get github.com/ShieldLabs-ai/shieldlabs-go` | `shieldlabs.NewClient(apiKey)` | `client.Identifications.Get(ctx, requestID, nil)` | `shieldlabs.EvaluateIdentification(ident, opts)` | [go.md](references/go.md) |
 | PHP 8.1+ | `composer require shieldlabs/shieldlabs-php` | `new ShieldLabs()` | `$shieldlabs->identifications->get($requestId)` | `Risk::evaluate($identification, $options)` | [php.md](references/php.md) |
@@ -48,7 +48,7 @@ Node.js and Express; the other references show the same flow in their language:
 
 ```ts
 import express from 'express';
-import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identification } from '@shieldlabs/node';
+import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identification } from '@shieldlabs-ai/node';
 
 const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY! }); // one per process
 

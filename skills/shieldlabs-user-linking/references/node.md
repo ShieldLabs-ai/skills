@@ -1,12 +1,12 @@
 # User HID in Node.js
 
-`userHid(userId, secret)` from `@shieldlabs/node` returns HMAC-SHA256 as 64 lowercase hex
+`userHid(userId, secret)` from `@shieldlabs-ai/node` returns HMAC-SHA256 as 64 lowercase hex
 characters and throws `ValidationError` on empty input. It needs Node.js crypto; in edge runtimes
 (Cloudflare Workers, Vercel Edge, Next.js `runtime = 'edge'`) use `await userHidAsync(userId, secret)`.
 
 ```ts
 // user-hid.ts
-import { userHid } from '@shieldlabs/node';
+import { userHid } from '@shieldlabs-ai/node';
 
 const secret = process.env.USER_HID_SECRET ?? '';
 if (!secret) throw new Error('USER_HID_SECRET is not set');
@@ -45,12 +45,12 @@ The app keeps `userHid` with its session state and passes it to the hooks, for e
 
 ## Next.js
 
-`@shieldlabs/next/server` exports `userHidAsync`, which works in Server Components, Server Actions
+`@shieldlabs-ai/next/server` exports `userHidAsync`, which works in Server Components, Server Actions
 and route handlers, in the Node.js and Edge runtimes:
 
 ```tsx
 // app/checkout/page.tsx (a Server Component)
-import { userHidAsync } from '@shieldlabs/next/server';
+import { userHidAsync } from '@shieldlabs-ai/next/server';
 import { CheckoutForm } from './checkout-form'; // 'use client', calls useIdentify({ userId: userHid })
 
 export default async function CheckoutPage() {
@@ -65,7 +65,7 @@ export default async function CheckoutPage() {
 ```ts
 // src/routes/+layout.server.ts
 import { USER_HID_SECRET } from '$env/static/private';
-import { userHid } from '@shieldlabs/node';
+import { userHid } from '@shieldlabs-ai/node';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = ({ locals }) => ({

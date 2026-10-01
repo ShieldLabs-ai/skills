@@ -1,4 +1,4 @@
-# Angular with `@shieldlabs/angular`
+# Angular with `@shieldlabs-ai/angular`
 
 Angular 17 or later: standalone and NgModule applications, zone-based and zoneless, Angular SSR
 and hydration. The package exposes functions, not services: `provideShieldLabs()`,
@@ -7,7 +7,7 @@ and hydration. The package exposes functions, not services: `provideShieldLabs()
 ## Install
 
 ```bash
-npm install @shieldlabs/angular @shieldlabs/js
+npm install @shieldlabs-ai/angular @shieldlabs-ai/js
 ```
 
 ## Provide once
@@ -18,7 +18,7 @@ Add the provider next to the providers the application already has:
 // src/app/app.config.ts
 import { ApplicationConfig } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
-import { provideShieldLabs } from '@shieldlabs/angular';
+import { provideShieldLabs } from '@shieldlabs-ai/angular';
 import { environment } from '../environments/environment';
 
 export const appConfig: ApplicationConfig = {
@@ -48,7 +48,7 @@ its own keys for development and staging.
 // src/app/signup-form.ts
 import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
-import { injectIdentify } from '@shieldlabs/angular';
+import { injectIdentify } from '@shieldlabs-ai/angular';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -108,7 +108,7 @@ render with `identifyOnInteraction(form)` of the agent from `getAgent()`:
 // src/app/signup-form.ts
 import { HttpClient } from '@angular/common/http';
 import { afterNextRender, Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
-import { injectShieldLabs, type InteractionIdentifier } from '@shieldlabs/angular';
+import { injectShieldLabs, type InteractionIdentifier } from '@shieldlabs-ai/angular';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -163,7 +163,7 @@ for `load()`, so the form is armed only once the agent may load.
 
 ```ts
 import { Component } from '@angular/core';
-import { injectShieldLabs } from '@shieldlabs/angular';
+import { injectShieldLabs } from '@shieldlabs-ai/angular';
 
 @Component({
   selector: 'app-agent-status',
@@ -181,7 +181,7 @@ export class AgentStatus {
 `injectShieldLabs()` returns `{ status, error, identify, check, load, getAgent }`: `status` and
 `error` are signals; `identify()` rejects with a `ShieldLabsError`; `check()` resolves `null` when
 the agent skipped it; `load()` starts loading the agent; `getAgent()` resolves the agent of
-`@shieldlabs/js`, whose calls run outside the Angular zone, and rejects with the load error when
+`@shieldlabs-ai/js`, whose calls run outside the Angular zone, and rejects with the load error when
 the load fails or times out. Outside an injection context, wrap the call in
 `runInInjectionContext(injector, () => injectIdentify())`. Without `provideShieldLabs()` in scope,
 both functions throw a `ShieldLabsError` with the code `invalid_options`.
@@ -225,7 +225,7 @@ Angular zone, so they neither trigger change detection nor keep the app from bec
 
 TestBed does not use the application config: add `provideShieldLabs({ publicKey, autoLoad: false })`
 to the spec's providers, so that nothing loads from the CDN unless a test calls `load()`. To test
-what a component does with the result, mock `@shieldlabs/angular` itself (with `vi.mock` or
+what a component does with the result, mock `@shieldlabs-ai/angular` itself (with `vi.mock` or
 `jest.mock`) and return an `injectIdentify` whose `identify` resolves a fixed
-`{ requestId, userId: null }`, or `null` for the unverified path. A mock of `@shieldlabs/js` does
-not reach the import inside `@shieldlabs/angular` under the Angular CLI test runner.
+`{ requestId, userId: null }`, or `null` for the unverified path. A mock of `@shieldlabs-ai/js` does
+not reach the import inside `@shieldlabs-ai/angular` under the Angular CLI test runner.

@@ -1,7 +1,7 @@
 # Set up the ShieldLabs MCP server
 
-The server is the npm package `@shieldlabs/mcp` (Node.js 20 or later), started with
-`npx -y @shieldlabs/mcp`. It reads its configuration from environment variables:
+The server is the npm package `@shieldlabs-ai/mcp` (Node.js 20 or later), started with
+`npx -y @shieldlabs-ai/mcp`. It reads its configuration from environment variables:
 
 | Variable | Needed for |
 |---|---|
@@ -27,7 +27,7 @@ Check the connection with `/mcp`.
 ## Claude Code without the plugin
 
 ```bash
-claude mcp add --transport stdio shieldlabs --env SHIELDLABS_API_KEY=sec_your_private_key -- npx -y @shieldlabs/mcp
+claude mcp add --transport stdio shieldlabs --env SHIELDLABS_API_KEY=sec_your_private_key -- npx -y @shieldlabs-ai/mcp
 ```
 
 Add `--scope user` to make it available in every project. To share it with a project without
@@ -38,7 +38,7 @@ committing the key, put this in the project's `.mcp.json`; each developer export
   "mcpServers": {
     "shieldlabs": {
       "command": "npx",
-      "args": ["-y", "@shieldlabs/mcp"],
+      "args": ["-y", "@shieldlabs-ai/mcp"],
       "env": { "SHIELDLABS_API_KEY": "${SHIELDLABS_API_KEY}" }
     }
   }
@@ -54,7 +54,7 @@ committing the key, put this in the project's `.mcp.json`; each developer export
   "mcpServers": {
     "shieldlabs": {
       "command": "npx",
-      "args": ["-y", "@shieldlabs/mcp"],
+      "args": ["-y", "@shieldlabs-ai/mcp"],
       "env": { "SHIELDLABS_API_KEY": "sec_your_private_key" }
     }
   }
@@ -70,7 +70,7 @@ committing the key, put this in the project's `.mcp.json`; each developer export
   "mcpServers": {
     "shieldlabs": {
       "command": "npx",
-      "args": ["-y", "@shieldlabs/mcp"],
+      "args": ["-y", "@shieldlabs-ai/mcp"],
       "env": { "SHIELDLABS_API_KEY": "${env:SHIELDLABS_API_KEY}" }
     }
   }
@@ -94,7 +94,7 @@ keep that file out of version control.
     "shieldlabs": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@shieldlabs/mcp"],
+      "args": ["-y", "@shieldlabs-ai/mcp"],
       "env": { "SHIELDLABS_API_KEY": "${input:shieldlabs-api-key}" }
     }
   }
@@ -109,7 +109,7 @@ which stays in your home folder, outside any repository:
 ```toml
 [mcp_servers.shieldlabs]
 command = "npx"
-args = ["-y", "@shieldlabs/mcp"]
+args = ["-y", "@shieldlabs-ai/mcp"]
 
 [mcp_servers.shieldlabs.env]
 SHIELDLABS_API_KEY = "sec_your_private_key"
@@ -117,9 +117,9 @@ SHIELDLABS_API_KEY = "sec_your_private_key"
 
 ## Other clients, HTTP and Docker
 
-- Any client that starts stdio servers: command `npx`, arguments `-y @shieldlabs/mcp`, and
+- Any client that starts stdio servers: command `npx`, arguments `-y @shieldlabs-ai/mcp`, and
   `SHIELDLABS_API_KEY` in the server's environment.
-- Streamable HTTP: `SHIELDLABS_MCP_TOKEN=<long random token> npx -y @shieldlabs/mcp --transport http --port 8787`,
+- Streamable HTTP: `SHIELDLABS_MCP_TOKEN=<long random token> npx -y @shieldlabs-ai/mcp --transport http --port 8787`,
   endpoint `http://127.0.0.1:8787/mcp`, header `Authorization: Bearer <token>`. Without the
   variable, the server generates a token and prints it once to stderr.
 - Docker: `docker run --rm -i -e SHIELDLABS_API_KEY ghcr.io/shieldlabs-ai/shieldlabs-mcp:1.0.0`.

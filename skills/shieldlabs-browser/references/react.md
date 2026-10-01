@@ -1,15 +1,15 @@
-# React with `@shieldlabs/react`
+# React with `@shieldlabs-ai/react`
 
-React 18 and 19, with Vite, React Router or any other setup. For Next.js use `@shieldlabs/next`
+React 18 and 19, with Vite, React Router or any other setup. For Next.js use `@shieldlabs-ai/next`
 ([nextjs.md](nextjs.md)).
 
 ## Install
 
 ```bash
-npm install @shieldlabs/react @shieldlabs/js
+npm install @shieldlabs-ai/react @shieldlabs-ai/js
 ```
 
-`@shieldlabs/js` (1.x) and `react` are peer dependencies.
+`@shieldlabs-ai/js` (1.x) and `react` are peer dependencies.
 
 ## Provider at the root
 
@@ -19,7 +19,7 @@ Render `ShieldLabsProvider` once, above the router, so that navigation never rem
 // src/main.tsx
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { ShieldLabsProvider } from '@shieldlabs/react';
+import { ShieldLabsProvider } from '@shieldlabs-ai/react';
 import { App } from './App';
 
 createRoot(document.getElementById('root')!).render(
@@ -51,7 +51,7 @@ into the page at run time instead, in a `<meta name="shieldlabs-public-key">` ta
 ```tsx
 // src/SignupForm.tsx
 import type { SyntheticEvent } from 'react';
-import { useIdentify } from '@shieldlabs/react';
+import { useIdentify } from '@shieldlabs-ai/react';
 
 export function SignupForm() {
   const { identify, isLoading } = useIdentify();
@@ -94,7 +94,7 @@ page stays alive while the agent posts:
 ```tsx
 import type { SyntheticEvent } from 'react';
 import { useSubmit } from 'react-router';
-import { useIdentify } from '@shieldlabs/react';
+import { useIdentify } from '@shieldlabs-ai/react';
 
 export function SignupForm() {
   const submit = useSubmit();
@@ -134,12 +134,12 @@ an anonymous identification, and only a call without the `userId` key uses the h
 `identify()` on submit is enough for most single-page apps. To have the identification finished
 by the time the user submits (or before a classic full-page post), start it on the first
 interaction with the form: `getAgent()` from `useShieldLabs()` resolves the loaded agent of
-`@shieldlabs/js`, and its `identifyOnInteraction(form)` starts `identify()` on the first
+`@shieldlabs-ai/js`, and its `identifyOnInteraction(form)` starts `identify()` on the first
 `focusin`, `pointerdown` or `keydown` inside the form:
 
 ```tsx
 import { useEffect, useRef, type SyntheticEvent } from 'react';
-import { useIdentify, useShieldLabs, type InteractionIdentifier } from '@shieldlabs/react';
+import { useIdentify, useShieldLabs, type InteractionIdentifier } from '@shieldlabs-ai/react';
 
 export function SignupForm() {
   const { getAgent } = useShieldLabs();
@@ -210,7 +210,7 @@ consent is known at the first render, pass it as `autoLoad={consentGiven}` ([Con
 ## Agent status
 
 ```tsx
-import { useShieldLabs } from '@shieldlabs/react';
+import { useShieldLabs } from '@shieldlabs-ai/react';
 
 function AgentStatus() {
   const { status, error } = useShieldLabs(); // 'loading' | 'ready' | 'error'
@@ -219,7 +219,7 @@ function AgentStatus() {
 ```
 
 `useShieldLabs()` returns `{ status, error, identify, check, load, getAgent }`. Its `identify()`
-is the call of `@shieldlabs/js` and rejects with a `ShieldLabsError`; `check()` resolves `null`
+is the call of `@shieldlabs-ai/js` and rejects with a `ShieldLabsError`; `check()` resolves `null`
 when the agent skipped it. Never block a protected action on `status`: calls wait for the agent
 within their timeout, and a failed load is tried again by the next `identify()`, `check()`,
 `getAgent()` or `load()`.
@@ -230,7 +230,7 @@ Where consent is required before the agent loads, render the provider with `auto
 nothing loads until `load()` from `useShieldLabs()` is called, or until `autoLoad` becomes `true`.
 
 ```tsx
-import { ShieldLabsProvider, useShieldLabs } from '@shieldlabs/react';
+import { ShieldLabsProvider, useShieldLabs } from '@shieldlabs-ai/react';
 import { SignupForm } from './SignupForm';
 
 export function App() {
@@ -260,7 +260,7 @@ Setting `autoLoad` back to `false` does not unload an agent that has loaded.
 
 ## Tests
 
-Mock `@shieldlabs/react` with your test runner (for example `vi.mock` or `jest.mock`) so that unit
+Mock `@shieldlabs-ai/react` with your test runner (for example `vi.mock` or `jest.mock`) so that unit
 tests never load the agent from the CDN: return a `useIdentify` whose `identify` resolves a fixed
 `{ requestId, userId: null }` (or `null` to test the unverified path), and a `ShieldLabsProvider`
 that renders its children.

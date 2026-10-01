@@ -63,12 +63,12 @@ https://github.com/ShieldLabs-ai/shieldlabs-skills.
 
 | Manifest | Look for | Browser package | Server SDK |
 |---|---|---|---|
-| `package.json` | `next` | `@shieldlabs/next` (with `@shieldlabs/react`, `@shieldlabs/js`, `@shieldlabs/node`) | `@shieldlabs/next/server` |
-| `package.json` | `nuxt` | `@shieldlabs/vue` | `@shieldlabs/node` in server routes |
-| `package.json` | `@sveltejs/kit` | `@shieldlabs/svelte` | `@shieldlabs/node` in actions and endpoints |
-| `package.json` | `@angular/core`, `svelte`, `vue`, `react` | `@shieldlabs/angular`, `@shieldlabs/svelte`, `@shieldlabs/vue`, `@shieldlabs/react` (each with `@shieldlabs/js`) | the backend's SDK |
-| `package.json` | `express`, `fastify`, `koa`, `hono`, `@nestjs/core` | | `@shieldlabs/node` |
-| no framework, or server-rendered pages | | `@shieldlabs/js` (npm, or its IIFE build) | the backend's SDK |
+| `package.json` | `next` | `@shieldlabs-ai/next` (with `@shieldlabs-ai/react`, `@shieldlabs-ai/js`, `@shieldlabs-ai/node`) | `@shieldlabs-ai/next/server` |
+| `package.json` | `nuxt` | `@shieldlabs-ai/vue` | `@shieldlabs-ai/node` in server routes |
+| `package.json` | `@sveltejs/kit` | `@shieldlabs-ai/svelte` | `@shieldlabs-ai/node` in actions and endpoints |
+| `package.json` | `@angular/core`, `svelte`, `vue`, `react` | `@shieldlabs-ai/angular`, `@shieldlabs-ai/svelte`, `@shieldlabs-ai/vue`, `@shieldlabs-ai/react` (each with `@shieldlabs-ai/js`) | the backend's SDK |
+| `package.json` | `express`, `fastify`, `koa`, `hono`, `@nestjs/core` | | `@shieldlabs-ai/node` |
+| no framework, or server-rendered pages | | `@shieldlabs-ai/js` (npm, or its IIFE build) | the backend's SDK |
 | `pyproject.toml`, `requirements*.txt`, `Pipfile` | `django`, `fastapi`, `flask` | | `shieldlabs` (PyPI) |
 | `go.mod` | the module | | `github.com/ShieldLabs-ai/shieldlabs-go` |
 | `composer.json` | `laravel/framework`, `symfony/*` | | `shieldlabs/shieldlabs-php` |
@@ -110,10 +110,10 @@ When the focused skills are not available, this is the core for a React frontend
 backend; other stacks follow the same shape with their SDK.
 
 ```tsx
-// Browser: npm install @shieldlabs/react @shieldlabs/js
+// Browser: npm install @shieldlabs-ai/react @shieldlabs-ai/js
 // Once at the root: <ShieldLabsProvider publicKey={import.meta.env.VITE_SHIELDLABS_PUBLIC_KEY}>
 import type { SyntheticEvent } from 'react';
-import { useIdentify } from '@shieldlabs/react';
+import { useIdentify } from '@shieldlabs-ai/react';
 
 export function SignupForm() {
   const { identify } = useIdentify();
@@ -128,8 +128,8 @@ export function SignupForm() {
 ```
 
 ```ts
-// Server: npm install @shieldlabs/node
-import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identification } from '@shieldlabs/node';
+// Server: npm install @shieldlabs-ai/node
+import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identification } from '@shieldlabs-ai/node';
 
 const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY! });
 

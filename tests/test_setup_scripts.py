@@ -53,8 +53,8 @@ class DetectStackTest(unittest.TestCase):
             result = detect_stack.detect(root)
             apps = {app["path"]: app for app in result["apps"]}
             self.assertEqual(apps["web"]["frontend"], "Next.js (App Router)")
-            self.assertIn("@shieldlabs/next", apps["web"]["install"][0])
-            self.assertIn("@shieldlabs/node", apps["web"]["install"][0])
+            self.assertIn("@shieldlabs-ai/next", apps["web"]["install"][0])
+            self.assertIn("@shieldlabs-ai/node", apps["web"]["install"][0])
             self.assertEqual(apps["api"]["server"], "Python (FastAPI)")
             self.assertEqual(apps["api"]["install"], ["pip install shieldlabs"])
             self.assertEqual(apps["worker"]["server"], "Go (chi)")
@@ -62,15 +62,15 @@ class DetectStackTest(unittest.TestCase):
             self.assertEqual(apps["billing"]["server"], "JVM (Spring Boot)")
             self.assertEqual(apps["admin"]["server"], ".NET (ASP.NET Core)")
             self.assertEqual(apps["spa"]["frontend"], "Vue")
-            self.assertTrue(apps["spa"]["install"][0].startswith("pnpm add @shieldlabs/vue @shieldlabs/js"))
+            self.assertTrue(apps["spa"]["install"][0].startswith("pnpm add @shieldlabs-ai/vue @shieldlabs-ai/js"))
             self.assertEqual(result["shieldlabs_installed"], [])
 
     def test_existing_packages_and_env_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write(root, {
-                "package.json": json.dumps({"dependencies": {"react": "18.3.0", "@shieldlabs/react": "^1.0.0",
-                                                             "@shieldlabs/js": "^1.0.0", "express": "4.19.0"}}),
+                "package.json": json.dumps({"dependencies": {"react": "18.3.0", "@shieldlabs-ai/react": "^1.0.0",
+                                                             "@shieldlabs-ai/js": "^1.0.0", "express": "4.19.0"}}),
                 ".gitignore": "node_modules\n.env\n",
                 ".env": "SHIELDLABS_API_KEY=sec_your_private_key\n",
                 ".env.example": "SHIELDLABS_API_KEY=\n",
@@ -79,8 +79,8 @@ class DetectStackTest(unittest.TestCase):
             app = result["apps"][0]
             self.assertEqual(app["frontend"], "React")
             self.assertEqual(app["server"], "Node.js (Express)")
-            self.assertEqual(app["installed"], ["@shieldlabs/js", "@shieldlabs/react"])
-            self.assertEqual(app["install"], ["npm install @shieldlabs/node"])
+            self.assertEqual(app["installed"], ["@shieldlabs-ai/js", "@shieldlabs-ai/react"])
+            self.assertEqual(app["install"], ["npm install @shieldlabs-ai/node"])
             env = {entry["file"]: entry for entry in result["env_files"]}
             self.assertTrue(env[".env"]["ignored_by_gitignore"])
             self.assertTrue(env[".env.example"]["example"])
@@ -96,14 +96,14 @@ class DetectStackTest(unittest.TestCase):
             result = detect_stack.detect(root)
             apps = {app["path"]: app for app in result["apps"]}
             self.assertEqual(apps["site"]["frontend"], "Astro (framework-agnostic loader)")
-            self.assertEqual(apps["site"]["install"], ["npm install @shieldlabs/js"])
+            self.assertEqual(apps["site"]["install"], ["npm install @shieldlabs-ai/js"])
             self.assertEqual(apps["backend"]["server"], "Python (Django)")
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write(root, {"composer.json": json.dumps({"require": {"symfony/framework-bundle": "^7.0"}})})
             text = detect_stack.render(detect_stack.detect(root))
             self.assertIn("PHP (Symfony)", text)
-            self.assertIn("server-rendered or static pages load @shieldlabs/js", text)
+            self.assertIn("server-rendered or static pages load @shieldlabs-ai/js", text)
 
     def test_static_pages_served_by_node(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -115,7 +115,7 @@ class DetectStackTest(unittest.TestCase):
             app = detect_stack.detect(root)["apps"][0]
             self.assertEqual(app["frontend"], "Static HTML pages (public/index.html)")
             self.assertEqual(app["server"], "Node.js (Fastify)")
-            self.assertEqual(app["install"], ["npm install @shieldlabs/js @shieldlabs/node"])
+            self.assertEqual(app["install"], ["npm install @shieldlabs-ai/js @shieldlabs-ai/node"])
             self.assertIn("shieldlabs-browser (references/vanilla.md)", app["skills"])
 
     def test_empty_project(self) -> None:
@@ -128,7 +128,7 @@ class DetectStackTest(unittest.TestCase):
 BAD_CLIENT = """
 'use client';
 import { useEffect } from 'react';
-import { useIdentify } from '@shieldlabs/react';
+import { useIdentify } from '@shieldlabs-ai/react';
 
 export function SignupForm({ user, pathname }) {
   const { identify } = useIdentify();
@@ -142,7 +142,7 @@ export function SignupForm({ user, pathname }) {
 
 BAD_SERVER = """
 import express from 'express';
-import { ShieldLabs } from '@shieldlabs/node';
+import { ShieldLabs } from '@shieldlabs-ai/node';
 
 const app = express();
 app.use(express.json());
@@ -157,7 +157,7 @@ app.post('/signup', async (req, res) => {
 
 BAD_WEBHOOK = """
 import express from 'express';
-import { webhooks } from '@shieldlabs/node';
+import { webhooks } from '@shieldlabs-ai/node';
 
 const app = express();
 app.use(express.json());
@@ -170,7 +170,7 @@ app.post('/webhooks/shieldlabs', (req, res) => {
 
 GOOD_SERVER = """
 import express from 'express';
-import { ShieldLabs, ShieldLabsError, SignatureVerificationError, evaluateIdentification, webhooks } from '@shieldlabs/node';
+import { ShieldLabs, ShieldLabsError, SignatureVerificationError, evaluateIdentification, webhooks } from '@shieldlabs-ai/node';
 
 const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY });
 const app = express();
@@ -244,14 +244,14 @@ class AuditScanTest(unittest.TestCase):
 
     def test_null_fallback_is_not_a_clean_default(self) -> None:
         result = self.scan({"api/log.ts": """
-            import { getIdentification } from '@shieldlabs/next/server';
+            import { getIdentification } from '@shieldlabs-ai/next/server';
             export function describe(identification) {
               console.info('verdict', identification?.risk_score ?? null, identification?.request_id ?? null);
             }
         """})
         self.assertNotIn("SL08", self.checks(result))
         result = self.scan({"api/check.ts": """
-            import { getIdentification } from '@shieldlabs/next/server';
+            import { getIdentification } from '@shieldlabs-ai/next/server';
             export const score = (identification) => identification?.risk_score ?? 0;
             export const low = (identification) => identification?.risk_score ?? 10;
         """})
@@ -260,14 +260,14 @@ class AuditScanTest(unittest.TestCase):
     def test_guards_in_another_file(self) -> None:
         result = self.scan({
             "server/shieldlabs.js": """
-                import { ShieldLabs } from '@shieldlabs/node';
+                import { ShieldLabs } from '@shieldlabs-ai/node';
                 const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY });
                 export async function readIdentification(requestId) {
                   try { return await shieldlabs.identifications.get(requestId); } catch { return null; }
                 }
             """,
             "server/risk-policy.js": """
-                import { evaluateIdentification } from '@shieldlabs/node';
+                import { evaluateIdentification } from '@shieldlabs-ai/node';
                 export function decide(identification, firstUse) {
                   return evaluateIdentification(identification, { isReplay: () => !firstUse });
                 }
@@ -277,7 +277,7 @@ class AuditScanTest(unittest.TestCase):
 
     def test_user_hid_and_raw_ids(self) -> None:
         result = self.scan({"checkout.tsx": """
-            import { useIdentify } from '@shieldlabs/react';
+            import { useIdentify } from '@shieldlabs-ai/react';
             export function Checkout({ session }) {
               const good = useIdentify({ userId: session.userHid });
               const bad = useIdentify({ userId: session.user.id });
@@ -293,7 +293,7 @@ class AuditScanTest(unittest.TestCase):
     def test_signed_test_deliveries_are_not_hand_written_checks(self) -> None:
         signer = """
             import { createHmac } from 'node:crypto';
-            import { ShieldLabs } from '@shieldlabs/node';
+            import { ShieldLabs } from '@shieldlabs-ai/node';
             export function sign(body, secret) {
               return { 'X-Shield-Signature': 'sha256=' + createHmac('sha256', secret).update(body).digest('hex') };
             }

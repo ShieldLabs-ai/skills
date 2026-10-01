@@ -1,4 +1,4 @@
-# Plain JavaScript with `@shieldlabs/js`
+# Plain JavaScript with `@shieldlabs-ai/js`
 
 For pages without a framework binding: plain JavaScript or TypeScript with any bundler, server
 rendered pages (Rails, Django, Laravel, Express templates), static HTML served by any backend, and
@@ -7,7 +7,7 @@ pages without a bundler.
 ## Install
 
 ```bash
-npm install @shieldlabs/js
+npm install @shieldlabs-ai/js
 ```
 
 Without a bundler, load the IIFE build of the loader instead ([Without a bundler](#without-a-bundler)).
@@ -16,7 +16,7 @@ Without a bundler, load the IIFE build of the loader instead ([Without a bundler
 
 ```ts
 // shieldlabs.ts
-import { load, type LoadOptions, type ShieldLabsAgent } from '@shieldlabs/js';
+import { load, type LoadOptions, type ShieldLabsAgent } from '@shieldlabs-ai/js';
 
 const options: LoadOptions = { publicKey: import.meta.env.VITE_SHIELDLABS_PUBLIC_KEY };
 
@@ -38,7 +38,7 @@ getAgent().catch(() => {}); // start loading now; failures are handled where ide
 ## Send the request ID with a `fetch` submit
 
 ```ts
-import { ShieldLabsError } from '@shieldlabs/js';
+import { ShieldLabsError } from '@shieldlabs-ai/js';
 import { getAgent } from './shieldlabs';
 
 const form = document.querySelector<HTMLFormElement>('#signup')!;
@@ -73,7 +73,7 @@ submits. Put the request ID in a hidden field:
 ```
 
 ```ts
-import type { InteractionIdentifier } from '@shieldlabs/js';
+import type { InteractionIdentifier } from '@shieldlabs-ai/js';
 import { getAgent } from './shieldlabs';
 
 const form = document.querySelector<HTMLFormElement>('#signup')!;
@@ -123,7 +123,7 @@ confirm the current one on npm first, or serve the file yourself (next section):
   <button>Sign up</button>
 </form>
 
-<script src="https://cdn.jsdelivr.net/npm/@shieldlabs/js@1.0.0/dist/shieldlabs.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@shieldlabs-ai/js@1.0.0/dist/shieldlabs.iife.js"></script>
 <script>
   const options = { publicKey: '0123456789abcdef0123456789abcdef' };
 
@@ -171,7 +171,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const require = createRequire(import.meta.url);
-const loaderFile = path.join(path.dirname(require.resolve('@shieldlabs/js/package.json')), 'dist', 'shieldlabs.iife.js');
+const loaderFile = path.join(path.dirname(require.resolve('@shieldlabs-ai/js/package.json')), 'dist', 'shieldlabs.iife.js');
 
 app.get('/assets/shieldlabs.iife.js', (req, res) => res.type('text/javascript').sendFile(loaderFile));
 ```

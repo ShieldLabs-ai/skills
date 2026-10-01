@@ -74,7 +74,7 @@ step-up becomes allow with limits.
 Node.js; every reference file has the same function for its SDK:
 
 ```ts
-import { evaluateIdentification, type Identification } from '@shieldlabs/node';
+import { evaluateIdentification, type Identification } from '@shieldlabs-ai/node';
 
 export type Sensitivity = 'low' | 'medium' | 'high';
 export type Decision = 'allow' | 'step_up' | 'review' | 'block';

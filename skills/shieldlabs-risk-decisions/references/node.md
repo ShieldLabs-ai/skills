@@ -1,13 +1,13 @@
 # Risk decisions in Node.js
 
 Put `decide()` from the skill ([The policy in code](../SKILL.md#the-policy-in-code)) in
-`risk-policy.ts`. It builds on `evaluateIdentification` from `@shieldlabs/node` (also exported by
-`@shieldlabs/next/server`); pass `now` in the context only in tests.
+`risk-policy.ts`. It builds on `evaluateIdentification` from `@shieldlabs-ai/node` (also exported by
+`@shieldlabs-ai/next/server`); pass `now` in the context only in tests.
 
 ## In a handler
 
 ```ts
-import { userHid } from '@shieldlabs/node';
+import { userHid } from '@shieldlabs-ai/node';
 import { decide } from './risk-policy';
 
 app.post('/api/payout', express.json(), async (req, res) => {

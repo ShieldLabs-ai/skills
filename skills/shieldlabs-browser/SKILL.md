@@ -1,6 +1,6 @@
 ---
 name: shieldlabs-browser
-description: Adds the ShieldLabs browser SDK to a web frontend so that each protected action (signup, login, checkout, payout, password change) runs one fresh identification and sends its request ID to the backend. Covers @shieldlabs/js for plain JavaScript and pages without a bundler, @shieldlabs/react, @shieldlabs/next, @shieldlabs/vue with Nuxt, @shieldlabs/angular and @shieldlabs/svelte with SvelteKit, plus Content Security Policy, consent, server-side rendering and the call budget. Use when the user asks to install or load the ShieldLabs agent or snippet, get a requestId in the browser, call identify() on a form, add ShieldLabsProvider, provideShieldLabs, createShieldLabs or setShieldLabs, load the agent only after consent (autoLoad, load()), identify early with getAgent(), fix load_failed, timeout, not_initialized or unsupported_environment errors, or wire the ShieldLabs Public Key into a frontend.
+description: Adds the ShieldLabs browser SDK to a web frontend so that each protected action (signup, login, checkout, payout, password change) runs one fresh identification and sends its request ID to the backend. Covers @shieldlabs-ai/js for plain JavaScript and pages without a bundler, @shieldlabs-ai/react, @shieldlabs-ai/next, @shieldlabs-ai/vue with Nuxt, @shieldlabs-ai/angular and @shieldlabs-ai/svelte with SvelteKit, plus Content Security Policy, consent, server-side rendering and the call budget. Use when the user asks to install or load the ShieldLabs agent or snippet, get a requestId in the browser, call identify() on a form, add ShieldLabsProvider, provideShieldLabs, createShieldLabs or setShieldLabs, load the agent only after consent (autoLoad, load()), identify early with getAgent(), fix load_failed, timeout, not_initialized or unsupported_environment errors, or wire the ShieldLabs Public Key into a frontend.
 ---
 
 # ShieldLabs in the browser
@@ -29,14 +29,14 @@ visitor ID or a device ID: the backend reads the verdict (shieldlabs-server skil
 
 | Frontend | Install | Set up once | Identify at the action | Reference |
 |---|---|---|---|---|
-| Plain JavaScript, any bundler, or a page without a bundler | `@shieldlabs/js` | `load({ publicKey })` | `agent.identify()`, rejects on failure | [vanilla.md](references/vanilla.md) |
-| React 18 or 19 (Vite, React Router) | `@shieldlabs/react @shieldlabs/js` | `<ShieldLabsProvider publicKey>` | `useIdentify()`, resolves `null` on failure | [react.md](references/react.md) |
-| Next.js 14 or later, App Router or Pages Router | `@shieldlabs/next @shieldlabs/react @shieldlabs/js @shieldlabs/node` | `<ShieldLabsProvider>` from `@shieldlabs/next` in the root layout | `useIdentify()` in a client component, resolves `null` on failure | [nextjs.md](references/nextjs.md) |
-| Vue 3.3 or later, Nuxt 3 | `@shieldlabs/vue @shieldlabs/js` | `app.use(createShieldLabs({ publicKey }))` | `useIdentify()`, resolves `null` on failure | [vue-nuxt.md](references/vue-nuxt.md) |
-| Angular 17 or later | `@shieldlabs/angular @shieldlabs/js` | `provideShieldLabs({ publicKey })` | `injectIdentify()`, resolves `null` on failure | [angular.md](references/angular.md) |
-| Svelte 5, SvelteKit 2 | `@shieldlabs/svelte @shieldlabs/js` | `setShieldLabs({ publicKey })` in the root layout | `useIdentify()`, resolves `null` on failure | [svelte-sveltekit.md](references/svelte-sveltekit.md) |
+| Plain JavaScript, any bundler, or a page without a bundler | `@shieldlabs-ai/js` | `load({ publicKey })` | `agent.identify()`, rejects on failure | [vanilla.md](references/vanilla.md) |
+| React 18 or 19 (Vite, React Router) | `@shieldlabs-ai/react @shieldlabs-ai/js` | `<ShieldLabsProvider publicKey>` | `useIdentify()`, resolves `null` on failure | [react.md](references/react.md) |
+| Next.js 14 or later, App Router or Pages Router | `@shieldlabs-ai/next @shieldlabs-ai/react @shieldlabs-ai/js @shieldlabs-ai/node` | `<ShieldLabsProvider>` from `@shieldlabs-ai/next` in the root layout | `useIdentify()` in a client component, resolves `null` on failure | [nextjs.md](references/nextjs.md) |
+| Vue 3.3 or later, Nuxt 3 | `@shieldlabs-ai/vue @shieldlabs-ai/js` | `app.use(createShieldLabs({ publicKey }))` | `useIdentify()`, resolves `null` on failure | [vue-nuxt.md](references/vue-nuxt.md) |
+| Angular 17 or later | `@shieldlabs-ai/angular @shieldlabs-ai/js` | `provideShieldLabs({ publicKey })` | `injectIdentify()`, resolves `null` on failure | [angular.md](references/angular.md) |
+| Svelte 5, SvelteKit 2 | `@shieldlabs-ai/svelte @shieldlabs-ai/js` | `setShieldLabs({ publicKey })` in the root layout | `useIdentify()`, resolves `null` on failure | [svelte-sveltekit.md](references/svelte-sveltekit.md) |
 
-`@shieldlabs/js` is the shared loader: the framework packages list it as a peer dependency, so
+`@shieldlabs-ai/js` is the shared loader: the framework packages list it as a peer dependency, so
 install it next to them. The Public Key is the only ShieldLabs credential that belongs in browser
 code. Copy it from the analytics dashboard at https://app.shieldlabs.ai (Integration > API keys;
 the Install tab shows a ready snippet with it) and expose it with the framework's public prefix:
@@ -51,10 +51,10 @@ the Install tab shows a ready snippet with it) and expose it with the framework'
 
 ## The core pattern
 
-Every framework package wraps this `@shieldlabs/js` flow:
+Every framework package wraps this `@shieldlabs-ai/js` flow:
 
 ```ts
-import { load, ShieldLabsError, type LoadOptions } from '@shieldlabs/js';
+import { load, ShieldLabsError, type LoadOptions } from '@shieldlabs-ai/js';
 
 const options: LoadOptions = { publicKey: import.meta.env.VITE_SHIELDLABS_PUBLIC_KEY };
 
@@ -109,7 +109,7 @@ await fetch('/api/signup', {
 - The state access object (`useShieldLabs()`, `injectShieldLabs()`, `getShieldLabs()`) gives
   `status`, `error`, the low-level `identify()` and `check()`, `load()` and `getAgent()`. Its
   `identify()` rejects with a `ShieldLabsError`, like the agent's. `getAgent()` resolves the agent
-  of `@shieldlabs/js`, for example for `agent.identifyOnInteraction(form)`, and rejects with the
+  of `@shieldlabs-ai/js`, for example for `agent.identifyOnInteraction(form)`, and rejects with the
   load error when the load fails or times out.
 - `autoLoad` (default `true`) loads the agent after the first render. With `autoLoad: false`
   nothing loads until `load()` is called (see [Consent](#consent)).
@@ -147,10 +147,10 @@ await fetch('/api/signup', {
 | Situation | Call |
 |---|---|
 | A form or button the backend protects (signup, login, checkout, payout) | `identify()` in the submit handler |
-| A classic full-page form post, or an identification that should be ready when the user submits | `agent.identifyOnInteraction(form)`, then `take()` in the submit handler. The agent comes from `load()` in `@shieldlabs/js` and from `getAgent()` in the framework packages |
+| A classic full-page form post, or an identification that should be ready when the user submits | `agent.identifyOnInteraction(form)`, then `take()` in the submit handler. The agent comes from `load()` in `@shieldlabs-ai/js` and from `getAgent()` in the framework packages |
 | Opening the page is the protected step (for example an account recovery page) | `runOnMount: true` on the identify helper, only in that page's component. It runs once: when the load fails or times out, it resolves `null` with the load error and does not run again when the agent arrives later. With `autoLoad: false` it identifies only when `load()` came first (see [Consent](#consent)) |
 | Passive monitoring of a visit, for example once after sign-in | `check()` or the `checkOnLoad` option, which runs once when the agent becomes ready unless an identification for the same User HID is already running. The agent runs at most one check per visit every 5 minutes, and `check()` resolves `null` when it skipped |
-| The agent may only run after consent | `autoLoad: false` on the provider, plugin or setup (`autoLoad={false}` in React and Next.js), then `load()` from the state access object once consent is given. With `@shieldlabs/js`, call `load()` only after consent |
+| The agent may only run after consent | `autoLoad: false` on the provider, plugin or setup (`autoLoad={false}` in React and Next.js), then `load()` from the state access object once consent is given. With `@shieldlabs-ai/js`, call `load()` only after consent |
 
 ## Errors
 
@@ -166,7 +166,7 @@ Every error is a `ShieldLabsError` with a `code`:
 
 The identify helpers (`useIdentify()` in React, Next.js, Vue and Svelte, `injectIdentify()` in
 Angular) never reject: they resolve `null` and put the error in their `error` state. The
-`identify()` of the state access objects and of the `@shieldlabs/js` agent rejects, so wrap it in
+`identify()` of the state access objects and of the `@shieldlabs-ai/js` agent rejects, so wrap it in
 `try`/`catch`.
 
 ## Content Security Policy
@@ -180,14 +180,14 @@ connect-src 'self' https://rest.shieldlabs.ai wss://rest.shieldlabs.ai https://w
 
 The agent loads with a dynamic `import()`, so no `'unsafe-eval'` is needed. A blocked
 `https://webrtc.shieldlabs.ai` still lets identifications arrive, but they can carry the
-`stun_not_checked` risk signal. When the `@shieldlabs/js` IIFE build is loaded from a public npm
+`stun_not_checked` risk signal. When the `@shieldlabs-ai/js` IIFE build is loaded from a public npm
 CDN, add that origin to `script-src` too. Details: https://docs.shieldlabs.ai/setup/csp.
 
 ## Consent
 
 The agent does not read consent banners. Where your policy or applicable law requires consent
 before identification, set up the framework package with `autoLoad: false` and call `load()` from
-the state access object once consent is given (with `@shieldlabs/js`, call `load()` only then).
+the state access object once consent is given (with `@shieldlabs-ai/js`, call `load()` only then).
 Until `load()`, nothing waits for consent: the helper's `identify()` resolves `null` at once with a
 `not_initialized` error, so the action goes out unverified; a `runOnMount` identification that
 starts before `load()` ends the same way and does not run again after `load()`; the low-level

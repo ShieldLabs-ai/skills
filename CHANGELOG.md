@@ -28,7 +28,7 @@ All notable changes to this project are documented in this file. The format foll
   mismatch never softens the band, account-abuse thresholds that count the account or device of
   the action, and the MCP tools with their exact arguments.
 - Slash commands `/shieldlabs:setup` and `/shieldlabs:audit`.
-- The read-only ShieldLabs MCP server (`npx -y @shieldlabs/mcp`) in `.mcp.json` for Claude Code,
+- The read-only ShieldLabs MCP server (`npx -y @shieldlabs-ai/mcp`) in `.mcp.json` for Claude Code,
   configured from the environment, with setup snippets for Cursor, Codex, VS Code and other
   clients.
 - `rules/shieldlabs.mdc` for Cursor and `AGENTS.md` for other agents.

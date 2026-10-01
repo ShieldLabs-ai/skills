@@ -119,7 +119,7 @@ Also in the plugin:
 ## The bundled MCP server
 
 In Claude Code, [`.mcp.json`](.mcp.json) starts the ShieldLabs MCP server with
-`npx -y @shieldlabs/mcp` (Node.js 20 or later); Cursor, Codex and other clients add it to their own
+`npx -y @shieldlabs-ai/mcp` (Node.js 20 or later); Cursor, Codex and other clients add it to their own
 MCP configuration. Every tool is read-only: read an identification by request ID, search the History API,
 summarize an account, a device or an IP address, explain a Risk Score, verify a webhook signature,
 read the domain profile. The server reads its keys from the environment that starts your client:
@@ -150,10 +150,10 @@ from its environment.
 
 ## Compatibility
 
-- ShieldLabs SDKs 1.x: `@shieldlabs/js`, `@shieldlabs/react`, `@shieldlabs/next`,
-  `@shieldlabs/vue`, `@shieldlabs/angular`, `@shieldlabs/svelte`, `@shieldlabs/node`, `shieldlabs`
+- ShieldLabs SDKs 1.x: `@shieldlabs-ai/js`, `@shieldlabs-ai/react`, `@shieldlabs-ai/next`,
+  `@shieldlabs-ai/vue`, `@shieldlabs-ai/angular`, `@shieldlabs-ai/svelte`, `@shieldlabs-ai/node`, `shieldlabs`
   (Python), `shieldlabs-go`, `shieldlabs/shieldlabs-php`, `ai.shieldlabs:shieldlabs-java`,
-  `ShieldLabs` (.NET) and `@shieldlabs/mcp`. The skills tell the agent to confirm current versions
+  `ShieldLabs` (.NET) and `@shieldlabs-ai/mcp`. The skills tell the agent to confirm current versions
   on the package registries and at https://docs.shieldlabs.ai.
 - Clients: Claude Code, the Claude desktop app, Cursor, Codex, OpenCode and other clients that read
   Agent Skills (`SKILL.md` with YAML frontmatter).

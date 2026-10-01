@@ -40,7 +40,7 @@ first, then only the reference files for the stack at hand.
 
 ## MCP server
 
-In Claude Code, `.mcp.json` starts the read-only ShieldLabs MCP server (`npx -y @shieldlabs/mcp`)
+In Claude Code, `.mcp.json` starts the read-only ShieldLabs MCP server (`npx -y @shieldlabs-ai/mcp`)
 with `SHIELDLABS_API_KEY` and the optional Management API and webhook variables from the
 environment. Codex and other clients add the server to their own configuration
 ([clients.md](skills/shieldlabs-investigate/references/clients.md)). Its tools are listed in

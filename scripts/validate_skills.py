@@ -505,8 +505,8 @@ def check_manifests(root: Path, report: Report) -> Optional[str]:
         server = servers.get(PLUGIN_NAME) if isinstance(servers, dict) else None
         if not isinstance(server, dict):
             report.error(f".mcp.json: mcpServers must define '{PLUGIN_NAME}'")
-        elif "@shieldlabs/mcp" not in (server.get("args") or []):
-            report.error(".mcp.json: the server must start @shieldlabs/mcp")
+        elif "@shieldlabs-ai/mcp" not in (server.get("args") or []):
+            report.error(".mcp.json: the server must start @shieldlabs-ai/mcp")
 
     changelog = root / "CHANGELOG.md"
     if version is not None:

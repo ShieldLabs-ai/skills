@@ -1,6 +1,6 @@
 # Webhooks in Node.js, Next.js and edge runtimes
 
-All examples use `@shieldlabs/node` (or `@shieldlabs/next/server`, which wraps it). They read
+All examples use `@shieldlabs-ai/node` (or `@shieldlabs-ai/next/server`, which wraps it). They read
 `SHIELDLABS_WEBHOOK_SECRET` once at startup, as a comma-separated list while you rotate a secret,
 and answer 500 when it is empty:
 
@@ -26,7 +26,7 @@ a boolean instead.
 
 ```ts
 import { createServer } from 'node:http';
-import { SignatureVerificationError, webhooks, type WebhookEvent } from '@shieldlabs/node';
+import { SignatureVerificationError, webhooks, type WebhookEvent } from '@shieldlabs-ai/node';
 
 const MAX_BODY = 1024 * 1024; // a delivery is a few kilobytes
 
@@ -64,7 +64,7 @@ const app = await NestFactory.create(AppModule, { rawBody: true });
 // shieldlabs-webhook.controller.ts
 import { BadRequestException, Controller, Headers, HttpCode, InternalServerErrorException, Post, Req, UnauthorizedException, type RawBodyRequest } from '@nestjs/common';
 import type { Request } from 'express';
-import { SignatureVerificationError, webhooks, type WebhookEvent } from '@shieldlabs/node';
+import { SignatureVerificationError, webhooks, type WebhookEvent } from '@shieldlabs-ai/node';
 
 @Controller('webhooks')
 export class ShieldLabsWebhookController {
@@ -116,7 +116,7 @@ fastify.register(async (scope) => {
 
 ```ts
 // app/api/webhooks/shieldlabs/route.ts
-import { createWebhookHandler } from '@shieldlabs/next/server';
+import { createWebhookHandler } from '@shieldlabs-ai/next/server';
 
 export const POST = createWebhookHandler({
   onEvent: async (event) => {
@@ -137,10 +137,10 @@ It works in the Node.js and Edge runtimes. For the Pages Router, see the shieldl
 
 ## Edge runtimes (Cloudflare Workers, Vercel Edge, Deno)
 
-Edge builds of `@shieldlabs/node` use WebCrypto, so use the async helpers:
+Edge builds of `@shieldlabs-ai/node` use WebCrypto, so use the async helpers:
 
 ```ts
-import { SignatureVerificationError, webhooks, type WebhookEvent } from '@shieldlabs/node';
+import { SignatureVerificationError, webhooks, type WebhookEvent } from '@shieldlabs-ai/node';
 
 export default {
   async fetch(request: Request, env: { SHIELDLABS_WEBHOOK_SECRET?: string }, ctx: ExecutionContext): Promise<Response> {

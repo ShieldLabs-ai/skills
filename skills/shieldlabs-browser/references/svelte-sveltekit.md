@@ -1,4 +1,4 @@
-# Svelte and SvelteKit with `@shieldlabs/svelte`
+# Svelte and SvelteKit with `@shieldlabs-ai/svelte`
 
 Svelte 5 (components with and without runes) and SvelteKit 2 with any adapter, including
 prerendering and server-side rendering.
@@ -6,8 +6,8 @@ prerendering and server-side rendering.
 ## Install
 
 ```bash
-npm install @shieldlabs/svelte @shieldlabs/js
-npm install @shieldlabs/node   # for the SvelteKit server code below
+npm install @shieldlabs-ai/svelte @shieldlabs-ai/js
+npm install @shieldlabs-ai/node   # for the SvelteKit server code below
 ```
 
 `.env`:
@@ -26,7 +26,7 @@ Keep the Private API Key in server-only modules (`$env/static/private`, `+page.s
 <!-- src/routes/+layout.svelte -->
 <script lang="ts">
   import { PUBLIC_SHIELDLABS_PUBLIC_KEY } from '$env/static/public';
-  import { setShieldLabs } from '@shieldlabs/svelte';
+  import { setShieldLabs } from '@shieldlabs-ai/svelte';
 
   let { children } = $props();
 
@@ -51,7 +51,7 @@ as `data` without the "initial value" warning, pass a function:
 <!-- src/routes/signup/+page.svelte -->
 <script lang="ts">
   import { enhance } from '$app/forms';
-  import { useIdentify } from '@shieldlabs/svelte';
+  import { useIdentify } from '@shieldlabs-ai/svelte';
   import type { SubmitFunction } from '@sveltejs/kit';
 
   const { identify, isLoading } = useIdentify();
@@ -75,7 +75,7 @@ JavaScript, or when the agent cannot load, the form is still sent without a `req
 // src/routes/signup/+page.server.ts
 import { fail } from '@sveltejs/kit';
 import { SHIELDLABS_API_KEY } from '$env/static/private';
-import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identification } from '@shieldlabs/node';
+import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identification } from '@shieldlabs-ai/node';
 import type { Actions } from './$types';
 
 const shieldlabs = new ShieldLabs({ apiKey: SHIELDLABS_API_KEY });
@@ -118,7 +118,7 @@ With a plain `fetch` instead of `use:enhance`:
 
 ```svelte
 <script lang="ts">
-  import { useIdentify } from '@shieldlabs/svelte';
+  import { useIdentify } from '@shieldlabs-ai/svelte';
 
   const { identify, isLoading } = useIdentify();
 
@@ -147,7 +147,7 @@ Compute the User HID in `+layout.server.ts` (shieldlabs-user-linking skill) and 
 
 ```svelte
 <script lang="ts">
-  import { useIdentify } from '@shieldlabs/svelte';
+  import { useIdentify } from '@shieldlabs-ai/svelte';
 
   let { data } = $props();
   const { identify } = useIdentify(() => ({ userId: data.userHid }));
@@ -159,7 +159,7 @@ Compute the User HID in `+layout.server.ts` (shieldlabs-user-linking skill) and 
 `getShieldLabs()` returns `{ status, error, identify, check, load, getAgent }` of the nearest
 `setShieldLabs()`: `status` and `error` are readable stores; `identify()` rejects with a
 `ShieldLabsError`; `check()` resolves `null` when the agent skipped it; `load()` starts loading the
-agent; `getAgent()` resolves the agent of `@shieldlabs/js` once it has loaded, and rejects with
+agent; `getAgent()` resolves the agent of `@shieldlabs-ai/js` once it has loaded, and rejects with
 the load error when the load fails or times out. `checkOnLoad: true` (or `{ userId }`) runs one
 background check when the agent is ready, unless an identification for the same User HID is
 already running. `runOnMount: true` on `useIdentify()` runs one identification per mount; use it
@@ -176,7 +176,7 @@ full-page form post), arm the form with `identifyOnInteraction()` of the agent f
 <!-- src/routes/signup/+page.svelte: a full-page form post, without use:enhance -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { getShieldLabs, type InteractionIdentifier } from '@shieldlabs/svelte';
+  import { getShieldLabs, type InteractionIdentifier } from '@shieldlabs-ai/svelte';
 
   const { getAgent } = getShieldLabs();
   let form: HTMLFormElement;
@@ -231,7 +231,7 @@ consent is given:
 <!-- src/routes/+layout.svelte -->
 <script lang="ts">
   import { PUBLIC_SHIELDLABS_PUBLIC_KEY } from '$env/static/public';
-  import { setShieldLabs } from '@shieldlabs/svelte';
+  import { setShieldLabs } from '@shieldlabs-ai/svelte';
   import { consent } from '$lib/consent'; // your consent state, for example a store your banner sets
 
   let { children } = $props();

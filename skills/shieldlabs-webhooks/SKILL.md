@@ -42,7 +42,7 @@ dependable read.
 |---|---|---|
 | Node.js (Express, NestJS, `node:http`) | `webhooks.constructEvent(body, header, secret)` | [node.md](references/node.md) |
 | Edge runtimes (Workers, Vercel Edge, Deno) | `await webhooks.constructEventAsync(body, header, secret)` | [node.md](references/node.md) |
-| Next.js route handler | `createWebhookHandler({ onEvent })` from `@shieldlabs/next/server` | [node.md](references/node.md) |
+| Next.js route handler | `createWebhookHandler({ onEvent })` from `@shieldlabs-ai/next/server` | [node.md](references/node.md) |
 | Python (FastAPI, Flask, Django) | `webhooks.construct_event(payload, header, secret)` | [python.md](references/python.md) |
 | Go (`net/http`) | `webhook.ConstructEvent(body, header, secrets...)` | [go.md](references/go.md) |
 | PHP (plain, Laravel, Symfony) | `Webhook::constructEvent($payload, $header, $secret)` | [php.md](references/php.md) |
@@ -56,7 +56,7 @@ Every SDK also has a boolean `verifySignature` (`verify_signature`, `VerifySigna
 
 ```js
 import express from 'express';
-import { SignatureVerificationError, webhooks } from '@shieldlabs/node';
+import { SignatureVerificationError, webhooks } from '@shieldlabs-ai/node';
 
 const app = express();
 

@@ -1,16 +1,16 @@
-# Next.js with `@shieldlabs/next`
+# Next.js with `@shieldlabs-ai/next`
 
-Next.js 14 or later. `@shieldlabs/next` has two entries:
+Next.js 14 or later. `@shieldlabs-ai/next` has two entries:
 
 | Import | Runs in | Exports |
 |---|---|---|
-| `@shieldlabs/next` | the browser (client module, marked `"use client"`) | `ShieldLabsProvider`, `useIdentify`, `useShieldLabs`, `ShieldLabsError` (the React bindings) |
-| `@shieldlabs/next/server` | route handlers, Server Actions, Server Components, Pages Router API routes, Node.js and Edge runtimes | `getIdentification`, `createWebhookHandler`, and from `@shieldlabs/node`: `ShieldLabs`, `evaluateIdentification`, `riskBand`, `isRateLimited`, `userHidAsync`, `NIL_UUID`, `SIGNALS`, `RISK_BANDS`, the error classes and the types |
+| `@shieldlabs-ai/next` | the browser (client module, marked `"use client"`) | `ShieldLabsProvider`, `useIdentify`, `useShieldLabs`, `ShieldLabsError` (the React bindings) |
+| `@shieldlabs-ai/next/server` | route handlers, Server Actions, Server Components, Pages Router API routes, Node.js and Edge runtimes | `getIdentification`, `createWebhookHandler`, and from `@shieldlabs-ai/node`: `ShieldLabs`, `evaluateIdentification`, `riskBand`, `isRateLimited`, `userHidAsync`, `NIL_UUID`, `SIGNALS`, `RISK_BANDS`, the error classes and the types |
 
 ## Install and configure
 
 ```bash
-npm install @shieldlabs/next @shieldlabs/react @shieldlabs/js @shieldlabs/node
+npm install @shieldlabs-ai/next @shieldlabs-ai/react @shieldlabs-ai/js @shieldlabs-ai/node
 ```
 
 The last three are peer dependencies. Environment variables (`.env.local` in development, the
@@ -34,7 +34,7 @@ client component, so this works as is:
 ```tsx
 // app/layout.tsx
 import type { ReactNode } from 'react';
-import { ShieldLabsProvider } from '@shieldlabs/next';
+import { ShieldLabsProvider } from '@shieldlabs-ai/next';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -56,7 +56,7 @@ Identify in a client component when the form is submitted:
 'use client';
 
 import type { SyntheticEvent } from 'react';
-import { useIdentify } from '@shieldlabs/next';
+import { useIdentify } from '@shieldlabs-ai/next';
 
 export function SignupForm() {
   const { identify, isLoading } = useIdentify();
@@ -92,7 +92,7 @@ import {
   evaluateIdentification,
   getIdentification,
   type Identification,
-} from '@shieldlabs/next/server';
+} from '@shieldlabs-ai/next/server';
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { email?: string; requestId?: string | null };
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
 ```
 
 `getIdentification(requestId, options?)` takes the options of `identifications.get` in
-`@shieldlabs/node` (`wait`, `timeout`, `pollInterval`, `signal`) plus `client`, and waits the same
+`@shieldlabs-ai/node` (`wait`, `timeout`, `pollInterval`, `signal`) plus `client`, and waits the same
 way: `timeout` (default 10 000 ms) is the total budget, each poll is one HTTP attempt, a 429, a 5xx
 or a network error keeps polling, 400, 401, 403 and 404 stop at once (and so does a 429 whose
 `Retry-After`, capped at 10 s, is longer than the time left), and the last poll runs at the
@@ -138,7 +138,7 @@ it after `identify()`:
 
 ### Early identification and consent
 
-The provider and hooks are those of `@shieldlabs/react` ([react.md](react.md)):
+The provider and hooks are those of `@shieldlabs-ai/react` ([react.md](react.md)):
 
 - To have the identification ready at submit time, arm the form in an effect with
   `useShieldLabs().getAgent()` and `agent.identifyOnInteraction(form)`, then call `take()` in the
@@ -154,7 +154,7 @@ The provider and hooks are those of `@shieldlabs/react` ([react.md](react.md)):
 
 ```ts
 // app/api/webhooks/shieldlabs/route.ts
-import { createWebhookHandler } from '@shieldlabs/next/server';
+import { createWebhookHandler } from '@shieldlabs-ai/next/server';
 
 export const POST = createWebhookHandler({
   // Verifies X-Shield-Signature with SHIELDLABS_WEBHOOK_SECRET (several secrets separated by
@@ -184,7 +184,7 @@ status })` is called before a 400, 401, 413 or 500. More in the shieldlabs-webho
 ```tsx
 // pages/_app.tsx
 import type { AppProps } from 'next/app';
-import { ShieldLabsProvider } from '@shieldlabs/next';
+import { ShieldLabsProvider } from '@shieldlabs-ai/next';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -195,13 +195,13 @@ export default function App({ Component, pageProps }: AppProps) {
 }
 ```
 
-Pages call `useIdentify()` from `@shieldlabs/next` exactly as in the App Router form above. API
-routes read the verdict with `getIdentification` from `@shieldlabs/next/server`:
+Pages call `useIdentify()` from `@shieldlabs-ai/next` exactly as in the App Router form above. API
+routes read the verdict with `getIdentification` from `@shieldlabs-ai/next/server`:
 
 ```ts
 // pages/api/signup.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { ShieldLabsError, evaluateIdentification, getIdentification, type Identification } from '@shieldlabs/next/server';
+import { ShieldLabsError, evaluateIdentification, getIdentification, type Identification } from '@shieldlabs-ai/next/server';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -222,12 +222,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 ```
 
 A webhook in the Pages Router needs the raw body, so turn off the body parser for that route and
-verify with `webhooks.constructEvent` of `@shieldlabs/node`:
+verify with `webhooks.constructEvent` of `@shieldlabs-ai/node`:
 
 ```ts
 // pages/api/webhooks/shieldlabs.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { SignatureVerificationError, webhooks, type WebhookEvent } from '@shieldlabs/node';
+import { SignatureVerificationError, webhooks, type WebhookEvent } from '@shieldlabs-ai/node';
 
 export const config = { api: { bodyParser: false } };
 
@@ -265,9 +265,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 ## Edge runtime and middleware
 
-`getIdentification`, `createWebhookHandler` and `userHidAsync` from `@shieldlabs/next/server` work
+`getIdentification`, `createWebhookHandler` and `userHidAsync` from `@shieldlabs-ai/next/server` work
 in the Edge runtime (`export const runtime = 'edge'`) as well as in Node.js. The synchronous
-`userHid` of `@shieldlabs/node` needs Node.js crypto, so the server entry offers only the async
+`userHid` of `@shieldlabs-ai/node` needs Node.js crypto, so the server entry offers only the async
 helper. When you host the app yourself with `next start`, keep the webhook route in the Node.js
 runtime: an Edge route handler runs only after Next.js has read the whole body, so `maxBodySize`
 cannot keep a large request out of memory there. Middleware runs on the server, so it never
@@ -276,12 +276,12 @@ identifies: identification always starts in the browser.
 ## Signed-in users
 
 Compute the User HID in a Server Component, Server Action or route with `userHidAsync` from
-`@shieldlabs/next/server` (Node.js and Edge runtimes), pass it to the client component as a prop,
+`@shieldlabs-ai/next/server` (Node.js and Edge runtimes), pass it to the client component as a prop,
 and call `useIdentify({ userId: userHid })` (shieldlabs-user-linking skill):
 
 ```tsx
 // app/account/page.tsx (a Server Component)
-import { userHidAsync } from '@shieldlabs/next/server';
+import { userHidAsync } from '@shieldlabs-ai/next/server';
 import { ChangeEmailForm } from './change-email-form'; // 'use client', calls useIdentify({ userId: userHid })
 
 export default async function AccountPage() {

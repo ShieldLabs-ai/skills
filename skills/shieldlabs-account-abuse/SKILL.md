@@ -81,7 +81,7 @@ appears in the account's history: pass it to the helper instead of scanning the 
 Node.js; the references have the same helpers for every SDK:
 
 ```ts
-import { NIL_UUID, type ShieldLabs } from '@shieldlabs/node';
+import { NIL_UUID, type ShieldLabs } from '@shieldlabs-ai/node';
 
 /** User HID values that do not name one of your accounts. */
 const NOT_AN_ACCOUNT = new Set(['anonymous', 'fail', '-1', 'unknown']);

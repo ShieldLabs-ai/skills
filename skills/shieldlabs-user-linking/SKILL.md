@@ -45,7 +45,7 @@ the message, as 64 lowercase hex characters. It fails with a validation error on
 | .NET | `UserHid.FromUserId(user.Id.ToString(), secret)` | [dotnet.md](references/dotnet.md) |
 
 ```ts
-import { userHid } from '@shieldlabs/node';
+import { userHid } from '@shieldlabs-ai/node';
 
 // Same account, same User HID, on every device. Irreversible without the secret.
 const hid = userHid(String(user.id), process.env.USER_HID_SECRET!);
@@ -55,11 +55,11 @@ const hid = userHid(String(user.id), process.env.USER_HID_SECRET!);
 
 | Browser package | Pass the User HID |
 |---|---|
-| `@shieldlabs/js` | `agent.identify({ userId: hid })`, `agent.check({ userId: hid })` |
-| `@shieldlabs/react`, `@shieldlabs/next` | `useIdentify({ userId: hid })`, or `identify({ userId })` per call |
-| `@shieldlabs/vue` | `useIdentify({ userId: () => props.userHid })` (a string, ref or getter) |
-| `@shieldlabs/angular` | `injectIdentify({ userId: session.userHid })` (a string, a signal or a function) |
-| `@shieldlabs/svelte` | `useIdentify(() => ({ userId: data.userHid }))` |
+| `@shieldlabs-ai/js` | `agent.identify({ userId: hid })`, `agent.check({ userId: hid })` |
+| `@shieldlabs-ai/react`, `@shieldlabs-ai/next` | `useIdentify({ userId: hid })`, or `identify({ userId })` per call |
+| `@shieldlabs-ai/vue` | `useIdentify({ userId: () => props.userHid })` (a string, ref or getter) |
+| `@shieldlabs-ai/angular` | `injectIdentify({ userId: session.userHid })` (a string, a signal or a function) |
+| `@shieldlabs-ai/svelte` | `useIdentify(() => ({ userId: data.userHid }))` |
 | Background checks | `check({ userId })`, or `checkOnLoad: { userId }` on the provider, plugin or setup |
 
 `identify()` resolves `{ requestId, userId }`: `userId` is the User HID that was sent (the

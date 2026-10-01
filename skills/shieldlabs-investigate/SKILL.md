@@ -5,9 +5,9 @@ description: Investigates ShieldLabs data with the read-only ShieldLabs MCP serv
 
 # Investigate with the ShieldLabs MCP server
 
-The MCP server `@shieldlabs/mcp` reads the History API and the Management API with keys from its
+The MCP server `@shieldlabs-ai/mcp` reads the History API and the Management API with keys from its
 environment. In Claude Code this plugin starts it as the server `shieldlabs`
-(`npx -y @shieldlabs/mcp`); Cursor, Codex and other clients add it to their own MCP configuration
+(`npx -y @shieldlabs-ai/mcp`); Cursor, Codex and other clients add it to their own MCP configuration
 ([clients.md](references/clients.md)). Every tool is read-only: nothing in ShieldLabs changes.
 
 ## Check the setup
@@ -106,7 +106,7 @@ Caveats: <legitimate explanations>; <window incomplete, if so>
 Read the same data with a server SDK in a short script run by the user, for example with Node.js:
 
 ```ts
-import { ShieldLabs } from '@shieldlabs/node';
+import { ShieldLabs } from '@shieldlabs-ai/node';
 
 const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY! });
 const page = await shieldlabs.history.search('device_id', '3f2b8c1e-9d4a-4e6b-8a7c-2d1e0f9b6a53', { limit: 100 });
@@ -119,6 +119,6 @@ counts in every SDK language.
 
 ## Versions
 
-This skill targets `@shieldlabs/mcp` 1.x and the 1.x SDKs. Confirm the current version on npm and
+This skill targets `@shieldlabs-ai/mcp` 1.x and the 1.x SDKs. Confirm the current version on npm and
 at https://docs.shieldlabs.ai, and check the client's own documentation when an MCP configuration
 snippet does not load.

@@ -23,7 +23,7 @@ export SHIELDLABS_API_KEY=sec_test0000-test0000-test0000
 - Use `127.0.0.1` or `localhost`: some SDKs accept a plain `http` base URL only for loopback hosts.
 - Where the base URL goes: the Node.js and Go clients take it as an option (see their references);
   Python, PHP, Java's `ShieldLabsClient.fromEnvironment()` and `getIdentification` of
-  `@shieldlabs/next/server` read `SHIELDLABS_API_BASE_URL`; .NET takes `BaseUrl` in its options.
+  `@shieldlabs-ai/next/server` read `SHIELDLABS_API_BASE_URL`; .NET takes `BaseUrl` in its options.
 - Without `--rows`, every request ID finds a trusted identification observed just now.
 
 `rows.json` maps request IDs to the History fields that differ from that default, or to `null`

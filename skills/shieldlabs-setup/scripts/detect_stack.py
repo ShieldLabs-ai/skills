@@ -29,13 +29,13 @@ PY_MANIFESTS = ("pyproject.toml", "Pipfile", "setup.py", "setup.cfg")
 
 # Frontend frameworks, most specific first: (dependency, name, browser packages, browser reference).
 FRONTENDS: List[Tuple[str, str, List[str], str]] = [
-    ("next", "Next.js", ["@shieldlabs/next", "@shieldlabs/react", "@shieldlabs/js", "@shieldlabs/node"], "nextjs.md"),
-    ("nuxt", "Nuxt", ["@shieldlabs/vue", "@shieldlabs/js"], "vue-nuxt.md"),
-    ("@sveltejs/kit", "SvelteKit", ["@shieldlabs/svelte", "@shieldlabs/js"], "svelte-sveltekit.md"),
-    ("@angular/core", "Angular", ["@shieldlabs/angular", "@shieldlabs/js"], "angular.md"),
-    ("svelte", "Svelte", ["@shieldlabs/svelte", "@shieldlabs/js"], "svelte-sveltekit.md"),
-    ("vue", "Vue", ["@shieldlabs/vue", "@shieldlabs/js"], "vue-nuxt.md"),
-    ("react", "React", ["@shieldlabs/react", "@shieldlabs/js"], "react.md"),
+    ("next", "Next.js", ["@shieldlabs-ai/next", "@shieldlabs-ai/react", "@shieldlabs-ai/js", "@shieldlabs-ai/node"], "nextjs.md"),
+    ("nuxt", "Nuxt", ["@shieldlabs-ai/vue", "@shieldlabs-ai/js"], "vue-nuxt.md"),
+    ("@sveltejs/kit", "SvelteKit", ["@shieldlabs-ai/svelte", "@shieldlabs-ai/js"], "svelte-sveltekit.md"),
+    ("@angular/core", "Angular", ["@shieldlabs-ai/angular", "@shieldlabs-ai/js"], "angular.md"),
+    ("svelte", "Svelte", ["@shieldlabs-ai/svelte", "@shieldlabs-ai/js"], "svelte-sveltekit.md"),
+    ("vue", "Vue", ["@shieldlabs-ai/vue", "@shieldlabs-ai/js"], "vue-nuxt.md"),
+    ("react", "React", ["@shieldlabs-ai/react", "@shieldlabs-ai/js"], "react.md"),
 ]
 # Other frontends and build tools: the framework-agnostic loader fits them.
 OTHER_FRONTENDS: List[Tuple[str, str]] = [
@@ -68,7 +68,7 @@ JVM_FRAMEWORKS = [("spring-boot", "Spring Boot"), ("io.quarkus", "Quarkus"), ("i
                   ("io.ktor", "Ktor"), ("io.javalin", "Javalin")]
 
 SERVER_SDKS = {
-    "node": ("@shieldlabs/node", "node.md"),
+    "node": ("@shieldlabs-ai/node", "node.md"),
     "python": ("shieldlabs", "python.md"),
     "go": ("github.com/ShieldLabs-ai/shieldlabs-go", "go.md"),
     "php": ("shieldlabs/shieldlabs-php", "php.md"),
@@ -137,7 +137,7 @@ def detect_node(manifest: Path, root: Path) -> Optional[dict]:
     folder = manifest.parent
     app = {"path": rel(folder, root), "manifest": rel(manifest, root), "language": "node",
            "frontend": None, "server": None, "install": [], "skills": [], "installed": []}
-    app["installed"] = sorted(name for name in deps if name.startswith("@shieldlabs/"))
+    app["installed"] = sorted(name for name in deps if name.startswith("@shieldlabs-ai/"))
     browser_packages: List[str] = []
     for dep, name, packages, reference in FRONTENDS:
         if dep in deps:
@@ -157,17 +157,17 @@ def detect_node(manifest: Path, root: Path) -> Optional[dict]:
         page = next((name for name in STATIC_PAGES if (folder / name).is_file()), None)
         if other or page:
             app["frontend"] = f"{other} (framework-agnostic loader)" if other else f"Static HTML pages ({page})"
-            browser_packages = ["@shieldlabs/js"]
+            browser_packages = ["@shieldlabs-ai/js"]
             app["skills"].append("shieldlabs-browser (references/vanilla.md)")
     for dep, name in NODE_SERVERS:
         if dep in deps:
             app["server"] = f"Node.js ({name})"
             break
     packages = list(browser_packages)
-    if app["server"] and "@shieldlabs/node" not in packages:
-        packages.append("@shieldlabs/node")
+    if app["server"] and "@shieldlabs-ai/node" not in packages:
+        packages.append("@shieldlabs-ai/node")
     if app["server"] and "next" in deps:
-        app["skills"].append("shieldlabs-server (@shieldlabs/next/server: shieldlabs-browser references/nextjs.md)")
+        app["skills"].append("shieldlabs-server (@shieldlabs-ai/next/server: shieldlabs-browser references/nextjs.md)")
     elif app["server"]:
         app["skills"].append("shieldlabs-server (references/node.md)")
     missing = [p for p in packages if p not in deps]
@@ -308,7 +308,7 @@ def detect(root: Path, max_depth: int = 4) -> dict:
 def render(result: dict) -> str:
     lines = [f"ShieldLabs stack detection for {result['root']}", ""]
     if not result["apps"]:
-        lines.append("No frontend or backend manifest found. Plain HTML pages can use @shieldlabs/js (the IIFE build);")
+        lines.append("No frontend or backend manifest found. Plain HTML pages can use @shieldlabs-ai/js (the IIFE build);")
         lines.append("see shieldlabs-browser (references/vanilla.md) and shieldlabs-server (references/other-languages.md).")
     for app in result["apps"]:
         lines.append(f"App: {app['path']} ({app['manifest']})")
@@ -324,7 +324,7 @@ def render(result: dict) -> str:
             lines.append(f"  Skills:   {'; '.join(app['skills'])}")
         lines.append("")
     if result["apps"] and not any(app["frontend"] for app in result["apps"]):
-        lines.append("No frontend framework found: server-rendered or static pages load @shieldlabs/js (npm, or")
+        lines.append("No frontend framework found: server-rendered or static pages load @shieldlabs-ai/js (npm, or")
         lines.append("its IIFE build) in their HTML, and the server writes the Public Key into the page; see")
         lines.append("shieldlabs-browser (references/vanilla.md) and shieldlabs-setup (references/environment.md).")
         lines.append("")

@@ -1,20 +1,20 @@
-# Vue and Nuxt with `@shieldlabs/vue`
+# Vue and Nuxt with `@shieldlabs-ai/vue`
 
 Vue 3.3 or later, Vue SSR and Nuxt 3.
 
 ## Install
 
 ```bash
-npm install @shieldlabs/vue @shieldlabs/js
+npm install @shieldlabs-ai/vue @shieldlabs-ai/js
 ```
 
-`vue` and `@shieldlabs/js` are peer dependencies.
+`vue` and `@shieldlabs-ai/js` are peer dependencies.
 
 ## Vue: install the plugin once
 
 ```ts
 // src/main.ts
-import { createShieldLabs } from '@shieldlabs/vue';
+import { createShieldLabs } from '@shieldlabs-ai/vue';
 import { createApp } from 'vue';
 import App from './App.vue';
 
@@ -34,7 +34,7 @@ after the app is mounted, never during server rendering.
 
 ```vue
 <script setup lang="ts">
-import { useIdentify } from '@shieldlabs/vue';
+import { useIdentify } from '@shieldlabs-ai/vue';
 import { ref } from 'vue';
 
 const email = ref('');
@@ -70,7 +70,7 @@ bounds the whole call: the wait for the agent to load and its answer. Composable
 
 ```vue
 <script setup lang="ts">
-import { useIdentify } from '@shieldlabs/vue';
+import { useIdentify } from '@shieldlabs-ai/vue';
 
 const props = defineProps<{ userHid: string }>(); // computed on the server
 const { identify } = useIdentify({ userId: () => props.userHid });
@@ -89,14 +89,14 @@ identification, and only a call without the `userId` key uses the composable's `
 component's first render. This `identify()` rejects with a `ShieldLabsError` (unlike
 `useIdentify()`), and `check()` resolves `null` when the agent skipped the check. `load()` starts
 loading the agent (and loads again after a failed load); `getAgent()` resolves the agent of
-`@shieldlabs/js` once it has loaded, and rejects with the load error when the load fails or times
+`@shieldlabs-ai/js` once it has loaded, and rejects with the load error when the load fails or times
 out.
 
 ## Consent: `autoLoad: false`
 
 ```ts
 // src/main.ts
-import { createShieldLabs, useShieldLabs } from '@shieldlabs/vue';
+import { createShieldLabs, useShieldLabs } from '@shieldlabs-ai/vue';
 import { createApp } from 'vue';
 import App from './App.vue';
 
@@ -126,7 +126,7 @@ the agent from `getAgent()`. The plugin loads the agent once, and `getAgent()` w
 
 ```vue
 <script setup lang="ts">
-import { useShieldLabs, type InteractionIdentifier } from '@shieldlabs/vue';
+import { useShieldLabs, type InteractionIdentifier } from '@shieldlabs-ai/vue';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 const form = ref<HTMLFormElement | null>(null);
@@ -189,7 +189,7 @@ Install the plugin in the browser only:
 
 ```ts
 // plugins/shieldlabs.client.ts
-import { createShieldLabs } from '@shieldlabs/vue';
+import { createShieldLabs } from '@shieldlabs-ai/vue';
 
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig();
@@ -203,7 +203,7 @@ the agent:
 ```vue
 <!-- pages/signup.vue -->
 <script setup lang="ts">
-import { useIdentify } from '@shieldlabs/vue';
+import { useIdentify } from '@shieldlabs-ai/vue';
 
 const email = ref('');
 const { identify, isLoading } = useIdentify();
@@ -215,11 +215,11 @@ async function onSubmit() {
 </script>
 ```
 
-The server route reads the verdict with `@shieldlabs/node` (shieldlabs-server skill):
+The server route reads the verdict with `@shieldlabs-ai/node` (shieldlabs-server skill):
 
 ```ts
 // server/api/signup.post.ts
-import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identification } from '@shieldlabs/node';
+import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identification } from '@shieldlabs-ai/node';
 
 const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY! });
 
@@ -245,7 +245,7 @@ A webhook route needs the raw bytes:
 
 ```ts
 // server/api/webhooks/shieldlabs.post.ts
-import { SignatureVerificationError, webhooks, type WebhookEvent } from '@shieldlabs/node';
+import { SignatureVerificationError, webhooks, type WebhookEvent } from '@shieldlabs-ai/node';
 
 // Several secrets, comma-separated, while you rotate one.
 const secrets = (process.env.SHIELDLABS_WEBHOOK_SECRET ?? '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -271,7 +271,7 @@ On edge presets (for example Cloudflare), use `await webhooks.constructEventAsyn
 Provide a stand-in context under `shieldLabsKey` so that tests never load the agent:
 
 ```ts
-import { shieldLabsKey, type ShieldLabsContext, type ShieldLabsStatus } from '@shieldlabs/vue';
+import { shieldLabsKey, type ShieldLabsContext, type ShieldLabsStatus } from '@shieldlabs-ai/vue';
 import { mount } from '@vue/test-utils';
 import { vi } from 'vitest';
 import { ref } from 'vue';

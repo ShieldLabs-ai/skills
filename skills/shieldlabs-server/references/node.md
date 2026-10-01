@@ -1,18 +1,18 @@
-# Node.js with `@shieldlabs/node`
+# Node.js with `@shieldlabs-ai/node`
 
 Node.js 18 or later, Bun, Deno and edge runtimes with `fetch` and WebCrypto (Cloudflare Workers,
-Vercel Edge Functions). No runtime dependencies. Next.js apps can use `@shieldlabs/next/server`,
+Vercel Edge Functions). No runtime dependencies. Next.js apps can use `@shieldlabs-ai/next/server`,
 which wraps this package (see the shieldlabs-browser skill, `references/nextjs.md`).
 
 ## Install and create the client
 
 ```bash
-npm install @shieldlabs/node
+npm install @shieldlabs-ai/node
 ```
 
 ```ts
 // shieldlabs.ts
-import { ShieldLabs } from '@shieldlabs/node';
+import { ShieldLabs } from '@shieldlabs-ai/node';
 
 export const shieldlabs = new ShieldLabs({
   apiKey: process.env.SHIELDLABS_API_KEY!, // Private API Key, sec_...
@@ -115,7 +115,7 @@ polls of `identifications.get` are single attempts: its schedule takes the place
 ## Management API
 
 ```ts
-import { ShieldLabsManagement } from '@shieldlabs/node';
+import { ShieldLabsManagement } from '@shieldlabs-ai/node';
 
 const management = new ShieldLabsManagement({
   secretKey: process.env.SHIELDLABS_SECRET_KEY!,

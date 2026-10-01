@@ -49,7 +49,7 @@ Any of these, with the request ID from the log:
 - Node.js:
 
   ```bash
-  node --input-type=module -e "import { ShieldLabs } from '@shieldlabs/node'; const s = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY }); console.log(await s.identifications.get(process.argv[1]))" "$REQUEST_ID"
+  node --input-type=module -e "import { ShieldLabs } from '@shieldlabs-ai/node'; const s = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY }); console.log(await s.identifications.get(process.argv[1]))" "$REQUEST_ID"
   ```
 
 - Python:
