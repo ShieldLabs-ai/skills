@@ -6,7 +6,7 @@ description: Investigates ShieldLabs data with the read-only ShieldLabs MCP serv
 # Investigate with the ShieldLabs MCP server
 
 The MCP server `@shieldlabs-ai/mcp` reads the History API and the Management API with keys from its
-environment. In Claude Code this plugin starts it as the server `shieldlabs`
+environment. In Claude Code and in Grok this plugin starts it as the server `shieldlabs`
 (`npx -y @shieldlabs-ai/mcp`); Cursor, Codex and other clients add it to their own MCP configuration
 ([clients.md](references/clients.md)). Every tool is read-only: nothing in ShieldLabs changes.
 

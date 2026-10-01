@@ -7,9 +7,9 @@ device intelligence and fraud detection into your app.
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/github/v/tag/ShieldLabs-ai/shieldlabs-skills?label=version&sort=semver)](https://github.com/ShieldLabs-ai/shieldlabs-skills/tags)
 
-This repository is a Claude Code plugin marketplace named `shieldlabs` with one plugin,
-`shieldlabs`. The same skills work in Cursor, Codex, OpenCode and any other client that reads
-Agent Skills. New to ShieldLabs? [Start free](https://app.shieldlabs.ai).
+This repository is a plugin marketplace named `shieldlabs` with one plugin, `shieldlabs`, for
+Claude Code and for Grok. The same skills work in Cursor, Codex, OpenCode and any other client
+that reads Agent Skills. New to ShieldLabs? [Start free](https://app.shieldlabs.ai).
 
 ## How it fits
 
@@ -34,6 +34,20 @@ A ShieldLabs integration always has three steps, and the skills teach an agent e
 
 From a shell: `claude plugin marketplace add ShieldLabs-ai/shieldlabs-skills`, then
 `claude plugin install shieldlabs@shieldlabs`. Restart Claude Code to load the plugin.
+
+### Grok
+
+The same marketplace and the same plugin. Grok reads `.grok-plugin/`, the skills, the slash
+commands and [`.mcp.json`](.mcp.json).
+
+```sh
+grok plugin marketplace add ShieldLabs-ai/shieldlabs-skills
+grok plugin install shieldlabs --trust
+```
+
+Start a new Grok session after installing. Export `SHIELDLABS_API_KEY` in the shell that starts
+Grok, then enable the `shieldlabs` server under `/mcps`. Setup:
+[MCP setup for Grok](skills/shieldlabs-investigate/references/clients.md#grok).
 
 ### Claude desktop app
 
@@ -77,6 +91,7 @@ cp -R shieldlabs-skills-main/skills/* ~/.claude/skills/
 | Agent | Skills directory |
 |---|---|
 | Claude Code | `~/.claude/skills/`, or `.claude/skills/` in a project |
+| Grok | `~/.grok/skills/`, or `.grok/skills/` in a project |
 | Cursor | `~/.cursor/skills/` |
 | Codex | `~/.codex/skills/` |
 | OpenCode | `~/.config/opencode/skills/` |
@@ -118,9 +133,9 @@ Also in the plugin:
 
 ## The bundled MCP server
 
-In Claude Code, [`.mcp.json`](.mcp.json) starts the ShieldLabs MCP server with
-`npx -y @shieldlabs-ai/mcp` (Node.js 20 or later); Cursor, Codex and other clients add it to their own
-MCP configuration. Every tool is read-only: read an identification by request ID, search the History API,
+In Claude Code and in Grok, [`.mcp.json`](.mcp.json) starts the ShieldLabs MCP server with
+`npx -y @shieldlabs-ai/mcp` (Node.js 20 or later). In Grok the plugin must be trusted before that
+server starts. Cursor, Codex and other clients add it to their own MCP configuration. Every tool is read-only: read an identification by request ID, search the History API,
 summarize an account, a device or an IP address, explain a Risk Score, verify a webhook signature,
 read the domain profile. The server reads its keys from the environment that starts your client:
 
@@ -155,7 +170,7 @@ from its environment.
   (Python), `shieldlabs-go`, `shieldlabs/shieldlabs-php`, `ai.shieldlabs:shieldlabs-java`,
   `ShieldLabs` (.NET) and `@shieldlabs-ai/mcp`. The skills tell the agent to confirm current versions
   on the package registries and at https://docs.shieldlabs.ai.
-- Clients: Claude Code, the Claude desktop app, Cursor, Codex, OpenCode and other clients that read
+- Clients: Claude Code, Grok, the Claude desktop app, Cursor, Codex, OpenCode and other clients that read
   Agent Skills (`SKILL.md` with YAML frontmatter).
 - The helper scripts need Python 3.9 or later; the skills work without them.
 
@@ -170,6 +185,7 @@ python3 scripts/check_links.py             # external links (network)
 Layout:
 
 ```text
+.grok-plugin/       Grok plugin and marketplace manifests
 .claude-plugin/     Claude Code plugin and marketplace manifests
 .cursor-plugin/     Cursor plugin and marketplace manifests
 .codex-plugin/      Codex plugin manifest

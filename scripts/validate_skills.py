@@ -11,7 +11,8 @@ Checks, with the Python standard library only:
 - every relative link and anchor in the Markdown files (.md, .mdc) resolves;
 - every Python code block in those files compiles with the grammar of Python 3.9, the oldest
   version the Python SDK supports (code that returns belongs inside a named function);
-- the JSON manifests parse and agree on the plugin name and version, the Codex marketplace entry
+- the JSON manifests parse and agree on the plugin name and version (Grok, Claude Code, Cursor
+  and Codex), the Codex marketplace entry
   asks for no authentication on install, and CHANGELOG.md has an entry for that version;
 - every slash command and every rule file has frontmatter with a description.
 
@@ -436,6 +437,8 @@ def plugin_entries(data: Optional[dict], where: str, report: Report) -> List[dic
 
 def check_manifests(root: Path, report: Report) -> Optional[str]:
     """Checks the JSON manifests. Returns the plugin version when all manifests agree on it."""
+    grok = load_json(root / ".grok-plugin/plugin.json", root, report)
+    grok_market = load_json(root / ".grok-plugin/marketplace.json", root, report)
     claude = load_json(root / ".claude-plugin/plugin.json", root, report)
     claude_market = load_json(root / ".claude-plugin/marketplace.json", root, report)
     cursor = load_json(root / ".cursor-plugin/plugin.json", root, report)
@@ -446,6 +449,7 @@ def check_manifests(root: Path, report: Report) -> Optional[str]:
 
     versions: Dict[str, object] = {}
     for label, manifest in (
+        (".grok-plugin/plugin.json", grok),
         (".claude-plugin/plugin.json", claude),
         (".cursor-plugin/plugin.json", cursor),
         (".codex-plugin/plugin.json", codex),
@@ -457,6 +461,7 @@ def check_manifests(root: Path, report: Report) -> Optional[str]:
         versions[label] = manifest.get("version")
 
     for label, market in (
+        (".grok-plugin/marketplace.json", grok_market),
         (".claude-plugin/marketplace.json", claude_market),
         (".cursor-plugin/marketplace.json", cursor_market),
         (".agents/plugins/marketplace.json", agents_market),
@@ -468,6 +473,13 @@ def check_manifests(root: Path, report: Report) -> Optional[str]:
         for entry in plugin_entries(market, label, report):
             if "version" in entry:
                 versions[f"{label} plugins[{PLUGIN_NAME}]"] = entry["version"]
+    if grok_market is not None:
+        metadata = grok_market.get("metadata")
+        if isinstance(metadata, dict) and "version" in metadata:
+            versions[".grok-plugin/marketplace.json metadata"] = metadata["version"]
+        for entry in plugin_entries(grok_market, ".grok-plugin/marketplace.json", Report()):
+            if entry.get("source") != "./":
+                report.error(".grok-plugin/marketplace.json: the plugin source must be './'")
     if claude_market is not None:
         metadata = claude_market.get("metadata")
         if isinstance(metadata, dict) and "version" in metadata:
@@ -484,7 +496,11 @@ def check_manifests(root: Path, report: Report) -> Optional[str]:
     if version is not None and not re.match(r"^\d+\.\d+\.\d+$", version):
         report.error(f"plugin version '{version}' is not MAJOR.MINOR.PATCH")
 
-    for label, manifest in ((".claude-plugin/plugin.json", claude), (".codex-plugin/plugin.json", codex)):
+    for label, manifest in (
+        (".grok-plugin/plugin.json", grok),
+        (".claude-plugin/plugin.json", claude),
+        (".codex-plugin/plugin.json", codex),
+    ):
         if manifest is None:
             continue
         for key in ("mcpServers", "skills"):
