@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Grok plugin manifests in `.grok-plugin/` and Grok install steps. The plugin starts the local
+  MCP server. The hosted server still only confirms sign-in.
+
 ## [1.0.0] - 2026-09-30
 
 ### Added

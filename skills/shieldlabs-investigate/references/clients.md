@@ -12,6 +12,39 @@ The server is the npm package `@shieldlabs-ai/mcp` (Node.js 20 or later), starte
 
 Without `SHIELDLABS_API_KEY` the server starts with the offline tools only.
 
+The hosted server at `https://mcp.shieldlabs.ai/mcp` only confirms that sign-in works
+(`shieldlabs_check_connection`) until the account API serves history, domains and webhooks on
+`/mcp/v1`. Investigations use the local server below.
+
+## Grok
+
+With the plugin installed and trusted, `.mcp.json` starts the server. Export the key in the shell
+that starts Grok, then restart it and enable `shieldlabs` under `/mcps`:
+
+```bash
+export SHIELDLABS_API_KEY=sec_your_private_key
+```
+
+Without the plugin, add the server yourself. Put this in `~/.grok/config.toml` (every project) or
+in `.grok/config.toml` (this project). `${SHIELDLABS_API_KEY}` is expanded when Grok loads the file,
+so the key stays out of the repository:
+
+```toml
+[mcp_servers.shieldlabs]
+command = "npx"
+args = ["-y", "@shieldlabs-ai/mcp"]
+env = { SHIELDLABS_API_KEY = "${SHIELDLABS_API_KEY}" }
+startup_timeout_sec = 60
+```
+
+The same from a shell:
+
+```bash
+grok mcp add shieldlabs -e SHIELDLABS_API_KEY='${SHIELDLABS_API_KEY}' -- npx -y @shieldlabs-ai/mcp
+```
+
+Check the connection with `grok mcp list` or `/mcps`.
+
 ## Claude Code with this plugin
 
 The plugin's `.mcp.json` starts the server and passes the four variables above from the

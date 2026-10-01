@@ -40,11 +40,13 @@ first, then only the reference files for the stack at hand.
 
 ## MCP server
 
-In Claude Code, `.mcp.json` starts the read-only ShieldLabs MCP server (`npx -y @shieldlabs-ai/mcp`)
-with `SHIELDLABS_API_KEY` and the optional Management API and webhook variables from the
-environment. Codex and other clients add the server to their own configuration
+In Claude Code and in Grok, `.mcp.json` starts the read-only ShieldLabs MCP server
+(`npx -y @shieldlabs-ai/mcp`) with `SHIELDLABS_API_KEY` and the optional Management API and webhook
+variables from the environment. In Grok the plugin must be trusted before that server starts.
+Cursor, Codex and other clients add the server to their own configuration
 ([clients.md](skills/shieldlabs-investigate/references/clients.md)). Its tools are listed in
-[skills/shieldlabs-investigate](skills/shieldlabs-investigate/SKILL.md).
+[skills/shieldlabs-investigate](skills/shieldlabs-investigate/SKILL.md). The hosted server only
+confirms sign-in until history, domains and webhooks exist on `/mcp/v1`.
 
 ## Working on this repository
 

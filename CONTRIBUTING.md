@@ -10,7 +10,7 @@ security reports, write to contact@shieldlabs.ai.
 - `skills/<name>/references/*.md`: details per framework or language, read only when needed.
 - `skills/<name>/scripts/`: optional helper scripts (Python 3, standard library only).
 - `commands/`, `rules/`, `AGENTS.md`, `.mcp.json` and the manifests wire the skills into Claude
-  Code, Cursor, Codex and other clients.
+  Code, Grok, Cursor, Codex and other clients.
 
 ## Writing a skill or a reference
 
@@ -46,7 +46,8 @@ python3 -m unittest discover -s tests
 
 ## Releases
 
-1. Update the version in `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` (both
-   places), `.cursor-plugin/plugin.json` and `.codex-plugin/plugin.json`, and add a CHANGELOG entry.
+1. Update the version in `.grok-plugin/plugin.json`, `.grok-plugin/marketplace.json` (both
+   places), `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` (both places),
+   `.cursor-plugin/plugin.json` and `.codex-plugin/plugin.json`, and add a CHANGELOG entry.
 2. Merge to `main`, then push a tag `vX.Y.Z`. The release workflow validates the repository and
    attaches an archive of the skills to a GitHub release.
