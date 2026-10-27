@@ -55,4 +55,4 @@ All notable changes to this project are documented in this file. The format foll
   grammar) and `scripts/check_links.py`, unit tests (including checks that every file stating one
   of the SDK rules above states it in full), and CI and release workflows.
 
-[1.0.0]: https://github.com/ShieldLabs-ai/shieldlabs-skills/releases/tag/v1.0.0
+[1.0.0]: https://github.com/ShieldLabs-ai/shieldlabs-skills/commit/3b06dc155c7c1a9b349c01424863c0a5213b4296
