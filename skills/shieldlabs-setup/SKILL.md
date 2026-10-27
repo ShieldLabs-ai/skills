@@ -16,7 +16,7 @@ This skill is the entry point. It plans the integration and hands each step to a
 shieldlabs-browser, shieldlabs-server, shieldlabs-webhooks, shieldlabs-risk-decisions,
 shieldlabs-user-linking, shieldlabs-account-abuse and shieldlabs-investigate. If those skills are
 not installed, the short versions in this file are enough to finish; the full set is at
-https://github.com/ShieldLabs-ai/shieldlabs-skills.
+https://github.com/ShieldLabs-ai/skills.
 
 ## How it fits
 
@@ -44,7 +44,9 @@ do not start a second flow or switch to the dashboard path.
 ### OAuth MCP
 
 Use [shieldlabs-investigate](../shieldlabs-investigate/SKILL.md) and its [client setup](../shieldlabs-investigate/references/clients.md).
-Give the user the fresh authorization URL directly and let them approve in their browser.
+Give the user the fresh authorization URL directly. They sign in or create a ShieldLabs account,
+then approve access in their browser. Wait for completion. If signup happens separately, return
+to the same pending flow in that browser or create a fresh flow if it expired.
 Run `shieldlabs_check_connection` and `shieldlabs_list_domains`; select the requested domain.
 Reuse configured keys. If absent, create only the authorized domain with `shieldlabs_add_domain`.
 Opt into `include_secret=true` only when installing a needed server credential; save it privately

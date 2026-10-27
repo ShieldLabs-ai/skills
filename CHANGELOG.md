@@ -4,9 +4,9 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 2026-10-27
+## [1.1.0] - 2026-10-28
 
-Release candidate prepared on this date; public publication is pending.
+Public release of the hosted OAuth MCP skills and installation workflows.
 
 - Connect the hosted HTTP MCP with OAuth instead of starting a local API-key server.
 - Document all 21 current tools, account/domain selection, webhook lifecycle and real-visit verification.
@@ -57,4 +57,4 @@ Release candidate prepared on this date; public publication is pending.
   grammar) and `scripts/check_links.py`, unit tests (including checks that every file stating one
   of the SDK rules above states it in full), and CI and release workflows.
 
-[1.0.0]: https://github.com/ShieldLabs-ai/shieldlabs-skills/commit/3b06dc155c7c1a9b349c01424863c0a5213b4296
+[1.0.0]: https://github.com/ShieldLabs-ai/skills/commit/3b06dc155c7c1a9b349c01424863c0a5213b4296

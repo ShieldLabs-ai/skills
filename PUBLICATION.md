@@ -35,7 +35,7 @@ From a fresh directory without GitHub credentials, verify GitHub's README/archiv
 then install using the documented public path:
 
 ```sh
-npx skills add https://github.com/ShieldLabs-ai/shieldlabs-skills --agent codex --yes --copy
+npx skills add https://github.com/ShieldLabs-ai/skills --agent codex --yes --copy
 ```
 
 Confirm all eight skill folders are installed and their reference files/scripts are present.

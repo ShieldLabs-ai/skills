@@ -29,7 +29,7 @@ URL_RE = re.compile(r"https?://[^\s<>()\[\]`'\"]+")
 TRAILING = ".,;:!?*_"
 SKIP_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "example.com", "example.org", "example.net")
 WARN_STATUSES = {401, 403, 405, 429}
-USER_AGENT = "shieldlabs-skills-link-check/1.0 (+https://github.com/ShieldLabs-ai/shieldlabs-skills)"
+USER_AGENT = "shieldlabs-skills-link-check/1.0 (+https://github.com/ShieldLabs-ai/skills)"
 
 
 def collect(root: Path) -> Dict[str, List[str]]:

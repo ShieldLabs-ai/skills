@@ -3,9 +3,9 @@
 Agent Skills, slash commands and a hosted OAuth MCP connection that let AI coding agents integrate ShieldLabs
 device intelligence and fraud detection into your app.
 
-[![CI](https://github.com/ShieldLabs-ai/shieldlabs-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/ShieldLabs-ai/shieldlabs-skills/actions/workflows/ci.yml)
+[![CI](https://github.com/ShieldLabs-ai/skills/actions/workflows/ci.yml/badge.svg)](https://github.com/ShieldLabs-ai/skills/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/github/v/tag/ShieldLabs-ai/shieldlabs-skills?label=version&sort=semver)](https://github.com/ShieldLabs-ai/shieldlabs-skills/tags)
+[![Version](https://img.shields.io/github/v/tag/ShieldLabs-ai/skills?label=version&sort=semver)](https://github.com/ShieldLabs-ai/skills/tags)
 
 This repository is a plugin marketplace named `shieldlabs` with one plugin, `shieldlabs`, for
 Claude Code, Cursor and Codex, with Grok metadata retained. The skills also work in OpenCode and any other client
@@ -35,11 +35,11 @@ registry installation. See [publication checklist](PUBLICATION.md).
 ### Claude Code
 
 ```text
-/plugin marketplace add ShieldLabs-ai/shieldlabs-skills
+/plugin marketplace add ShieldLabs-ai/skills
 /plugin install shieldlabs@shieldlabs
 ```
 
-From a shell: `claude plugin marketplace add ShieldLabs-ai/shieldlabs-skills`, then
+From a shell: `claude plugin marketplace add ShieldLabs-ai/skills`, then
 `claude plugin install shieldlabs@shieldlabs`. Restart Claude Code to load the plugin.
 
 ### Grok and Claude desktop
@@ -50,7 +50,7 @@ through a custom connector where available. See [client setup](skills/shieldlabs
 
 ### Cursor
 
-Import this repository using From GitHub Repository (`ShieldLabs-ai/shieldlabs-skills`) and install the
+Import this repository using From GitHub Repository (`ShieldLabs-ai/skills`) and install the
 `shieldlabs` plugin with a project or user scope. Cursor reads `.cursor-plugin/`, the skills and
 `rules/shieldlabs.mdc`. To connect the MCP server, see
 [MCP setup for Cursor](skills/shieldlabs-investigate/references/clients.md#cursor).
@@ -58,7 +58,7 @@ Import this repository using From GitHub Repository (`ShieldLabs-ai/shieldlabs-s
 ### Codex
 
 ```sh
-codex plugin marketplace add ShieldLabs-ai/shieldlabs-skills
+codex plugin marketplace add ShieldLabs-ai/skills
 codex plugin add shieldlabs@shieldlabs
 ```
 
@@ -69,7 +69,7 @@ with `codex mcp add` and `codex mcp login` ([MCP setup for Codex](skills/shieldl
 ### `npx skills`
 
 ```sh
-npx skills add https://github.com/ShieldLabs-ai/shieldlabs-skills
+npx skills add https://github.com/ShieldLabs-ai/skills
 ```
 
 `npx skills` installs the eight skills; it does not install the plugin's MCP connection.
@@ -80,8 +80,8 @@ Follow [MCP client setup](skills/shieldlabs-investigate/references/clients.md) a
 Download the repository and copy the skill folders into your agent's skills directory:
 
 ```sh
-curl -L https://github.com/ShieldLabs-ai/shieldlabs-skills/archive/refs/heads/main.tar.gz | tar -xz
-cp -R shieldlabs-skills-main/skills/* ~/.claude/skills/
+curl -L https://github.com/ShieldLabs-ai/skills/archive/refs/heads/main.tar.gz | tar -xz
+cp -R skills-main/skills/* ~/.claude/skills/
 ```
 
 | Agent | Skills directory |
@@ -147,7 +147,8 @@ The plugin includes this remote entry in [`.mcp.json`](.mcp.json):
 }
 ```
 
-Enable the connection in your client and sign in with your ShieldLabs account. You do not need
+Enable the connection in your client. Sign in or create a ShieldLabs account in the fresh
+authorization flow, then approve access. You do not need
 Node.js, a domain API key or a pasted bearer token for this connection. For skills-only installs:
 
 ```sh
