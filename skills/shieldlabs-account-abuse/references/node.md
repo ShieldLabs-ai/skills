@@ -12,7 +12,7 @@ const time = (item: Identification): number => (item.observed_at ? Date.parse(it
 /** A VPN, proxy, Tor or relay hides the real country. */
 const masked = (item: Identification): boolean => {
   const f = item.detection_flags;
-  return f.vpn || f.proxy || f.tor || f.privacy_relay || f.browser_vpn_proxy;
+  return f.vpn || f.proxy || f.tor || f.private_relay;
 };
 
 /** Account sharing: the distinct devices of one account since `sinceMs` (epoch milliseconds). */
@@ -29,7 +29,7 @@ export interface TravelJump {
   from: string; // country of the earlier identification
   to: string; // country of the current identification
   minutes: number;
-  earlierRequestId: string;
+  earlierIdentificationId: string;
 }
 
 /**
@@ -49,12 +49,12 @@ export async function impossibleTravel(
   if (!country || Number.isNaN(at) || masked(current) || isRateLimited(current.risk_score)) return null;
   for await (const item of shieldlabs.history.iterate('user_hid', userHid, { maxItems })) {
     const t = time(item);
-    if (item.request_id === current.request_id || Number.isNaN(t) || t > at) continue; // only earlier ones
+    if (item.identification_id === current.identification_id || Number.isNaN(t) || t > at) continue; // only earlier ones
     const minutes = (at - t) / 60_000;
     if (minutes > withinMinutes) break; // newest first: the rest is older
     if (!item.public_ip.country || masked(item) || isRateLimited(item.risk_score)) continue;
     if (item.public_ip.country !== country) {
-      return { from: item.public_ip.country, to: country, minutes: Math.round(minutes), earlierRequestId: item.request_id };
+      return { from: item.public_ip.country, to: country, minutes: Math.round(minutes), earlierIdentificationId: item.identification_id };
     }
   }
   return null;
@@ -73,7 +73,7 @@ export async function takeoverCheck(shieldlabs: ShieldLabs, userHid: string, cur
   const countries = new Set<string>();
   let knownAccount = false;
   for await (const item of shieldlabs.history.iterate('user_hid', userHid, { maxItems })) {
-    if (item.request_id === current.request_id || isRateLimited(item.risk_score)) continue;
+    if (item.identification_id === current.identification_id || isRateLimited(item.risk_score)) continue;
     knownAccount = true;
     if (item.device_id !== NIL_UUID) devices.add(item.device_id);
     if (item.public_ip.country) countries.add(item.public_ip.country);

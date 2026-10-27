@@ -1,9 +1,15 @@
 ---
 name: shieldlabs-browser
-description: Adds the ShieldLabs browser SDK to a web frontend so that each protected action (signup, login, checkout, payout, password change) runs one fresh identification and sends its request ID to the backend. Covers @shieldlabs-ai/js for plain JavaScript and pages without a bundler, @shieldlabs-ai/react, @shieldlabs-ai/next, @shieldlabs-ai/vue with Nuxt, @shieldlabs-ai/angular and @shieldlabs-ai/svelte with SvelteKit, plus Content Security Policy, consent, server-side rendering and the call budget. Use when the user asks to install or load the ShieldLabs agent or snippet, get a requestId in the browser, call identify() on a form, add ShieldLabsProvider, provideShieldLabs, createShieldLabs or setShieldLabs, load the agent only after consent (autoLoad, load()), identify early with getAgent(), fix load_failed, timeout, not_initialized or unsupported_environment errors, or wire the ShieldLabs Public Key into a frontend.
+description: Adds the ShieldLabs browser SDK to a web frontend so that each protected action (signup, login, checkout, payout, password change) runs one fresh identification and sends its request ID to the backend. Covers @shieldlabs-ai/js for plain JavaScript and pages without a bundler, @shieldlabs-ai/react, @shieldlabs-ai/next, @shieldlabs-ai/vue with Nuxt, @shieldlabs-ai/angular and @shieldlabs-ai/svelte with SvelteKit, plus Content Security Policy, consent, server-side rendering and the call budget. Use when the user asks to install or load the ShieldLabs agent or snippet, get an identificationId in the browser, call identify() on a form, add ShieldLabsProvider, provideShieldLabs, createShieldLabs or setShieldLabs, load the agent only after consent (autoLoad, load()), identify early with getAgent(), fix load_failed, timeout, not_initialized or unsupported_environment errors, or wire the ShieldLabs Public Key into a frontend.
 ---
 
 # ShieldLabs in the browser
+
+Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
+Published SDKs can lag the current wire schema: an empty normalized identification ID is
+unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
+OAuth adapter; a successful MCP read does not validate an application SDK.
+
 
 The browser half of a ShieldLabs integration. The ShieldLabs agent runs an identification in the
 visitor's browser and hands the page a **request ID**. The page sends that request ID to the
@@ -17,10 +23,10 @@ visitor ID or a device ID: the backend reads the verdict (shieldlabs-server skil
    file before writing code.
 2. Install the package and put the Public Key in the framework's public environment variable.
 3. Set the agent up once, at the root of the app (provider, plugin or setup call).
-4. At each protected action, call `identify()` in the submit handler and send the `requestId` in
+4. At each protected action, call `identify()` in the submit handler and send the `identificationId` in
    the same request as the action.
 5. When there is no identification (the identify helper resolves `null`, or the agent's
-   `identify()` rejects), send the action anyway without a `requestId`. The backend treats it as
+   `identify()` rejects), send the action anyway without a `identificationId`. The backend treats it as
    unverified, never as clean.
 6. Add the Content Security Policy origins, load the agent only after consent where consent is
    required (`autoLoad: false`, then `load()`), and test on a registered domain over HTTPS.
@@ -38,8 +44,8 @@ visitor ID or a device ID: the backend reads the verdict (shieldlabs-server skil
 
 `@shieldlabs-ai/js` is the shared loader: the framework packages list it as a peer dependency, so
 install it next to them. The Public Key is the only ShieldLabs credential that belongs in browser
-code. Copy it from the analytics dashboard at https://app.shieldlabs.ai (Integration > API keys;
-the Install tab shows a ready snippet with it) and expose it with the framework's public prefix:
+code. Obtain it through the selected MCP or dashboard setup path, reuse existing configuration and
+expose it with the framework's public prefix. The dashboard is at https://app.shieldlabs.ai:
 
 | Framework | Variable |
 |---|---|
@@ -65,24 +71,24 @@ load(options).catch(() => {}); // handled in the submit handler
 const form = document.querySelector<HTMLFormElement>('#signup')!;
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  let requestId: string | null = null;
+  let identificationId: string | null = null;
   try {
     // load() again: memoized, it returns the loaded agent at once and retries a failed load.
     const agent = await load(options);
-    ({ requestId } = await agent.identify()); // one fresh identification per submission
+    ({ identificationId } = await agent.identify()); // one fresh identification per submission
   } catch (error) {
     if (error instanceof ShieldLabsError) console.warn('ShieldLabs:', error.code);
   }
-  // Same request as the protected action. Without a requestId the server treats it as unverified.
+  // Same request as the protected action. Without an identificationId the server treats it as unverified.
   await fetch('/api/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: form.email.value, requestId }),
+    body: JSON.stringify({ email: form.email.value, identificationId }),
   });
 });
 ```
 
-`identify()` resolves `{ requestId, userId }`. `userId` is the User HID that was sent, or `null`
+`identify()` resolves `{ identificationId, userId }`. `userId` is the User HID that was sent, or `null`
 for an anonymous identification.
 
 ## The framework packages
@@ -95,11 +101,11 @@ const result = await identify(); // never rejects: null when there is no identif
 await fetch('/api/signup', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email, requestId: result?.requestId ?? null }),
+  body: JSON.stringify({ email, identificationId: result?.identificationId ?? null }),
 });
 ```
 
-- The helper's `identify(options?)` resolves `{ requestId, userId }` or `null`, and puts the reason
+- The helper's `identify(options?)` resolves `{ identificationId, userId }` or `null`, and puts the reason
   (a `ShieldLabsError`) in `error`. No `try`/`catch` is needed.
 - While an identification of the same helper with the same User HID and the same effective timeout
   runs, `identify()` returns it instead of starting another: a double submit costs one
@@ -139,7 +145,7 @@ await fetch('/api/signup', {
   a User HID that contains `/` or is `.` or `..`: the hex output of the helpers avoids both.
 - **Server-side rendering is safe.** The packages touch no browser globals during render and load
   the agent after mount. `load()` rejects with `unsupported_environment` on the server.
-- **No identification is not an error for the user.** Send the action without a `requestId` and
+- **No identification is not an error for the user.** Send the action without a `identificationId` and
   let the backend policy handle "unverified" (step-up or review, never "clean").
 
 ## Which call to use
@@ -160,9 +166,9 @@ Every error is a `ShieldLabsError` with a `code`:
 |---|---|---|
 | `invalid_options` | A bad option: missing or malformed `publicKey` (often an unset environment variable), a server secret as `publicKey`, a reserved `userId` | Fix the configuration. Retrying does not help |
 | `unsupported_environment` | Server-side rendering, a worker, or a page that is not a secure context | Identify in the browser. Serve the page over HTTPS (the SDK also accepts `localhost`, but identifications are recorded only on registered domains) |
-| `load_failed` | The agent could not be imported: network error, content blocker, Content Security Policy | Send the action without a `requestId`. The next call loads again |
-| `not_initialized` | `identify()` only (`check()` resolves `null` instead): the agent did not start an identification, for example because another one runs in this or another tab, or `autoLoad: false` and `load()` has not been called yet | Retry once later, or send the action without a `requestId` |
-| `timeout` | No answer within `timeout` (default 10 000 ms; in the framework packages it covers the wait for the agent to load and its answer) | Send the action without a `requestId`. A late answer is ignored |
+| `load_failed` | The agent could not be imported: network error, content blocker, Content Security Policy | Send the action without a `identificationId`. The next call loads again |
+| `not_initialized` | `identify()` only (`check()` resolves `null` instead): the agent did not start an identification, for example because another one runs in this or another tab, or `autoLoad: false` and `load()` has not been called yet | Retry once later, or send the action without a `identificationId` |
+| `timeout` | No answer within `timeout` (default 10 000 ms; in the framework packages it covers the wait for the agent to load and its answer) | Send the action without a `identificationId`. A late answer is ignored |
 
 The identify helpers (`useIdentify()` in React, Next.js, Vue and Svelte, `injectIdentify()` in
 Angular) never reject: they resolve `null` and put the error in their `error` state. The
@@ -236,13 +242,13 @@ that resolves in public DNS, served over HTTPS, with that domain's own keys
   form `method="post"` ([vanilla.md](references/vanilla.md)).
 - Passing an empty string as `userId` (an empty data attribute or session field): the SDK rejects
   it with `invalid_options`. Pass `value || undefined`.
-- Wrapping the helper's `identify()` in `try`/`catch` and reading `result.requestId`: the helper
-  resolves `null` instead of rejecting. Send `result?.requestId ?? null`.
+- Wrapping the helper's `identify()` in `try`/`catch` and reading `result.identificationId`: the helper
+  resolves `null` instead of rejecting. Send `result?.identificationId ?? null`.
 - Reading `event.currentTarget` after an `await` in React: it is `null` by then. Read the form
   data first.
 - Awaiting `identify()` and then doing a full-page navigation or `form.submit()` in the same tick
   on a slow network: prefer `fetch`, or start early with `identifyOnInteraction()`.
-- Reusing one `requestId` for several actions, or caching it in `localStorage`: the backend
+- Reusing one `identificationId` for several actions, or caching it in `localStorage`: the backend
   rejects reused and stale request IDs.
 - A provider inside a route component, which remounts on every navigation: keep it above the
   router.

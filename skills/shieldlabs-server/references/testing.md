@@ -2,7 +2,7 @@
 
 ## Unit tests
 
-Wrap the verdict read in one function of your own (for example `readIdentification(requestId)`,
+Wrap the verdict read in one function of your own (for example `readIdentification(identificationId)`,
 which returns an identification or `null` on any failure) and replace it in unit tests. Build the
 identifications as data: a plain object with the `Identification` fields in Node.js,
 `Identification.from_dict()` in Python, or verify a recorded webhook body with a test secret
@@ -25,6 +25,11 @@ export SHIELDLABS_API_KEY=sec_test0000-test0000-test0000
   Python, PHP, Java's `ShieldLabsClient.fromEnvironment()` and `getIdentification` of
   `@shieldlabs-ai/next/server` read `SHIELDLABS_API_BASE_URL`; .NET takes `BaseUrl` in its options.
 - Without `--rows`, every request ID finds a trusted identification observed just now.
+- The default `--contract current` emits `identification_id` without a legacy `request_id`, so an
+  old SDK cannot pass simply because the mock repeated the old wire schema. Use `--contract legacy`
+  explicitly for old-schema regression tests; that mode does not prove current compatibility.
+- Current flags include `is_ai_bot`, `is_ai_browser`, `is_device_spoof`, `is_latency_test` and
+  `is_rate_limited`. Match the installed SDK's model; other language versions need their own preflight.
 
 `rows.json` maps request IDs to the History fields that differ from that default, or to `null`
 for "not found". `minutes_ago` moves the row into the past:
@@ -52,7 +57,8 @@ tested.
 ## History rows are not the `Identification` model
 
 The History API returns rows with their own field names; the SDKs map them to `Identification`.
-A hand-written mock must use the row names, or the SDK finds no score, time or flags:
+A hand-written mock must use the row names, or the SDK finds no score, time or flags. The ID and
+flag mapping below targets the JS/Node 1.1.0 candidates; see [SDK preflight](sdk-contract.md):
 
 | `Identification` | History row |
 |---|---|
@@ -60,13 +66,16 @@ A hand-written mock must use the row names, or the SDK finds no score, time or f
 | `observed_at` | `created_at`, as `YYYY-MM-DD HH:MM:SS.mmm` in UTC without a zone |
 | `public_ip.ip`, `public_ip.country` | `ip` (`"0.0.0.0"` when none), `country` (an English country name) |
 | `signals` | `score_details`: a JSON string of `[{"Value": 60, "Description": "..."}]`; entries with `Value` 0 are left out |
-| `detection_flags.vpn`, `tor`, `proxy`, `privacy_relay`, `incognito`, `search_bot` | `is_vpn`, `is_tor`, `is_proxy`, `is_privacy_relay`, `is_incognito`, `is_search_bot` |
-| `datacenter_ip`, `abuser`, `anti_detect_browser`, `browser_automation`, `javascript_disabled` | `is_datacenter`, `is_abuser`, `is_antidetect`, `is_browser_automation`, `is_js_disabled` |
-| `os_mismatch`, `os_not_detected`, `timezone_mismatch`, `stun_not_checked`, `check_incomplete` | `is_os_mismatch`, `is_os_not_detected`, `is_timezone_mismatch`, `is_stun_not_checked`, `check_incomplete` |
-| `suspicious_paid_click` | `is_suspicious_paid_click` (left out when false) |
-| `browser_vpn_proxy` | `connection_type` equal to `"browser_vpn_proxy"` |
+| `identification_id` | Current `identification_id`; the Node candidate can also read legacy `request_id` |
+| `detection_flags.vpn` | `is_vpn`, `is_browser_vpn_proxy` or `connection_type` equal to `browser_vpn_proxy` |
+| `proxy`, `private_relay`, `tor`, `incognito`, `search_bot` | `is_proxy`, `is_privacy_relay`, `is_tor`, `is_incognito`, `is_search_bot` |
+| `network_check_incomplete`, `check_incomplete` | `is_stun_not_checked`, `check_incomplete` |
+| `os_mismatch` | `is_os_mismatch` or `is_os_mismatch2` |
+| `os_not_detected`, `timezone_mismatch`, `javascript_disabled`, `anti_detect_browser`, `browser_automation` | `is_os_not_detected`, `is_timezone_mismatch`, `is_js_disabled`, `is_antidetect`, `is_browser_automation` |
+| `latency_test`, `device_spoofing`, `banned_ip`, `ai_bot`, `ai_browser` | `is_latency_test`, `is_device_spoof`, `is_rate_limited`, `is_ai_bot`, `is_ai_browser` |
+| `ip_mismatch` | Derived from the public/leak IP or a mismatch detail, except for search bots |
 | `domain` | `site_domain` when present, else `domain` |
-| `request_id`, `visitor_id`, `device_id`, `session_id`, `cookie_id`, `user_hid`, `connection_type`, `os`, `browser`, `device_type` | the same names |
+| `visitor_id`, `device_id`, `session_id`, `cookie_id`, `user_hid`, `connection_type`, `os`, `browser`, `device_type` | the same names |
 
 The response is `{"data": [rows, newest first], "total": n}`; a request ID that is not found gives
 `{"data": [], "total": 0}`.

@@ -1,5 +1,13 @@
 # Webhooks in .NET
 
+Use the verified raw envelope for current deliveries. Its `event_id` is the delivery key;
+`data.identification_id` correlates the visit. The older typed SDK model can omit these fields.
+The application-provided enqueue-once service must reject an empty key and atomically persist
+its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
+This queue API is application code, not a ShieldLabs SDK method.
+Do not enqueue only the old normalized data model.
+
+
 `WebhookEvents.ConstructEvent(payload, signatureHeader, params secrets)` takes the raw body as
 `byte[]` (or `string`) and one or more secrets. It returns an `IdentificationScoredEvent` (`Data` is
 an `Identification`), a `WebhookPingEvent` or an `UnknownWebhookEvent`, and throws
@@ -7,8 +15,6 @@ an `Identification`), a `WebhookPingEvent` or an `UnknownWebhookEvent`, and thro
 `WebhookSignature.Verify(...)` returns a `bool` and never throws; `WebhookSignature.HeaderName` is
 `"X-Shield-Signature"`.
 
-`processed.TryMark(requestId)` below stands for your atomic "first time" check, separate from the
-store of request IDs that authorized actions.
 
 ## ASP.NET Core minimal API
 
@@ -17,7 +23,7 @@ var webhookSecrets = (builder.Configuration["SHIELDLABS_WEBHOOK_SECRET"] ?? stri
     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 if (webhookSecrets.Length == 0) app.Logger.LogError("SHIELDLABS_WEBHOOK_SECRET is not set: webhook deliveries get 500");
 
-app.MapPost("/webhooks/shieldlabs", async (HttpRequest request, ProcessedDeliveries processed, IBackgroundQueue queue) =>
+app.MapPost("/webhooks/shieldlabs", async (HttpRequest request, IBackgroundQueue queue) =>
 {
     if (webhookSecrets.Length == 0) return Results.StatusCode(500); // a configuration error, not a bad signature
 
@@ -43,23 +49,23 @@ app.MapPost("/webhooks/shieldlabs", async (HttpRequest request, ProcessedDeliver
         return Results.BadRequest();
     }
 
-    if (evt is IdentificationScoredEvent scored && processed.TryMark(scored.Data.RequestId))
+    if (evt is IdentificationScoredEvent scored)
     {
-        queue.Enqueue(scored.Data); // answer within 1 second, work in the background
+        await queue.EnqueueOnceAsync(scored.Raw.GetProperty("event_id").GetString()!, scored.Raw); // answer within 1 second, work in the background
     }
     return Results.Ok(); // WebhookPingEvent and UnknownWebhookEvent: acknowledge
 });
 ```
 
-`ProcessedDeliveries` and `IBackgroundQueue` are your own services, for example a table with a
-unique key on the request ID and a `Channel<Identification>` read by a hosted service.
+`IBackgroundQueue` is your own durable enqueue-once service, for example a table with a
+unique key on the event ID and a durable outbox of verified JSON envelopes read by a hosted service.
 
 ## MVC controller
 
 ```csharp
 [ApiController]
 [Route("webhooks/shieldlabs")]
-public sealed class ShieldLabsWebhookController(ProcessedDeliveries processed, IBackgroundQueue queue, IConfiguration config) : ControllerBase
+public sealed class ShieldLabsWebhookController(IBackgroundQueue queue, IConfiguration config) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Receive()
@@ -72,9 +78,9 @@ public sealed class ShieldLabsWebhookController(ProcessedDeliveries processed, I
         try
         {
             var evt = WebhookEvents.ConstructEvent(buffer.ToArray(), Request.Headers[WebhookSignature.HeaderName], secrets);
-            if (evt is IdentificationScoredEvent scored && processed.TryMark(scored.Data.RequestId))
+            if (evt is IdentificationScoredEvent scored)
             {
-                queue.Enqueue(scored.Data);
+                await queue.EnqueueOnceAsync(scored.Raw.GetProperty("event_id").GetString()!, scored.Raw);
             }
             return Ok();
         }

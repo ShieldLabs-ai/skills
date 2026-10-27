@@ -20,7 +20,6 @@ SERVER_REFERENCES = [
     SERVER / "references" / f"{name}.md" for name in ("node", "python", "go", "php", "java", "dotnet")
 ]
 OTHER_LANGUAGES = SERVER / "references" / "other-languages.md"
-MCP_TOOLS = SKILLS / "shieldlabs-investigate" / "references" / "tools.md"
 BROWSER = SKILLS / "shieldlabs-browser"
 NEXTJS = BROWSER / "references" / "nextjs.md"
 
@@ -107,7 +106,7 @@ class RateLimitInsideTheWaitTest(unittest.TestCase):
     """A 429 while identifications.get waits: the Retry-After capped at 10 s decides."""
 
     def test_a_429_ends_the_wait_only_when_the_capped_retry_after_is_longer_than_the_time_left(self) -> None:
-        for path in [SERVER / "SKILL.md", *SERVER_REFERENCES, OTHER_LANGUAGES, MCP_TOOLS, NEXTJS]:
+        for path in [SERVER / "SKILL.md", *SERVER_REFERENCES, OTHER_LANGUAGES, NEXTJS]:
             with self.subTest(file=name_of(path)):
                 statements = blocks_with(path, "429", "Retry-After", "time left")
                 self.assertTrue(statements, "the file does not state when a 429 ends the wait")
@@ -115,7 +114,7 @@ class RateLimitInsideTheWaitTest(unittest.TestCase):
                     self.assertRegex(statement, TEN_SECONDS_RE, "Retry-After without its 10 s cap")
 
     def test_the_next_poll_after_a_429_waits_the_longest_of_the_scheduled_wait_1_s_and_retry_after(self) -> None:
-        for path in [SERVER / "SKILL.md", *SERVER_REFERENCES, OTHER_LANGUAGES, MCP_TOOLS]:
+        for path in [SERVER / "SKILL.md", *SERVER_REFERENCES, OTHER_LANGUAGES]:
             with self.subTest(file=name_of(path)):
                 statements = blocks_with(path, "429", "Retry-After", "time left", "scheduled wait")
                 self.assertTrue(statements, "the file does not state the wait after a 429")

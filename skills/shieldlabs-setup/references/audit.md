@@ -34,7 +34,7 @@ positives before reporting. Without Python, use the search patterns in the table
 | SL10 | medium | Raw account ID as User HID | `userId: user.id`, `userId: session.user.id` | Guessable and not pseudonymous | `userHid` helper on the server |
 | SL11 | medium | Identify on render or route change | `identify(` inside `useEffect`, `watch`, `$effect`; router event listeners; `runOnMount: true` in a layout | Burns the call budget, triggers the per-IP limit (`999`), bills every page view | `identify()` in the action's handler |
 | SL12 | high | Agent self-hosted, proxied or bundled | a copied `snippet.js`, a static `import` from `cdn.shieldlabs.ai`, rewrites or proxies to it, `scriptUrl` pointing elsewhere | Only the agent served from `https://cdn.shieldlabs.ai` works and stays current | Load it through a browser package |
-| SL13 | medium | Webhook not idempotent | a verified event handled without a `request_id` check | A later release resends identical bytes | Atomic insert on `data.request_id` |
+| SL13 | medium | Webhook not idempotent | no recognizable delivery identifier/dedup pattern near the handler | Repeated deliveries can repeat a business effect | Atomic durable enqueue keyed by verified `event_id` |
 | SL14 | medium | CSP without ShieldLabs origins | `script-src` or `connect-src` without `cdn.shieldlabs.ai` or `rest.shieldlabs.ai` | The browser blocks the agent (`load_failed`) or its network check | Add the origins (shieldlabs-browser) |
 | SL15 | high | `.env` with keys committed or not ignored | `git ls-files .env*`, `git check-ignore .env` | Keys in the repository | `.gitignore`, rotate |
 | SL16 | low | `localStorage.clear()` | `localStorage.clear()` | Clearing the agent's cookie ID raises the browser automation signal | Remove only your own keys |
@@ -84,3 +84,6 @@ Low
 Checked by hand: <what you verified from the list above, and what you could not verify>
 Next step: <offer to fix the findings, starting with High>
 ```
+
+The delivery scan recognizes legacy identifier names as well. It is a heuristic, not proof that
+current event IDs or an atomic outbox are used; verify those manually against the installed receiver.

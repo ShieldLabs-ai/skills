@@ -4,12 +4,22 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-10-28
 
-### Added
+Public release of the hosted OAuth MCP skills and installation workflows.
 
-- Grok plugin manifests in `.grok-plugin/` and Grok install steps. The plugin starts the local
-  MCP server. The hosted server still only confirms sign-in.
+- Connect the hosted HTTP MCP with OAuth instead of starting a local API-key server.
+- Document all 21 current tools, account/domain selection, webhook lifecycle and real-visit verification.
+- Separate application SDK credentials from MCP sign-in and distinguish published 1.0.1 names from the compatible 1.1.0 candidates.
+- Add current-tool contract checks and package the complete plugin, including MCP configuration.
+- Document public installation and release verification for maintainers.
+- Re-audit all eight skills after source refresh; gate old SDK normalization, preserve raw webhook envelopes, dedupe current event IDs and correct Test/retry assumptions.
+
+- Add `/shieldlabs:get-started` as an entry point, with OAuth MCP by default and the dashboard fallback.
+- Keep first install scoped to the existing app, with no invented backend or mandatory webhook.
+- Document the current 20-flag Node model and current-wire History mock; preserve explicit legacy tests.
+- Correct remaining Node reference identifiers, SDK compatibility wording and webhook Test semantics.
+- Retain Grok metadata, with remote HTTP/OAuth support explicitly unverified in that client.
 
 ## [1.0.0] - 2026-09-30
 
@@ -47,4 +57,4 @@ All notable changes to this project are documented in this file. The format foll
   grammar) and `scripts/check_links.py`, unit tests (including checks that every file stating one
   of the SDK rules above states it in full), and CI and release workflows.
 
-[1.0.0]: https://github.com/ShieldLabs-ai/shieldlabs-skills/releases/tag/v1.0.0
+[1.0.0]: https://github.com/ShieldLabs-ai/skills/commit/3b06dc155c7c1a9b349c01424863c0a5213b4296

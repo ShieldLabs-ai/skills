@@ -62,7 +62,7 @@ the browser SDK adds timeouts, option validation and SSR safety. When the user w
 | `forceCheckAuthenticatedUser(hid, { onInitialized })` | `identify({ userId: hid })` |
 | `checkAnonymous()` on page load | `check()` or `checkOnLoad: true` |
 | `checkAuthenticatedUser(hid)` on signed-in pages | `check({ userId: hid })` or `checkOnLoad: { userId: hid }` |
-| `result.requestID` in `onInitialized` | `(await identify()).requestId` |
+| `result.requestID` in `onInitialized` | `(await identify()).identificationId` |
 
 Keep one setup: remove the old script tag or import when the SDK takes over, so the agent loads
 once.

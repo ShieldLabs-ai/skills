@@ -1,6 +1,6 @@
 {
   "name": "shieldlabs",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Integrate ShieldLabs device intelligence and fraud detection into your app: browser identification, server-side verdicts, signed webhooks, risk decisions, account-abuse checks and investigations with the ShieldLabs MCP server.",
   "author": {
     "name": "ShieldLabs",
@@ -8,7 +8,7 @@
     "url": "https://shieldlabs.ai"
   },
   "homepage": "https://shieldlabs.ai",
-  "repository": "https://github.com/ShieldLabs-ai/shieldlabs-skills",
+  "repository": "https://github.com/ShieldLabs-ai/skills",
   "license": "MIT",
   "keywords": [
     "shieldlabs",
@@ -26,7 +26,7 @@
   "interface": {
     "displayName": "ShieldLabs",
     "shortDescription": "Device intelligence and fraud detection for your app",
-    "longDescription": "Detect risky users and stop abuse of your product. These skills add the ShieldLabs browser SDK to your frontend, read verdicts on your backend with the ShieldLabs server SDKs, verify signed webhooks, turn Risk Scores, bands and detection flags into decisions, build multi-accounting, account sharing and account takeover checks on the History API, and investigate requests, users and devices with the read-only ShieldLabs MCP server.",
+    "longDescription": "Detect risky users and stop abuse of your product. These skills add the ShieldLabs browser SDK to your frontend, read verdicts on your backend with the ShieldLabs server SDKs, verify signed webhooks, turn Risk Scores, bands and detection flags into decisions, build multi-accounting, account sharing and account takeover checks on the History API, and investigate requests, users and devices with the hosted ShieldLabs MCP with OAuth, domain management and signed webhook delivery tests.",
     "developerName": "ShieldLabs",
     "category": "Developer Tools",
     "capabilities": [
@@ -43,5 +43,6 @@
     ],
     "brandColor": "#009966",
     "screenshots": []
-  }
+  },
+  "mcpServers": "./.mcp.json"
 }

@@ -5,6 +5,12 @@ description: Turns a ShieldLabs identification into an allow, step-up, review or
 
 # Decide on a ShieldLabs verdict
 
+Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
+Published SDKs can lag the current wire schema: an empty normalized identification ID is
+unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
+OAuth adapter; a successful MCP read does not validate an application SDK.
+
+
 The backend has an `Identification` for the request ID of a protected action (shieldlabs-server
 skill, [../shieldlabs-server/SKILL.md](../shieldlabs-server/SKILL.md)), or knows that it has none.
 This skill maps that verdict to one of four actions: **allow**, **step-up** (a check the user can
@@ -28,7 +34,7 @@ example a payout, for a person or a later job) or **block** (refuse with a gener
 | Field | Use it for | Notes |
 |---|---|---|
 | `risk_score` | The band, through `riskBand(score)` | 0-100. `999` is the rate-limit marker, never a score. Never recompute it from signals |
-| `detection_flags` | Specific conditions (19 booleans) | Stable names: `browser_automation`, `anti_detect_browser`, `tor`, `vpn`, `proxy`, ... |
+| `detection_flags` | Specific conditions in the installed SDK model | Stable names: `browser_automation`, `anti_detect_browser`, `tor`, `vpn`, `proxy`, ... |
 | `signals` | Display and logging | The weighted risk signals behind the score. An open set: weights can be negative and names can repeat |
 | `device_id`, `visitor_id`, `user_hid`, `public_ip` | Account binding and account-level checks | The all-zero device ID means no usable device signals |
 | `observed_at` | Freshness | The policy helper checks it against the freshness window |
@@ -128,13 +134,17 @@ References with the same policy: [node.md](references/node.md), [python.md](refe
 
 ## Flags worth a rule of their own
 
+The table uses the compatible Node 1.1.0 model. Read the [current/legacy mapping](references/flags-and-signals.md)
+for all 20 flags; never interpret an unsupported old-SDK field as a confirmed negative. AI flags
+are booleans and do not provide bot identity or confidence metadata.
+
 | Flag | Meaning | Starting point |
 |---|---|---|
 | `browser_automation`, `javascript_disabled` | Automated or scripted browsing | Block on protected actions (the SDK default) |
 | `anti_detect_browser` | A browser that masks its real configuration | Step-up on medium actions, block on high |
 | `tor` | A Tor exit node | Step-up on medium actions, review or block on high |
-| `vpn`, `privacy_relay`, `proxy`, `browser_vpn_proxy`, `datacenter_ip` | A masked or hosted network | Already in the score. Many legitimate users (companies, privacy tools) use them: step-up on high-value actions instead of blocking outright |
-| `incognito`, `ip_mismatch`, `check_incomplete`, `stun_not_checked` | Context | Log only |
+| `vpn`, `private_relay`, `proxy`, `tor` | A masked or hosted network | Already in the score. Many legitimate users (companies, privacy tools) use them: step-up on high-value actions instead of blocking outright |
+| `incognito`, `ip_mismatch`, `check_incomplete`, `network_check_incomplete` | Context | Log only |
 
 ## Rules that keep decisions sound
 

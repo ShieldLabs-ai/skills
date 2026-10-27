@@ -70,7 +70,7 @@ export function SignupForm() {
     await fetch('/api/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, requestId: result?.requestId ?? null }),
+      body: JSON.stringify({ email, identificationId: result?.identificationId ?? null }),
     });
   }
 
@@ -95,19 +95,19 @@ import {
 } from '@shieldlabs-ai/next/server';
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as { email?: string; requestId?: string | null };
+  const body = (await request.json()) as { email?: string; identificationId?: string | null };
   let identification: Identification | null = null;
-  if (body.requestId) {
+  if (body.identificationId) {
     try {
       // Reads SHIELDLABS_API_KEY and waits (with backoff) until the identification is scored.
-      identification = await getIdentification(body.requestId);
+      identification = await getIdentification(body.identificationId);
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error; // the signup stays unverified
       console.warn('ShieldLabs lookup failed:', error.name);
     }
   }
   // claimRequestId: your atomic "first use" store (see the shieldlabs-server skill).
-  const firstUse = identification ? await claimRequestId(identification.request_id) : false;
+  const firstUse = identification ? await claimRequestId(identification.identification_id) : false;
   const verdict = evaluateIdentification(identification, { isReplay: () => !firstUse });
   if (!verdict.ok) {
     console.info('signup refused', verdict.reason, verdict.band);
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
 }
 ```
 
-`getIdentification(requestId, options?)` takes the options of `identifications.get` in
+`getIdentification(identificationId, options?)` takes the options of `identifications.get` in
 `@shieldlabs-ai/node` (`wait`, `timeout`, `pollInterval`, `signal`) plus `client`, and waits the same
 way: `timeout` (default 10 000 ms) is the total budget, each poll is one HTTP attempt, a 429, a 5xx
 or a network error keeps polling, 400, 401, 403 and 404 stop at once (and so does a 429 whose
@@ -131,10 +131,10 @@ a data cache: polling must see fresh answers.
 ### Server Actions
 
 A Server Action (`'use server'`, for example `app/signup/actions.ts`) runs the same code as the
-`POST` handler above: `getIdentification(input.requestId)` in a `try`, the claim, then
+`POST` handler above: `getIdentification(input.identificationId)` in a `try`, the claim, then
 `evaluateIdentification`, returning `{ ok }` instead of a `Response`. The client component calls
 it after `identify()`:
-`const { ok } = await signup({ email: String(email), requestId: result?.requestId ?? null });`.
+`const { ok } = await signup({ email: String(email), identificationId: result?.identificationId ?? null });`.
 
 ### Early identification and consent
 
@@ -161,7 +161,7 @@ export const POST = createWebhookHandler({
   // commas while you rotate one). webhook.ping is acknowledged and never reaches onEvent.
   onEvent: async (event) => {
     if (event.event_type !== 'identification.scored') return; // a newer event type: acknowledge it
-    await saveIdentificationOnce(event.data); // idempotent on event.data.request_id, and fast
+    await jobs.enqueueOnce(event.raw.event_id as string, event.raw); // atomic durable acceptance
   },
 });
 ```
@@ -175,8 +175,8 @@ export const POST = createWebhookHandler({
 | 413 | The body is larger than `maxBodySize` (default 1 MiB; a delivery is about 2 KB) |
 | 500 | `onEvent` threw, or no signing secret is configured |
 
-The handler reads the raw body only when the signature header is well formed. Deliveries time out
-after 1 second: keep `onEvent` short (write one row or enqueue a job). `onError(error, { request,
+The handler reads the raw body only when the signature header is well formed. Keep `onEvent`
+short and durably enqueue before acknowledging; sender/probe timeout budgets vary. `onError(error, { request,
 status })` is called before a 400, 401, 413 or 500. More in the shieldlabs-webhooks skill.
 
 ## Pages Router
@@ -205,16 +205,16 @@ import { ShieldLabsError, evaluateIdentification, getIdentification, type Identi
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
-  const requestId = typeof req.body?.requestId === 'string' ? req.body.requestId : '';
+  const identificationId = typeof req.body?.identificationId === 'string' ? req.body.identificationId : '';
   let identification: Identification | null = null;
-  if (requestId) {
+  if (identificationId) {
     try {
-      identification = await getIdentification(requestId);
+      identification = await getIdentification(identificationId);
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error;
     }
   }
-  const firstUse = identification ? await claimRequestId(identification.request_id) : false;
+  const firstUse = identification ? await claimRequestId(identification.identification_id) : false;
   const verdict = evaluateIdentification(identification, { isReplay: () => !firstUse });
   if (!verdict.ok) return res.status(403).json({ error: 'signup_refused' });
   return res.status(201).json({ ok: true });
@@ -258,7 +258,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error) {
     return res.status(error instanceof SignatureVerificationError ? 401 : 400).end();
   }
-  if (event.event_type === 'identification.scored') await saveIdentificationOnce(event.data);
+  if (event.event_type === 'identification.scored') await jobs.enqueueOnce(event.raw.event_id as string, event.raw);
   return res.status(200).json({ received: true });
 }
 ```

@@ -1,5 +1,13 @@
 # Webhooks in Go
 
+Use the verified raw envelope for current deliveries. Its `event_id` is the delivery key;
+`data.identification_id` correlates the visit. The older typed SDK model can omit these fields.
+The application-provided enqueue-once service must reject an empty key and atomically persist
+its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
+This queue API is application code, not a ShieldLabs SDK method.
+Do not enqueue only the old normalized data model.
+
+
 Package `github.com/ShieldLabs-ai/shieldlabs-go/webhook`. `webhook.ConstructEvent(payload, header,
 secrets...)` verifies the signature and returns a typed `webhook.Event`:
 `*webhook.IdentificationScoredEvent` (with `Data`, a `*shieldlabs.Identification`),
@@ -58,9 +66,15 @@ func (a *app) shieldlabsWebhook(w http.ResponseWriter, r *http.Request) {
 
 	switch e := event.(type) {
 	case *webhook.IdentificationScoredEvent:
-		// claimDelivery: atomic "first time" check, separate from the action replay store.
-		if a.claimDelivery(r.Context(), e.Data.RequestID) {
-			a.jobs <- e.Data // hand off; the worker does the slow part
+		eventID, ok := e.Raw["event_id"].(string)
+		if !ok || eventID == "" {
+			http.Error(w, "missing event_id", http.StatusBadRequest)
+			return
+		}
+		// Application queue: atomic deduplication and durable enqueue.
+		if err := a.jobs.EnqueueOnce(r.Context(), eventID, e.Raw); err != nil {
+			http.Error(w, "queue unavailable", http.StatusServiceUnavailable)
+			return
 		}
 	case *webhook.PingEvent:
 		log.Print("webhook.ping received")
@@ -71,7 +85,7 @@ func (a *app) shieldlabsWebhook(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-Keep the channel buffered (or use a real queue) so the handler never blocks past one second. To
+Use a durable queue/outbox and acknowledge promptly after it commits. To
 rotate a secret, pass both: `webhook.ConstructEvent(body, header, newSecret, oldSecret)`.
 
 ## Event data

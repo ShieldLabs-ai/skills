@@ -23,7 +23,7 @@ from typing import Dict, Iterable, List, Optional, Pattern, Tuple
 
 SKIP_DIRS = {
     ".git", "node_modules", "vendor", "dist", "build", "out", "target", "bin", "obj", ".next",
-    ".nuxt", ".output", ".svelte-kit", ".angular", ".turbo", ".vercel", ".venv", "venv", "env",
+    ".nuxt", ".cloudflare", ".output", ".svelte-kit", ".angular", ".turbo", ".vercel", ".venv", "venv", "env",
     "__pycache__", ".tox", ".mypy_cache", ".pytest_cache", "coverage", ".idea", ".vscode", ".gradle",
 }
 CODE_EXT = {".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".vue", ".svelte", ".astro", ".html", ".htm",
@@ -57,8 +57,8 @@ CHECKS: Dict[str, Tuple[str, str, str]] = {
              "Call identify() in the handler of the protected action. Use runOnMount only in the component of a protected step, never in a layout (shieldlabs-browser)."),
     "SL12": ("high", "The agent is self-hosted, proxied or bundled",
              "Load the agent only from https://cdn.shieldlabs.ai through a ShieldLabs browser package (shieldlabs-browser)."),
-    "SL13": ("medium", "Webhook handler without deduplication on request_id",
-             "Make the handler idempotent on data.request_id with an atomic insert, and answer 2xx within one second (shieldlabs-webhooks)."),
+    "SL13": ("medium", "Webhook handler without delivery deduplication",
+             "Use the verified event_id and atomic durable enqueue, and answer 2xx promptly (shieldlabs-webhooks)."),
     "SL14": ("medium", "Content Security Policy without the ShieldLabs origins",
              "Add https://cdn.shieldlabs.ai to script-src, and https://rest.shieldlabs.ai wss://rest.shieldlabs.ai https://webrtc.shieldlabs.ai stun:ice.shieldlabs.ai:3478 to connect-src."),
     "SL15": ("high", "Environment file with ShieldLabs keys is committed or not ignored",
@@ -73,7 +73,7 @@ CHECKS: Dict[str, Tuple[str, str, str]] = {
 
 SECRET_RES = [re.compile(r"\bsec_[a-z0-9]{8}-[a-z0-9]{8}-[a-z0-9]{8}\b"), re.compile(r"\bwhsec_[0-9a-f]{32}\b")]
 # Key-shaped placeholders that the ShieldLabs docs and test data use: never real keys.
-KNOWN_FAKE_SECRETS = {"sec_test0000-test0000-test0000", "whsec_00112233445566778899aabbccddeeff",
+KNOWN_FAKE_SECRETS = {"sec_xxxxxxxx-xxxxxxxx-xxxxxxxx", "sec_test0000-test0000-test0000", "whsec_00112233445566778899aabbccddeeff",
                       "whsec_0123456789abcdef0123456789abcdef"}
 PUBLIC_PREFIX_RE = re.compile(r"\b(NEXT_PUBLIC_|VITE_|NUXT_PUBLIC_|PUBLIC_|REACT_APP_|EXPO_PUBLIC_|GATSBY_)SHIELDLABS_(API_KEY|SECRET_KEY|WEBHOOK_SECRET)\b")
 SERVER_ONLY_RE = re.compile(r"\b(SHIELDLABS_API_KEY|SHIELDLABS_SECRET_KEY|SHIELDLABS_WEBHOOK_SECRET|USER_HID_SECRET)\b|['\"]@shieldlabs-ai/(node|next/server)['\"]")
@@ -123,7 +123,7 @@ STATIC_AGENT_IMPORT_RE = re.compile(r"^\s*import\s+[^;(]*?\bfrom\s+['\"]https://
 SELF_HOSTED_TAG_RE = re.compile(r"<script[^>]*\bsrc=['\"](?!https://(dev\.)?cdn\.shieldlabs\.ai)[^'\"]*(snippet|shield-loader)\.js", re.I)
 PROXY_RE = re.compile(r"(destination|target|upstream|proxy_pass)\s*[:=]?\s*['\"]?https://(dev\.)?cdn\.shieldlabs\.ai", re.I)
 SCRIPT_URL_RE = re.compile(r"scriptUrl\s*[:=]\s*['\"](?!https://(dev\.)?cdn\.shieldlabs\.ai)")
-DEDUPE_RE = re.compile(r"request_id|RequestId|RequestID|getRequestId|requestId")
+DEDUPE_RE = re.compile(r"event_id|eventId|EventId|enqueueOnce|enqueue_once|EnqueueOnce|request_id|RequestId|RequestID|getRequestId|requestId")
 STORAGE_CLEAR_RE = re.compile(r"localStorage\.clear\s*\(\s*\)")
 STORED_REQUEST_ID_RE = re.compile(r"(localStorage|sessionStorage)\.setItem\s*\([^)]*request_?[iI]d", re.I)
 MANAGEMENT_RE = re.compile(r"\bgetProfile(Async)?\s*\(|\bget_profile\s*\(|\bGetProfile(Async)?\s*\(")
@@ -187,7 +187,7 @@ class Scanner:
                 continue
             for entry in entries:
                 if entry.is_dir():
-                    if entry.name not in SKIP_DIRS:
+                    if entry.name not in SKIP_DIRS and not (entry.name == "skills" and entry.parent.name in {".agents", ".codex", ".claude"}):
                         stack.append(entry)
                 elif entry.is_file() and self.wanted(entry):
                     yield entry

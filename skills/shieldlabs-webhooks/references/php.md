@@ -1,14 +1,19 @@
 # Webhooks in PHP
 
+Use the verified raw envelope for current deliveries. Its `event_id` is the delivery key;
+`data.identification_id` correlates the visit. The older typed SDK model can omit these fields.
+The application-provided enqueue-once service must reject an empty key and atomically persist
+its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
+This queue API is application code, not a ShieldLabs SDK method.
+Do not enqueue only the old normalized data model.
+
+
 `ShieldLabs\Webhook::constructEvent(string $payload, ?string $header, string|array $secret)`
 returns `Event\IdentificationScoredEvent` (`$event->data` is a `Model\Identification`),
 `Event\WebhookPingEvent` or `Event\UnknownWebhookEvent`. It throws
 `Exception\SignatureVerificationException` (answer 401) or `Exception\WebhookParseException`
 (answer 400). `Webhook::verifySignature(...)` returns a `bool`.
 
-`claimDelivery($requestId)` below stands for your atomic "first time" check (an insert on a unique
-key, or Redis `SET shieldlabs:delivered:<request_id> 1 NX EX 86400`), separate from the store of
-request IDs that authorized actions.
 
 ## Plain PHP
 
@@ -41,8 +46,8 @@ try {
     exit;
 }
 
-if ($event instanceof IdentificationScoredEvent && claimDelivery($event->data->request_id)) {
-    enqueue($event->data->toArray()); // fast; the sender waits at most 1 second
+if ($event instanceof IdentificationScoredEvent) {
+    enqueueOnce($event->raw['event_id'], $event->raw); // atomic durable acceptance
 }
 http_response_code(200);
 ```
@@ -102,8 +107,8 @@ class ShieldLabsWebhookController extends Controller
             return response()->noContent(400);
         }
 
-        if ($event instanceof IdentificationScoredEvent && claimDelivery($event->data->request_id)) {
-            ProcessIdentification::dispatch($event->data->toArray()); // a queued job
+        if ($event instanceof IdentificationScoredEvent) {
+            app(DurableWebhookQueue::class)->enqueueOnce($event->raw['event_id'], $event->raw);
         }
         return response()->noContent(200);
     }
@@ -124,7 +129,6 @@ use ShieldLabs\Exception\WebhookParseException;
 use ShieldLabs\Webhook;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class ShieldLabsWebhookController
@@ -134,8 +138,7 @@ final class ShieldLabsWebhookController
 
     public function __construct(
         string $webhookSecret, // several secrets, comma-separated, while you rotate one
-        private readonly DeliveryStore $deliveries,
-        private readonly MessageBusInterface $bus,
+        private readonly DurableWebhookQueue $queue,
     ) {
         $this->webhookSecrets = array_values(array_filter(array_map('trim', explode(',', $webhookSecret))));
     }
@@ -153,15 +156,16 @@ final class ShieldLabsWebhookController
         } catch (WebhookParseException) {
             return new Response(status: 400);
         }
-        if ($event instanceof IdentificationScoredEvent && $this->deliveries->claim($event->data->request_id)) {
-            $this->bus->dispatch(new ProcessIdentification($event->data->toArray()));
+        if ($event instanceof IdentificationScoredEvent) {
+            $this->queue->enqueueOnce($event->raw['event_id'], $event->raw);
         }
         return new Response(status: 200);
     }
 }
 ```
 
-`DeliveryStore` and `ProcessIdentification` are your own classes. Bind `$webhookSecret` to
+`DurableWebhookQueue` and the plain-PHP `enqueueOnce` function are application-provided,
+using a transaction/outbox; they are not Laravel/Symfony/ShieldLabs built-ins. Bind `$webhookSecret` to
 `'%env(SHIELDLABS_WEBHOOK_SECRET)%'` in `config/services.yaml`.
 
 ## Event data

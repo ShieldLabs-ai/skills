@@ -1,14 +1,14 @@
 # ShieldLabs skills
 
-Agent Skills, slash commands and an MCP server that let AI coding agents integrate ShieldLabs
+Agent Skills, slash commands and a hosted OAuth MCP connection that let AI coding agents integrate ShieldLabs
 device intelligence and fraud detection into your app.
 
-[![CI](https://github.com/ShieldLabs-ai/shieldlabs-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/ShieldLabs-ai/shieldlabs-skills/actions/workflows/ci.yml)
+[![CI](https://github.com/ShieldLabs-ai/skills/actions/workflows/ci.yml/badge.svg)](https://github.com/ShieldLabs-ai/skills/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/github/v/tag/ShieldLabs-ai/shieldlabs-skills?label=version&sort=semver)](https://github.com/ShieldLabs-ai/shieldlabs-skills/tags)
+[![Version](https://img.shields.io/github/v/tag/ShieldLabs-ai/skills?label=version&sort=semver)](https://github.com/ShieldLabs-ai/skills/tags)
 
 This repository is a plugin marketplace named `shieldlabs` with one plugin, `shieldlabs`, for
-Claude Code and for Grok. The same skills work in Cursor, Codex, OpenCode and any other client
+Claude Code, Cursor and Codex, with Grok metadata retained. The skills also work in OpenCode and any other client
 that reads Agent Skills. New to ShieldLabs? [Start free](https://app.shieldlabs.ai).
 
 ## How it fits
@@ -23,41 +23,34 @@ A ShieldLabs integration always has three steps, and the skills teach an agent e
 3. **Decision.** Your backend acts on the Risk Score (trusted 0-29, suspicious 30-59, dangerous
    60-100), the detection flags and the identifiers, for example how many accounts one device has.
 
+## Release readiness
+
+The JS/Node examples target the compatible 1.1.0 candidates. npm 1.0.1 still has the older
+contract; use the [SDK preflight](skills/shieldlabs-server/references/sdk-contract.md) before
+application integration. Public release is gated on compatible SDK publication and a clean
+registry installation. See [publication checklist](PUBLICATION.md).
+
 ## Install
 
 ### Claude Code
 
 ```text
-/plugin marketplace add ShieldLabs-ai/shieldlabs-skills
+/plugin marketplace add ShieldLabs-ai/skills
 /plugin install shieldlabs@shieldlabs
 ```
 
-From a shell: `claude plugin marketplace add ShieldLabs-ai/shieldlabs-skills`, then
+From a shell: `claude plugin marketplace add ShieldLabs-ai/skills`, then
 `claude plugin install shieldlabs@shieldlabs`. Restart Claude Code to load the plugin.
 
-### Grok
+### Grok and Claude desktop
 
-The same marketplace and the same plugin. Grok reads `.grok-plugin/`, the skills, the slash
-commands and [`.mcp.json`](.mcp.json).
-
-```sh
-grok plugin marketplace add ShieldLabs-ai/shieldlabs-skills
-grok plugin install shieldlabs --trust
-```
-
-Start a new Grok session after installing. Export `SHIELDLABS_API_KEY` in the shell that starts
-Grok, then enable the `shieldlabs` server under `/mcps`. Setup:
-[MCP setup for Grok](skills/shieldlabs-investigate/references/clients.md#grok).
-
-### Claude desktop app
-
-Open the plugin manager, add the marketplace `ShieldLabs-ai/shieldlabs-skills` and install the
-`shieldlabs` plugin.
+The Grok plugin metadata is included. Verify remote HTTP/OAuth support in your Grok version
+before enabling MCP; its CLI flow is not verified for this release. Claude desktop can connect
+through a custom connector where available. See [client setup](skills/shieldlabs-investigate/references/clients.md).
 
 ### Cursor
 
-Open Customize in the sidebar and install the plugin from the Cursor marketplace, or import this
-repository with From GitHub Repository (`ShieldLabs-ai/shieldlabs-skills`) and install the
+Import this repository using From GitHub Repository (`ShieldLabs-ai/skills`) and install the
 `shieldlabs` plugin with a project or user scope. Cursor reads `.cursor-plugin/`, the skills and
 `rules/shieldlabs.mdc`. To connect the MCP server, see
 [MCP setup for Cursor](skills/shieldlabs-investigate/references/clients.md#cursor).
@@ -65,27 +58,30 @@ repository with From GitHub Repository (`ShieldLabs-ai/shieldlabs-skills`) and i
 ### Codex
 
 ```sh
-codex plugin marketplace add ShieldLabs-ai/shieldlabs-skills
+codex plugin marketplace add ShieldLabs-ai/skills
 codex plugin add shieldlabs@shieldlabs
 ```
 
 Start a new Codex session after installing. Codex reads `.codex-plugin/`, the skills and
-[AGENTS.md](AGENTS.md). The Codex plugin carries the skills only: connect the MCP server in
-`~/.codex/config.toml` ([MCP setup for Codex](skills/shieldlabs-investigate/references/clients.md#codex)).
+[AGENTS.md](AGENTS.md). The plugin includes the hosted MCP configuration. Sign in when prompted, or connect it explicitly
+with `codex mcp add` and `codex mcp login` ([MCP setup for Codex](skills/shieldlabs-investigate/references/clients.md#codex)).
 
 ### `npx skills`
 
 ```sh
-npx skills add https://github.com/ShieldLabs-ai/shieldlabs-skills
+npx skills add https://github.com/ShieldLabs-ai/skills
 ```
+
+`npx skills` installs the eight skills; it does not install the plugin's MCP connection.
+Follow [MCP client setup](skills/shieldlabs-investigate/references/clients.md) and sign in separately.
 
 ### Manual copy
 
 Download the repository and copy the skill folders into your agent's skills directory:
 
 ```sh
-curl -L https://github.com/ShieldLabs-ai/shieldlabs-skills/archive/refs/heads/main.tar.gz | tar -xz
-cp -R shieldlabs-skills-main/skills/* ~/.claude/skills/
+curl -L https://github.com/ShieldLabs-ai/skills/archive/refs/heads/main.tar.gz | tar -xz
+cp -R skills-main/skills/* ~/.claude/skills/
 ```
 
 | Agent | Skills directory |
@@ -97,13 +93,21 @@ cp -R shieldlabs-skills-main/skills/* ~/.claude/skills/
 | OpenCode | `~/.config/opencode/skills/` |
 | Other Agent Skills clients | the client's skills directory |
 
+## One-link setup
+
+Give your coding agent: **Read https://shieldlabs.ai/get-started.md and follow its instructions to install ShieldLabs in this project.**
+
+The guide and the setup skill use the same workflow: inspect the project, reuse existing integration,
+configure through OAuth MCP by default or the dashboard when chosen, install the matching SDKs and
+verify the first identification and Risk Score. Choose one setup path; do not run both. No separate
+ShieldLabs CLI is required. Skills installation and MCP connection are separate operations.
+
 ## Quick start
 
 After installing, open your project and ask the agent:
 
 - "Add ShieldLabs to this app and protect signup and checkout", or run
-  `/shieldlabs:setup signup and checkout`. The agent detects the stack, proposes a plan, and after
-  you confirm it adds the browser identification, the server-side check, environment variables
+  `/shieldlabs:get-started signup and checkout` (or `/shieldlabs:setup`). The agent detects the stack, states a plan, and uses the scope you authorized to add the browser identification, the server-side check, environment variables
   and a verification checklist.
 - "Audit our ShieldLabs integration", or run `/shieldlabs:audit`, for a report of problems by
   severity with fixes.
@@ -121,54 +125,94 @@ After installing, open your project and ask the agent:
 | [shieldlabs-risk-decisions](skills/shieldlabs-risk-decisions/SKILL.md) | Allow, step-up, review or block per action, from bands, flags, the `999` marker, missing identifications and User HID mismatches |
 | [shieldlabs-account-abuse](skills/shieldlabs-account-abuse/SKILL.md) | Multi-accounting, account sharing, impossible travel, account takeover, ban evasion and promo abuse with History API lookups |
 | [shieldlabs-user-linking](skills/shieldlabs-user-linking/SKILL.md) | User HIDs computed on the server and passed to the browser SDK |
-| [shieldlabs-investigate](skills/shieldlabs-investigate/SKILL.md) | Investigations with the ShieldLabs MCP server |
+| [shieldlabs-investigate](skills/shieldlabs-investigate/SKILL.md) | OAuth connection, all 21 MCP tools, domain and webhook management, investigations and real-visit verification |
 
 Also in the plugin:
 
-- **Slash commands**: [`/shieldlabs:setup`](commands/setup.md) and [`/shieldlabs:audit`](commands/audit.md).
+- **Slash commands**: [`/shieldlabs:get-started`](commands/get-started.md), [`/shieldlabs:setup`](commands/setup.md) and [`/shieldlabs:audit`](commands/audit.md).
 - **Cursor rule**: [`rules/shieldlabs.mdc`](rules/shieldlabs.mdc), attached when a task needs it.
 - **Agent guide**: [`AGENTS.md`](AGENTS.md) for Codex and other agents that read it.
 - **Helper scripts** in shieldlabs-setup: stack detection and a read-only audit scan (Python 3,
   standard library).
 
-## The bundled MCP server
+## Connect MCP with OAuth
 
-In Claude Code and in Grok, [`.mcp.json`](.mcp.json) starts the ShieldLabs MCP server with
-`npx -y @shieldlabs-ai/mcp` (Node.js 20 or later). In Grok the plugin must be trusted before that
-server starts. Cursor, Codex and other clients add it to their own MCP configuration. Every tool is read-only: read an identification by request ID, search the History API,
-summarize an account, a device or an IP address, explain a Risk Score, verify a webhook signature,
-read the domain profile. The server reads its keys from the environment that starts your client:
+The plugin includes this remote entry in [`.mcp.json`](.mcp.json):
 
-```bash
-export SHIELDLABS_API_KEY=sec_your_private_key   # Private API Key of the domain
+```json
+{
+  "mcpServers": {
+    "shieldlabs": { "type": "http", "url": "https://mcp.shieldlabs.ai/mcp" }
+  }
+}
 ```
 
-Without the key it starts with the offline tools only (explain a score, verify a signature, current
-time). Setup for other clients: [clients.md](skills/shieldlabs-investigate/references/clients.md).
+Enable the connection in your client. Sign in or create a ShieldLabs account in the fresh
+authorization flow, then approve access. You do not need
+Node.js, a domain API key or a pasted bearer token for this connection. For skills-only installs:
 
-## Keys
+```sh
+# Codex
+codex mcp add shieldlabs --url https://mcp.shieldlabs.ai/mcp
+codex mcp login shieldlabs --no-browser
 
-Copy the keys from the analytics dashboard at https://app.shieldlabs.ai: Integration > API keys
-for the domain keys, Integration > Webhooks for each endpoint's signing secret.
+# Claude Code: then authenticate through /mcp
+claude mcp add --transport http shieldlabs https://mcp.shieldlabs.ai/mcp
+```
 
-| Variable | Key | Where it belongs |
-|---|---|---|
-| `SHIELDLABS_PUBLIC_KEY` (with `VITE_`, `NEXT_PUBLIC_`, `NUXT_PUBLIC_` or `PUBLIC_`) | Public Key | Your frontend build |
-| `SHIELDLABS_API_KEY` | Private API Key (`sec_...`) | Your backend, and the MCP server |
-| `SHIELDLABS_WEBHOOK_SECRET` | Webhook signing secret (`whsec_...`) | Your backend (optional for the MCP server) |
-| `SHIELDLABS_SECRET_KEY`, `SHIELDLABS_DOMAIN` | Secret Key and registered domain | Your backend or the MCP server, for the domain profile (optional) |
-| `USER_HID_SECRET` | Your own random secret for User HIDs | Your backend |
+Choose one setup path to avoid duplicate server entries. Other clients:
+[clients.md](skills/shieldlabs-investigate/references/clients.md).
 
-The skills keep keys in environment variables, add placeholders to `.env.example` and never put a
-server key in browser code. Do not paste keys into a chat with an agent: the MCP server reads them
-from its environment.
+After signing in, ask: "Check the ShieldLabs connection and list my domains."
+The agent calls `shieldlabs_check_connection`, then `shieldlabs_list_domains`. Select the hostname
+before reading identifications; management uses the returned domain UUID.
+
+### 21 tools
+
+| Area | Tools (prefix `shieldlabs_`) |
+|---|---|
+| Connection (1) | `check_connection` |
+| Domains (6) | `list_domains`, `get_domain`, `add_domain`, `patch_domain`, `delete_domain`, `rotate_server_key` |
+| Webhooks (10) | `list_webhooks`, `get_webhook`, `create_webhook`, `patch_webhook`, `delete_webhook`, `disable_webhook`, `enable_webhook`, `rotate_webhook_secret`, `verify_webhook`, `test_webhook` |
+| Investigation (4) | `get_identification`, `search_history`, `summarize_entity`, `explain_risk_score` |
+
+[All arguments and behavior](skills/shieldlabs-investigate/references/tools.md).
+Domain/webhook writes are supported and require the user's intent. Deletes, disable, rotations
+and disruptive patches require explicit `confirm: true`. Mutations are not automatically retried.
+Credentials stay masked by default; one-time secret retrieval is an installer opt-in.
+
+### Verify a real installation
+
+Ask: "Verify a fresh visit on example.com through identification, Risk Score and MCP."
+The agent captures the actual browser identification UUID, reads that same ID on the selected
+domain, explains the score and checks its history. Scoring is asynchronous; a missing result is
+unverified. Empty detailed weights can be valid and do not mean a zero Risk Score.
+
+For webhooks, verification pings, sample deliveries and real scored events are separate checks.
+Use an authorized HTTPS receiver. [Step-by-step playbooks](skills/shieldlabs-investigate/references/playbooks.md).
+
+## Application credentials and SDK versions
+
+OAuth authenticates the **MCP connection**. Your application's backend still needs its own SDK
+API key and, when receiving webhooks, its signing secret. Keep these in a private server environment;
+only the Public Key belongs in frontend code. Never paste private keys into chat or commit them.
+See [environment setup](skills/shieldlabs-setup/references/environment.md).
+
+As checked on 2026-10-27, npm publishes `@shieldlabs-ai/js` 1.0.1 and `@shieldlabs-ai/node` 1.0.1.
+Their identifier fields are `requestId` and `request_id`. Some GitHub main branches already use
+`identificationId` / `identification_id`; match the **installed package's types** when upgrading.
+The hosted MCP still accepts `request_id`. These names refer to the identification UUID, not a
+webhook delivery's event ID. Examples target the compatible 1.1.0 candidates and require the
+[SDK contract preflight](skills/shieldlabs-server/references/sdk-contract.md). Node 1.0.1 can
+leave the ID empty on current History/webhook input; a working MCP connection does not prove
+application SDK compatibility. Webhook handlers preserve the verified raw envelope and event ID.
 
 ## Compatibility
 
 - ShieldLabs SDKs 1.x: `@shieldlabs-ai/js`, `@shieldlabs-ai/react`, `@shieldlabs-ai/next`,
   `@shieldlabs-ai/vue`, `@shieldlabs-ai/angular`, `@shieldlabs-ai/svelte`, `@shieldlabs-ai/node`, `shieldlabs`
   (Python), `shieldlabs-go`, `shieldlabs/shieldlabs-php`, `ai.shieldlabs:shieldlabs-java`,
-  `ShieldLabs` (.NET) and `@shieldlabs-ai/mcp`. The skills tell the agent to confirm current versions
+  `ShieldLabs` (.NET). The hosted MCP is versioned independently of the npm SDKs. The skills tell the agent to confirm current versions
   on the package registries and at https://docs.shieldlabs.ai.
 - Clients: Claude Code, Grok, the Claude desktop app, Cursor, Codex, OpenCode and other clients that read
   Agent Skills (`SKILL.md` with YAML frontmatter).
@@ -190,16 +234,17 @@ Layout:
 .cursor-plugin/     Cursor plugin and marketplace manifests
 .codex-plugin/      Codex plugin manifest
 .agents/plugins/    Codex marketplace manifest
-.mcp.json           the bundled MCP server
+.mcp.json           hosted HTTP MCP connection (OAuth)
 AGENTS.md           guide for agents that read AGENTS.md
 commands/           slash commands
 rules/              Cursor rule
 skills/             the skills: SKILL.md, references/, scripts/
-scripts/            validator and link check
+scripts/            validator, release packaging and link check
 tests/              unit tests
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Documentation: https://docs.shieldlabs.ai. Analytics
+For release preparation and anonymous installation checks, see
+[PUBLICATION.md](PUBLICATION.md). See [CONTRIBUTING.md](CONTRIBUTING.md). Documentation: https://docs.shieldlabs.ai. Analytics
 dashboard: https://app.shieldlabs.ai. Support: contact@shieldlabs.ai.
 
 ## License

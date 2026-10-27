@@ -507,22 +507,22 @@ def check_manifests(root: Path, report: Report) -> Optional[str]:
             target = manifest.get(key)
             if isinstance(target, str) and not (root / target).exists():
                 report.error(f"{label}: {key} points to a missing path: {target}")
-    if codex is not None and not any(key in codex for key in ("apps", "mcpServers")):
-        # Nothing in the Codex plugin signs in to anything, and Codex reads a missing value as ON_INSTALL.
+    if codex is not None:
+        # Install instructions first; OAuth is requested when the connection is used.
         for entry in plugin_entries(agents_market, ".agents/plugins/marketplace.json", Report()):
             policy = entry.get("policy")
             if not isinstance(policy, dict) or policy.get("authentication") != "ON_USE":
                 report.error(
-                    ".agents/plugins/marketplace.json: the Codex plugin has no apps or MCP servers, "
-                    "so policy.authentication must be 'ON_USE'"
+                    ".agents/plugins/marketplace.json: "
+                    "policy.authentication must be 'ON_USE'"
                 )
     if mcp is not None:
         servers = mcp.get("mcpServers")
         server = servers.get(PLUGIN_NAME) if isinstance(servers, dict) else None
         if not isinstance(server, dict):
             report.error(f".mcp.json: mcpServers must define '{PLUGIN_NAME}'")
-        elif "@shieldlabs-ai/mcp" not in (server.get("args") or []):
-            report.error(".mcp.json: the server must start @shieldlabs-ai/mcp")
+        elif server != {"type": "http", "url": "https://mcp.shieldlabs.ai/mcp"}:
+            report.error(".mcp.json: use the hosted HTTPS OAuth endpoint without commands, env or credentials")
 
     changelog = root / "CHANGELOG.md"
     if version is not None:

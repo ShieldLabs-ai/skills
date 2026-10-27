@@ -1,80 +1,69 @@
-# Investigation playbooks
+# MCP playbooks
 
-Each playbook lists the tool calls in order, with example arguments. Replace the example values
-with the ones the user gave. Report with the template of the skill.
+Call `shieldlabs_check_connection` and `shieldlabs_list_domains` first. In every history call below,
+replace `example.com` with the chosen hostname. Management calls take the domain's UUID instead.
 
-## Review one request
+## Review one identification
 
-1. `shieldlabs_get_identification` with `{"request_id": "6f1c2e8a-3b5d-4c7e-8f9a-0b1c2d3e4f5a"}`.
-   If it is not found, report "unverified": the identification may be seconds old (try again
-   shortly) or belong to another domain. Stop there.
-2. `shieldlabs_explain_risk_score` with the same `request_id`: band, weighted risk signals, flags.
-3. `shieldlabs_current_time`, then compare with `observed_at`. Older than about 5 minutes means
-   the request ID should not authorize a new protected action.
-4. `shieldlabs_summarize_entity` with `{"type": "device_id", "value": "<device_id>"}`, unless the
-   device ID is `00000000-0000-0000-0000-000000000000`: how many accounts use the device.
-5. `shieldlabs_summarize_entity` with `{"type": "user_hid", "value": "<user_hid>"}`, unless it is
-   `null`, `"anonymous"`, `"fail"`, `"-1"` or `"unknown"` (these name no account): the account's
-   usual devices and countries.
-6. Suggest an action with the decision table of the shieldlabs-risk-decisions skill: the band, the
-   sensitivity of the action it protected, then the account evidence. Remind the user that one
-   request ID authorizes one action: a request ID that was already used must be refused.
+1. `shieldlabs_get_identification`:
+   `{"domain":"example.com","request_id":"6f1c2e8a-3b5d-4c7e-8f9a-0b1c2d3e4f5a","wait":true,"response_format":"json"}`.
+   On missing data check domain/ID, allow asynchronous processing, and make a bounded follow-up
+   read. If still missing, report unverified and the elapsed time.
+2. `shieldlabs_explain_risk_score` with the same domain/ID, in Markdown for a readable report.
+   Compare score, band and flags. Empty weights can be expected from History.
+3. Compare `observed_at` with a trusted current clock. An old identification should not authorize
+   a fresh protected action; the application's SDK implements replay/freshness checks.
+4. Summarize its device and User HID, skipping placeholder IDs. Explain both the evidence and the
+   sample window. The MCP summary is not a backend High-Risk Event verdict.
 
-## Investigate an account (User HID)
+## Investigate an entity
 
-1. `shieldlabs_summarize_entity` with `{"type": "user_hid", "value": "<user_hid>", "max_items": 200}`.
-   Note the worst band, band counts, devices, countries, IPs, flags and rate-limit markers.
-2. For the account's top devices (at most 5, skipping the all-zero device ID), call
-   `shieldlabs_summarize_entity` with `{"type": "device_id", "value": "<device_id>"}` and look at
-   `users.distinct`: other accounts on the same devices point to multi-accounting.
-3. `shieldlabs_search_history` with `{"type": "user_hid", "value": "<user_hid>", "limit": 50}` for
-   the timeline: country changes within an hour, new devices, bursts of identifications, the
-   dangerous identifications.
-4. `shieldlabs_explain_risk_score` for the riskiest one to three identifications.
-5. Mention that the High-Risk Events ShieldLabs detected on this user are on the user card in the
-   analytics dashboard.
+1. `shieldlabs_summarize_entity` with
+   `{"domain":"example.com","type":"user_hid","value":"<exact-user-hid>","max_items":100,"response_format":"json"}`.
+2. Inspect `summary.risk`, `devices`, `users`, `countries`, `flags_seen` and `window.complete`.
+3. Summarize at most five associated devices/accounts if needed. For a timeline, use
+   `shieldlabs_search_history` with the same domain/type/value, `limit: 50`, `offset: 0`.
+4. Explain one to three relevant identifications. Shared IPs alone are weak account evidence.
 
-The server's `investigate_user` prompt runs the same steps.
+For device, visitor, cookie or IPv4 investigations change `type` and the exact value. History
+also accepts request and session IDs; summaries do not. Report time/window limits explicitly.
 
-## Investigate a device, a visitor or a cookie
+## Manage an integration
 
-1. `shieldlabs_summarize_entity` with `type` `device_id`, `visitor_id` or `cookie_id`.
-2. For each account in `users.top`, `shieldlabs_summarize_entity` with `user_hid` (at most 5) to
-   see whether those accounts also share other devices.
-3. `shieldlabs_search_history` with the same `type` and `value` to read the individual
-   identifications when the timeline matters.
+1. Read existing domains; reuse the intended one. If absent and registration is authorized,
+   `shieldlabs_add_domain` with `domain: "example.com"` and the intended `allow_subdomains` setting.
+   Leave `include_secret` false unless installing a needed credential into a private store.
+2. Read the domain with `shieldlabs_get_domain`. Use `shieldlabs_patch_domain` only for requested
+   settings. A root domain's subdomain behavior is controlled by `allow_subdomains`.
+3. `shieldlabs_list_webhooks` with `domain_id`; reuse an existing endpoint rather than creating
+   duplicates. Implement and deploy the receiver using the webhooks skill before testing it.
+4. If authorized and absent, `shieldlabs_create_webhook` with `domain_id`, `name` and the user's
+   public HTTPS `url`. Obtain/store the signing secret privately for the receiver as needed.
+5. `shieldlabs_verify_webhook` sends a signed ping. Check the resulting status. Then
+   `shieldlabs_test_webhook`; inspect `delivered`, HTTP status, latency and timeout.
+6. Read the webhook again and check receiver logs, with secrets and personal payloads redacted.
+   For a rename use `patch_webhook` with only `name`. For a URL change use `confirm: true`, then
+   repeat verification and test. `enable_webhook` restores delivery; `disable_webhook` requires
+   `confirm: true` and authorization to stop delivery.
+7. Domain/webhook deletion and key/secret rotation are maintenance actions, never test cleanup
+   for pre-existing resources. Only perform them when requested. Record created test resource
+   UUIDs so authorized cleanup targets exactly those resources.
 
-A device ID survives cleared cookies and private windows, so it is the strongest of the three for
-counting accounts.
+## Verify the real visit chain
 
-## Investigate an IP address
+1. Note the target hostname, current time and expected production snippet/public key.
+2. Open the actual page and trigger an identification. Capture the UUID from the actual callback
+   or application request. Do not manufacture a History row or use a sample webhook as a visit.
+3. Read that same UUID through `get_identification` with the explicit domain and `wait: true`.
+4. Compare domain, ID, time, score and flags. Call `explain_risk_score` for the same UUID.
+5. Search its visitor/device history and summarize that entity. If real webhook delivery is part
+   of the requested setup, match the received event's identification UUID to this visit.
+6. Report each stage separately: page loaded, browser ID obtained, History found, Risk Score
+   returned, explanation read, real webhook received (if tested). Distinguish pending from failed.
 
-1. `shieldlabs_summarize_entity` with `{"type": "ip", "value": "203.0.113.24"}` (IPv4 only).
-2. Read it as weak evidence: offices, universities and mobile carriers put many people behind one
-   address. Look at `rate_limit_markers` (the IP was blocked for sending too many
-   identifications), `flags_seen` (`datacenter_ip`, `proxy`, `tor`) and the accounts found.
+## Debug delivery or a signature
 
-## Why was a signup blocked or allowed?
-
-1. Get the request ID from the application logs (the backend should log it with every decision).
-2. Run "Review one request".
-3. Compare with the reason the application logged (`missing`, `replayed`, `stale`,
-   `rate_limited`, `no_device_signals`, `blocked_flag`, `blocked_band`, or its own rule), and say
-   which check decided. Suggest tuning per action when the evidence looks legitimate.
-
-## Debug a webhook signature
-
-1. Ask for the raw body exactly as the server received it (base64 of the logged bytes is safest)
-   and the `X-Shield-Signature` header value.
-2. `shieldlabs_verify_webhook_signature` with `payload`, `signature_header` and
-   `payload_encoding: "base64"` when you pass base64. Let it read `SHIELDLABS_WEBHOOK_SECRET` from
-   the server environment instead of pasting the secret.
-3. Act on its `checks`: a re-serialized or pretty-printed body means a JSON parser ran before
-   verification; a missing `whsec_` prefix means the secret was stripped; a mismatch with a valid
-   format usually means the secret of another endpoint, or one replaced by **Rotate secret**.
-
-## Check the remaining included identifications
-
-`shieldlabs_get_domain_profile` (needs `SHIELDLABS_SECRET_KEY` and `SHIELDLABS_DOMAIN`). A negative
-`remaining_identifications` means the account is over its included volume. Call it once per
-question, never in a loop.
+Read `get_webhook`, then use verify/test only for an authorized receiver. A 4xx, 5xx or timeout is
+an endpoint result, not automatically an MCP failure. Inspect the receiver's raw-body handling,
+correct secret and response path. Verify signatures locally with the SDK; do not ask the user to
+paste a secret. A valid ping does not prove the scored-event branch works.

@@ -44,16 +44,16 @@ import { getAgent } from './shieldlabs';
 const form = document.querySelector<HTMLFormElement>('#signup')!;
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
-  let requestId: string | null = null;
+  let identificationId: string | null = null;
   try {
-    ({ requestId } = await (await getAgent()).identify());
+    ({ identificationId } = await (await getAgent()).identify());
   } catch (error) {
     if (error instanceof ShieldLabsError) console.warn('ShieldLabs:', error.code);
   }
   await fetch('/api/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: form.email.value, requestId }),
+    body: JSON.stringify({ email: form.email.value, identificationId }),
   });
 });
 ```
@@ -67,7 +67,7 @@ submits. Put the request ID in a hidden field:
 ```html
 <form id="signup" action="/signup" method="post">
   <input name="email" type="email" required />
-  <input type="hidden" name="requestId" />
+  <input type="hidden" name="identificationId" />
   <button>Sign up</button>
 </form>
 ```
@@ -90,10 +90,10 @@ identifier().catch(() => {});
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   try {
-    const { requestId } = await (await identifier()).take();
-    (form.elements.namedItem('requestId') as HTMLInputElement).value = requestId;
+    const { identificationId } = await (await identifier()).take();
+    (form.elements.namedItem('identificationId') as HTMLInputElement).value = identificationId;
   } catch {
-    // No identification: submit without a requestId. The server treats it as unverified.
+    // No identification: submit without a identificationId. The server treats it as unverified.
   }
   form.submit();
 });
@@ -133,7 +133,7 @@ confirm the current one on npm first, or serve the file yourself (next section):
     if (typeof ShieldLabsJS === 'undefined') return null;
     try {
       const agent = await ShieldLabsJS.load(options); // memoized; imports again after a failed load
-      return (await agent.identify()).requestId;
+      return (await agent.identify()).identificationId;
     } catch (error) {
       console.warn('ShieldLabs:', error && error.code);
       return null;
@@ -143,11 +143,11 @@ confirm the current one on npm first, or serve the file yourself (next section):
   document.querySelector('#signup').addEventListener('submit', async (event) => {
     event.preventDefault();
     const form = event.currentTarget; // read it before the first await: it is null afterwards
-    const requestId = await getRequestId();
+    const identificationId = await getRequestId();
     await fetch(form.action, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: form.email.value, requestId }),
+      body: JSON.stringify({ email: form.email.value, identificationId }),
     });
   });
 </script>
@@ -200,7 +200,7 @@ example as a data attribute, and pass it as `userId`:
 
 ```ts
 // An empty attribute (no signed-in user) must become undefined: the SDK rejects "" with invalid_options.
-const { requestId, userId } = await (await getAgent()).identify({ userId: form.dataset.userHid || undefined });
+const { identificationId, userId } = await (await getAgent()).identify({ userId: form.dataset.userHid || undefined });
 ```
 
 Omit `userId` (or pass `undefined`) for visitors who are not signed in. The SDK rejects `""`,

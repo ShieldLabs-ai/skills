@@ -51,3 +51,10 @@ python3 -m unittest discover -s tests
    `.cursor-plugin/plugin.json` and `.codex-plugin/plugin.json`, and add a CHANGELOG entry.
 2. Merge to `main`, then push a tag `vX.Y.Z`. The release workflow validates the repository and
    attaches an archive of the skills to a GitHub release.
+
+## Hosted MCP contract
+
+Use the live OAuth endpoint and its current tools as the source for MCP instructions. The input
+snapshot in shieldlabs-investigate is a dated contract record, not account data. Keep the published
+SDK contract distinct from unreleased GitHub main and MCP argument names. See [PUBLICATION.md](PUBLICATION.md)
+for release packaging, anonymous install verification and directory-listing boundaries.

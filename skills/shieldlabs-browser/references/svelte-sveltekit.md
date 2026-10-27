@@ -58,7 +58,7 @@ as `data` without the "initial value" warning, pass a function:
 
   const protect: SubmitFunction = async ({ formData }) => {
     const result = await identify(); // null when no identification was possible; never rejects
-    formData.set('requestId', result?.requestId ?? '');
+    formData.set('identificationId', result?.identificationId ?? '');
   };
 </script>
 
@@ -69,7 +69,7 @@ as `data` without the "initial value" warning, pass a function:
 ```
 
 `use:enhance` sends the form with `fetch`, so the page stays alive while the agent posts. Without
-JavaScript, or when the agent cannot load, the form is still sent without a `requestId`.
+JavaScript, or when the agent cannot load, the form is still sent without a `identificationId`.
 
 ```ts
 // src/routes/signup/+page.server.ts
@@ -83,16 +83,16 @@ const shieldlabs = new ShieldLabs({ apiKey: SHIELDLABS_API_KEY });
 export const actions = {
   default: async ({ request }) => {
     const data = await request.formData();
-    const requestId = String(data.get('requestId') ?? '');
+    const identificationId = String(data.get('identificationId') ?? '');
     let identification: Identification | null = null;
-    if (requestId) {
+    if (identificationId) {
       try {
-        identification = await shieldlabs.identifications.get(requestId); // waits until scored
+        identification = await shieldlabs.identifications.get(identificationId); // waits until scored
       } catch (error) {
         if (!(error instanceof ShieldLabsError)) throw error; // stays unverified
       }
     }
-    const firstUse = identification ? await claimRequestId(identification.request_id) : false;
+    const firstUse = identification ? await claimRequestId(identification.identification_id) : false;
     const verdict = evaluateIdentification(identification, { isReplay: () => !firstUse });
     if (!verdict.ok) return fail(403, { message: 'We could not verify this signup.' });
     // Create the account.
@@ -107,7 +107,7 @@ export const actions = {
 `useIdentify(options?)` must run during component initialisation. `options` is
 `{ userId?, timeout?, runOnMount? }` or a function that returns it (read when each identification
 starts, so it follows sign-in and sign-out). It returns `{ result, isLoading, error, identify,
-reset }`: readable stores plus `identify(options?)`, which resolves `{ requestId, userId }` or
+reset }`: readable stores plus `identify(options?)`, which resolves `{ identificationId, userId }` or
 `null` (the reason is in `$error`) and never rejects. A second call of the same helper while one
 runs with the same User HID and the same effective timeout returns the running one (a call without
 its own `timeout` counts with the helper's, else the setup's). The `timeout` covers the whole call:
@@ -129,7 +129,7 @@ With a plain `fetch` instead of `use:enhance`:
     await fetch('/api/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: form.email.value, requestId: result?.requestId ?? null }),
+      body: JSON.stringify({ email: form.email.value, identificationId: result?.identificationId ?? null }),
     });
   }
 </script>
@@ -180,7 +180,7 @@ full-page form post), arm the form with `identifyOnInteraction()` of the agent f
 
   const { getAgent } = getShieldLabs();
   let form: HTMLFormElement;
-  let requestIdField: HTMLInputElement;
+  let identificationIdField: HTMLInputElement;
   let early: InteractionIdentifier | undefined;
 
   onMount(() => {
@@ -190,7 +190,7 @@ full-page form post), arm the form with `identifyOnInteraction()` of the agent f
       (agent) => {
         if (active) early = agent.identifyOnInteraction(form);
       },
-      () => {}, // no agent: the form is sent without a requestId
+      () => {}, // no agent: the form is sent without a identificationId
     );
     return () => {
       active = false;
@@ -202,9 +202,9 @@ full-page form post), arm the form with `identifyOnInteraction()` of the agent f
     event.preventDefault();
     try {
       // The early identification while it is fresh, otherwise a new one.
-      if (early) requestIdField.value = (await early.take()).requestId;
+      if (early) identificationIdField.value = (await early.take()).identificationId;
     } catch {
-      // No identification: the form is sent without a requestId, and the server treats it as unverified.
+      // No identification: the form is sent without a identificationId, and the server treats it as unverified.
     }
     form.submit();
   }
@@ -212,7 +212,7 @@ full-page form post), arm the form with `identifyOnInteraction()` of the agent f
 
 <form bind:this={form} method="POST" {onsubmit}>
   <input name="email" type="email" required />
-  <input bind:this={requestIdField} type="hidden" name="requestId" />
+  <input bind:this={identificationIdField} type="hidden" name="identificationId" />
   <button>Sign up</button>
 </form>
 ```

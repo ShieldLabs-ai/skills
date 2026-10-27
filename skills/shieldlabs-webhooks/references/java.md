@@ -1,5 +1,13 @@
 # Webhooks in Java
 
+Use the verified raw envelope for current deliveries. Its `event_id` is the delivery key;
+`data.identification_id` correlates the visit. The older typed SDK model can omit these fields.
+The application-provided enqueue-once service must reject an empty key and atomically persist
+its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
+This queue API is application code, not a ShieldLabs SDK method.
+Do not enqueue only the old normalized data model.
+
+
 `ai.shieldlabs.Webhooks.constructEvent(payload, signatureHeader, secrets...)` takes the raw body as
 `byte[]` (or `String`) and one or more secrets (varargs or a `Collection<String>`). It returns an
 `IdentificationScoredEvent` (`getIdentification()`), a `WebhookPingEvent` or an
@@ -7,8 +15,6 @@
 `WebhookParseException` (answer 400). `Webhooks.verifySignature(...)` returns a `boolean`;
 `Webhooks.SIGNATURE_HEADER` is `"X-Shield-Signature"`.
 
-`claimDelivery(requestId)` below stands for your atomic "first time" check (an insert on a unique
-key), separate from the store of request IDs that authorized actions.
 
 ```java
 List<String> secrets = Arrays.stream(System.getenv().getOrDefault("SHIELDLABS_WEBHOOK_SECRET", "").split(","))
@@ -31,13 +37,12 @@ Both receivers answer 500 while the list is empty: a missing secret is a configu
 @RestController
 class ShieldLabsWebhookController {
     private final List<String> secrets;
-    private final DeliveryStore deliveries;
-    private final ExecutorService workers;
+    private final DurableQueue queue;
 
-    ShieldLabsWebhookController(List<String> secrets, DeliveryStore deliveries, ExecutorService workers) {
+
+    ShieldLabsWebhookController(List<String> secrets, DurableQueue queue) {
         this.secrets = secrets;
-        this.deliveries = deliveries;
-        this.workers = workers;
+        this.queue = queue;
     }
 
     @PostMapping("/webhooks/shieldlabs")
@@ -53,10 +58,8 @@ class ShieldLabsWebhookController {
             return ResponseEntity.badRequest().build();
         }
         if (event instanceof IdentificationScoredEvent) {
-            Identification identification = ((IdentificationScoredEvent) event).getIdentification();
-            if (deliveries.claim(identification.getRequestId())) {
-                workers.submit(() -> process(identification)); // answer within 1 second
-            }
+            Map<String, Object> envelope = event.raw();
+            queue.enqueueOnce((String) envelope.get("event_id"), envelope); // commit before 2xx
         }
         return ResponseEntity.ok().build(); // WebhookPingEvent and UnknownWebhookEvent: acknowledge
     }
@@ -79,8 +82,8 @@ server.createContext("/webhooks/shieldlabs", exchange -> {
         try {
             WebhookEvent event = Webhooks.constructEvent(body, signature, secrets);
             if (event instanceof IdentificationScoredEvent) {
-                Identification identification = ((IdentificationScoredEvent) event).getIdentification();
-                if (claimDelivery(identification.getRequestId())) workers.submit(() -> process(identification));
+                Map<String, Object> envelope = event.raw();
+                queue.enqueueOnce((String) envelope.get("event_id"), envelope);
             }
         } catch (SignatureVerificationException e) {
             status = 401;

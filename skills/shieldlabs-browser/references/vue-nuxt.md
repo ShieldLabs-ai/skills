@@ -45,7 +45,7 @@ async function onSubmit() {
   await fetch('/api/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email.value, requestId: result?.requestId ?? null }),
+    body: JSON.stringify({ email: email.value, identificationId: result?.identificationId ?? null }),
   });
 }
 </script>
@@ -59,7 +59,7 @@ async function onSubmit() {
 ```
 
 `useIdentify({ userId?, runOnMount? })` returns `{ identify, result, isLoading, error, reset }` as
-refs. `identify(options?)` resolves `{ requestId, userId }` or `null` (the reason is in `error`)
+refs. `identify(options?)` resolves `{ identificationId, userId }` or `null` (the reason is in `error`)
 and never rejects. While a call of the same helper with the same User HID and the same effective
 timeout is in flight (a double click), `identify()` returns it instead of starting another
 identification; a call without `timeout` counts as one with the plugin's `timeout`. The `timeout`
@@ -140,7 +140,7 @@ onMounted(() => {
       if (!unmounted && form.value) identifier = agent.identifyOnInteraction(form.value);
     })
     .catch(() => {
-      // No agent: the form is sent without a requestId.
+      // No agent: the form is sent without a identificationId.
     });
 });
 
@@ -156,7 +156,7 @@ async function onSubmit() {
   await fetch('/api/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ requestId: result?.requestId ?? null }),
+    body: JSON.stringify({ identificationId: result?.identificationId ?? null }),
   });
 }
 </script>
@@ -167,7 +167,7 @@ async function onSubmit() {
 ```
 
 `take()` hands out the early identification only while it is fresh and otherwise starts a new one.
-For a classic full-page post, write `result?.requestId ?? ''` into a hidden `requestId` field, wait
+For a classic full-page post, write `result?.identificationId ?? ''` into a hidden `identificationId` field, wait
 for `nextTick()` and call `form.value?.submit()` instead of `fetch()`.
 
 ## Nuxt 3
@@ -210,7 +210,7 @@ const { identify, isLoading } = useIdentify();
 
 async function onSubmit() {
   const result = await identify();
-  await $fetch('/api/signup', { method: 'POST', body: { email: email.value, requestId: result?.requestId ?? null } });
+  await $fetch('/api/signup', { method: 'POST', body: { email: email.value, identificationId: result?.identificationId ?? null } });
 }
 </script>
 ```
@@ -224,16 +224,16 @@ import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identificatio
 const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY! });
 
 export default defineEventHandler(async (event) => {
-  const { requestId } = await readBody<{ email: string; requestId: string | null }>(event);
+  const { identificationId } = await readBody<{ email: string; identificationId: string | null }>(event);
   let identification: Identification | null = null;
-  if (requestId) {
+  if (identificationId) {
     try {
-      identification = await shieldlabs.identifications.get(requestId);
+      identification = await shieldlabs.identifications.get(identificationId);
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error; // stays unverified
     }
   }
-  const firstUse = identification ? await claimRequestId(identification.request_id) : false;
+  const firstUse = identification ? await claimRequestId(identification.identification_id) : false;
   const verdict = evaluateIdentification(identification, { isReplay: () => !firstUse });
   if (!verdict.ok) throw createError({ statusCode: 403, statusMessage: 'Signup refused' });
   // Create the account.
@@ -280,7 +280,7 @@ import SignupForm from './SignupForm.vue';
 const shieldlabs: ShieldLabsContext = {
   status: ref<ShieldLabsStatus>('ready'),
   error: ref(null),
-  identify: vi.fn(async () => ({ requestId: '6f1c2e8a-3b5d-4c7e-8f9a-0b1c2d3e4f5a', userId: null })),
+  identify: vi.fn(async () => ({ identificationId: '6f1c2e8a-3b5d-4c7e-8f9a-0b1c2d3e4f5a', userId: null })),
   check: vi.fn(async () => null),
   load: vi.fn(),
   getAgent: vi.fn(() => Promise.reject(new Error('No agent in component tests.'))),
