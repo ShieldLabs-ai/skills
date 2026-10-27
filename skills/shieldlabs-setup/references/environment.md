@@ -1,5 +1,8 @@
 # Keys and environment variables
 
+These variables are for the application SDKs. The hosted MCP uses client OAuth and needs none
+of them in its configuration. Keep application keys when migrating an old local MCP connection.
+
 Every domain registered in the analytics dashboard (https://app.shieldlabs.ai, Integration >
 Domains) has its own keys under Integration > API keys. Each webhook endpoint has its own signing
 secret under Integration > Webhooks.

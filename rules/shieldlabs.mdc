@@ -30,3 +30,14 @@ Read the matching skill before writing code: [setup and audit](../skills/shieldl
 - User HIDs come from the SDK `userHid` helpers on the server, never raw emails or IDs.
 - Use only the public SDK APIs, and confirm package versions on the registry and at
   https://docs.shieldlabs.ai.
+
+## Hosted OAuth MCP
+
+Connect to `https://mcp.shieldlabs.ai/mcp` with client OAuth; no MCP API-key environment is needed.
+Use the shieldlabs-investigate skill for all 21 tools. Begin with check_connection/list_domains;
+history uses a hostname, management uses a UUID. Investigation requests stay read-only; domain and
+webhook changes require user intent. Do not automatically retry mutations. Keep secrets masked;
+never call private dashboard APIs or extract OAuth credentials as a fallback.
+
+Published JS/Node 1.0.1 use requestId/request_id; follow installed types, not unreleased GitHub main.
+MCP uses request_id. Empty History weights are valid and do not imply zero risk.

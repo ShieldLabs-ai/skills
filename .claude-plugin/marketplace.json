@@ -9,7 +9,7 @@
   },
   "metadata": {
     "description": "ShieldLabs skills, slash commands and MCP server that help AI coding agents integrate device intelligence and fraud detection.",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "plugins": [
     {
@@ -17,7 +17,7 @@
       "displayName": "ShieldLabs",
       "source": "./",
       "description": "Integrate ShieldLabs device intelligence and fraud detection into your app: browser identification, server-side verdicts, signed webhooks, risk decisions, account-abuse checks and investigations with the ShieldLabs MCP server.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "ShieldLabs",
         "email": "contact@shieldlabs.ai",

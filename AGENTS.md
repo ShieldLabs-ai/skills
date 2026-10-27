@@ -16,7 +16,7 @@ first, then only the reference files for the stack at hand.
 | Map Risk Scores, bands and flags to allow, step-up, review or block | [skills/shieldlabs-risk-decisions](skills/shieldlabs-risk-decisions/SKILL.md) |
 | Multi-accounting, account sharing, impossible travel, account takeover, ban evasion, promo abuse | [skills/shieldlabs-account-abuse](skills/shieldlabs-account-abuse/SKILL.md) |
 | Link identifications to user accounts with a User HID | [skills/shieldlabs-user-linking](skills/shieldlabs-user-linking/SKILL.md) |
-| Investigate requests, users, devices and webhook signatures with the ShieldLabs MCP server | [skills/shieldlabs-investigate](skills/shieldlabs-investigate/SKILL.md) |
+| Connect OAuth MCP, manage domains/webhooks and investigate requests, users and devices with the ShieldLabs MCP server | [skills/shieldlabs-investigate](skills/shieldlabs-investigate/SKILL.md) |
 
 ## Core rules
 
@@ -40,13 +40,20 @@ first, then only the reference files for the stack at hand.
 
 ## MCP server
 
-In Claude Code and in Grok, `.mcp.json` starts the read-only ShieldLabs MCP server
-(`npx -y @shieldlabs-ai/mcp`) with `SHIELDLABS_API_KEY` and the optional Management API and webhook
-variables from the environment. In Grok the plugin must be trusted before that server starts.
-Cursor, Codex and other clients add the server to their own configuration
-([clients.md](skills/shieldlabs-investigate/references/clients.md)). Its tools are listed in
-[skills/shieldlabs-investigate](skills/shieldlabs-investigate/SKILL.md). The hosted server only
-confirms sign-in until history, domains and webhooks exist on `/mcp/v1`.
+The plugin connects to `https://mcp.shieldlabs.ai/mcp` over HTTP with OAuth. No API key or local
+npm process is required for MCP. See [client setup](skills/shieldlabs-investigate/references/clients.md).
+The current server exposes 21 tools; use the [investigate skill](skills/shieldlabs-investigate/SKILL.md)
+for their workflows and [catalog](skills/shieldlabs-investigate/references/tools.md) for inputs.
+
+Start with `shieldlabs_check_connection` and `shieldlabs_list_domains`. History takes a hostname;
+management takes public UUIDs. Pass the selected hostname explicitly when multiple domains are enabled.
+An investigation stays read-only. Mutations need user intent, are never automatically retried, and
+require `confirm: true` for destructive operations. Keep secrets masked unless an authorized installer
+needs a one-time credential. Never repeat secrets in chat or use private dashboard APIs as a fallback.
+
+Published JS/Node 1.0.1 SDKs use `requestId` / `request_id`; newer GitHub main branches may use
+`identificationId` / `identification_id`. Check installed package types. MCP currently uses
+`request_id`. History can omit detailed weights (`signals: []`) even with a nonzero Risk Score.
 
 ## Working on this repository
 

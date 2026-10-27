@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-10-27
+
+- Connect the hosted HTTP MCP with OAuth instead of starting a local API-key server.
+- Document all 21 current tools, account/domain selection, webhook lifecycle and real-visit verification.
+- Separate application SDK credentials from MCP sign-in and preserve published SDK identifier names.
+- Add current-tool contract checks and package the complete plugin, including MCP configuration.
+- Document public installation and release verification for maintainers.
+
 ## [Unreleased]
 
 ### Added

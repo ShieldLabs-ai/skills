@@ -114,6 +114,17 @@ class ValidateBrokenRepositoryTest(unittest.TestCase):
         path.write_text(json.dumps(data), encoding="utf-8")
         self.assertIn("policy.authentication must be 'ON_USE'", self.errors())
 
+    def test_mcp_rejects_local_process_and_embedded_credentials(self) -> None:
+        path = self.root / ".mcp.json"
+        for server in (
+            {"command": "npx", "args": ["-y", "@shieldlabs-ai/mcp"]},
+            {"type": "http", "url": "http://mcp.shieldlabs.ai/mcp"},
+            {"type": "http", "url": "https://mcp.shieldlabs.ai/mcp", "headers": {"Authorization": "Bearer placeholder"}},
+        ):
+            with self.subTest(server=server):
+                path.write_text(json.dumps({"mcpServers": {"shieldlabs": server}}))
+                self.assertIn("use the hosted HTTPS OAuth endpoint", self.errors())
+
     def test_frontmatter_that_yaml_would_misread(self) -> None:
         skill = self.root / "skills" / "shieldlabs-setup" / "SKILL.md"
         text = skill.read_text(encoding="utf-8")

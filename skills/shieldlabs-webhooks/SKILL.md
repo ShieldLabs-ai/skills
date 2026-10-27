@@ -19,6 +19,15 @@ dependable read.
 | React asynchronously: store `device_id` and `user_hid` per account, alert on the dangerous band, flag accounts for review, feed analytics | The webhook |
 | The latest state, or anything a delivery may have missed | The History API: rows can be refined after the webhook was sent, and the webhook is not sent again |
 
+## Configure through OAuth MCP
+
+The [MCP skill](../shieldlabs-investigate/SKILL.md) covers listing, creation, patches, enable/disable,
+rotation, verification, tests and deletion. Reuse the selected domain UUID and existing endpoint.
+Use only the authorized receiver URL; verification and testing send requests to it. Leave secrets
+masked unless installing a needed credential privately. Verify a ping, test the scored-event branch,
+then match a real visit's identification UUID separately. Changing a URL resets verification;
+rotating a secret invalidates the old one immediately. Do not automatically retry mutations.
+
 ## Workflow
 
 1. Register the endpoint in the analytics dashboard (https://app.shieldlabs.ai, Integration >
@@ -31,8 +40,7 @@ dependable read.
    like a wrong secret.
 4. Deduplicate on `data.request_id` with an atomic insert, answer 2xx within one second, and hand
    slow work to a queue.
-5. Handle `identification.scored` (its `data` is the same `Identification` model the History API
-   returns). Acknowledge `webhook.ping` and unknown event types with 2xx.
+5. Handle `identification.scored` (parse its `data` with the installed SDK; History may omit detailed signal weights). Acknowledge `webhook.ping` and unknown event types with 2xx.
 6. In the analytics dashboard press **Verify** (sends `webhook.ping`) and **Test** (sends a sample
    `identification.scored`), then check the server logs.
 

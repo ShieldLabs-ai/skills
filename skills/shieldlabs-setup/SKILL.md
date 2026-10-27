@@ -1,6 +1,6 @@
 ---
 name: shieldlabs-setup
-description: Plans and implements a complete ShieldLabs integration in the current project, or audits an existing one. Detects the stack from package.json, pyproject.toml or requirements.txt, go.mod, composer.json, pom.xml or build.gradle and .csproj files, plans the browser identification, the server-side verdict and the webhook, sets up environment variables without hardcoding keys, walks through the other ShieldLabs skills step by step and ends with a verification checklist. Use when the user says add ShieldLabs to this app, integrate ShieldLabs, set up ShieldLabs fraud detection or device intelligence, protect signup, login, checkout or payouts with ShieldLabs, runs /shieldlabs:setup, or asks to review, audit or fix an existing ShieldLabs integration (/shieldlabs:audit).
+description: Plans and implements a complete ShieldLabs integration in the current project, or audits an existing one. Detects the stack from package.json, pyproject.toml or requirements.txt, go.mod, composer.json, pom.xml or build.gradle and .csproj files, plans the browser identification, the server-side verdict and the webhook, sets up environment variables without hardcoding keys, walks through the other ShieldLabs skills step by step and ends with a verification checklist. Use when the user asks to connect ShieldLabs MCP with OAuth, configure a domain or webhook, says add ShieldLabs to this app, integrate ShieldLabs, set up ShieldLabs fraud detection or device intelligence, protect signup, login, checkout or payouts with ShieldLabs, runs /shieldlabs:setup, or asks to review, audit or fix an existing ShieldLabs integration (/shieldlabs:audit).
 ---
 
 # Set up ShieldLabs
@@ -28,6 +28,22 @@ https://github.com/ShieldLabs-ai/shieldlabs-skills.
 - **Setup** (default): follow the workflow below.
 - **Audit**: the user asks to review, audit or fix an existing integration, or runs
   `/shieldlabs:audit`. Jump to [Audit mode](#audit-mode).
+
+## Connect and configure through MCP
+
+Use [shieldlabs-investigate](../shieldlabs-investigate/SKILL.md) for the hosted OAuth connection,
+all 21 tools and domain/webhook lifecycle. Start with `shieldlabs_check_connection` and
+`shieldlabs_list_domains`; reuse the intended domain and webhook. Domain registration and
+`allow_subdomains` are account settings, not DNS provisioning. Use management UUIDs from returned
+state and hostnames for history. Only change settings within the user's requested scope.
+
+OAuth replaces MCP API-key configuration. Application SDK keys still belong in a private backend
+secret store ([environment.md](references/environment.md)). Keep one-time credentials masked unless
+an authorized installer needs them. Verify with a real browser visit and the same identification
+UUID in History; a successful connection or sample webhook alone does not complete installation.
+
+Published npm JS/Node 1.0.1 use `requestId` / `request_id`; newer GitHub main names may differ.
+Check installed types before changing field names. MCP inputs remain `request_id`.
 
 ## Setup workflow
 
