@@ -6,6 +6,39 @@ https://docs.shieldlabs.ai/features/risk-signals.
 
 ## Detection flags
 
+The compatible Node 1.1.0 candidate normalizes these **20 flags**. Check the installed SDK
+before using a flag; the hosted MCP adapter and older language/package versions can expose a
+different model. A missing field in an unsupported model is not evidence of a negative result.
+
+| Flag | Meaning / handling |
+|---|---|
+| `vpn` | VPN evidence, including browser VPN/proxy evidence in History |
+| `proxy` | Proxy evidence |
+| `private_relay` | Privacy relay evidence; connection type remains `privacy_relay` |
+| `tor` | Tor evidence |
+| `check_incomplete` | Browser check incomplete |
+| `network_check_incomplete` | Network check incomplete; History column `is_stun_not_checked` |
+| `os_not_detected` | OS not determined |
+| `timezone_mismatch` | Time-zone mismatch |
+| `javascript_disabled` | JavaScript features unavailable |
+| `os_mismatch` | Reported and observed OS mismatch |
+| `ip_mismatch` | IP mismatch context; do not treat it alone as fraud |
+| `latency_test` | Latency-test flag; preserve it without inventing thresholds |
+| `anti_detect_browser` | Anti-detect browser evidence |
+| `device_spoofing` | Device-spoofing evidence |
+| `banned_ip` | Rate-limited/banned IP; check the `999` marker separately |
+| `incognito` | Private browsing |
+| `search_bot` | Search crawler |
+| `ai_bot` | AI-bot classification |
+| `browser_automation` | Browser automation |
+| `ai_browser` | AI-browser classification |
+
+The AI flags are booleans; this SDK model does not expose a `bot_info` identity object. Do not invent bot names,
+providers, categories, confidence or verified identity from these flags. Scope any blocking to
+the requested protected action; preserve legitimate crawler access to public pages.
+
+### Legacy Node 1.0.1 model
+
 The table below is the legacy 19-flag normalized model of the published Node 1.0.1 contract.
 It is not the complete current wire model. Read [the SDK contract preflight](../../shieldlabs-server/references/sdk-contract.md)
 before interpreting absent fields. Old SDKs default missing flags to false; that default is not

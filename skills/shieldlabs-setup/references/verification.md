@@ -3,6 +3,10 @@
 Run these checks after the setup, and after any change to the integration. Report which ones
 passed and which could not be run (for example because no registered domain is available yet).
 
+Use the selected setup path only: OAuth MCP by default, or the ShieldLabs dashboard fallback.
+For a frontend-only app, verify its UUID and Risk Score through that path and report backend
+checks as not configured. Webhook checks apply only when a webhook is requested.
+
 ## 1. Build and keys
 
 - [ ] The app builds, and its type checks and tests pass.
@@ -27,7 +31,7 @@ passed and which could not be run (for example because no registered domain is a
 
 - [ ] The network panel shows `snippet.js` from `https://cdn.shieldlabs.ai` and successful posts to
   `https://rest.shieldlabs.ai`; the console shows no Content Security Policy errors.
-- [ ] The request of the protected action (for example `POST /api/signup`) carries a `requestId`.
+- [ ] The request of the protected action (for example `POST /api/signup`) carries an `identificationId`.
 - [ ] Nothing identifies on page load or on route changes, unless you chose `checkOnLoad` or
   `runOnMount` for a specific page. The History API can still show one more identification for the
   same device and session, observed just before the action, with a request ID the page never
@@ -44,7 +48,7 @@ passed and which could not be run (for example because no registered domain is a
 
 Any of these, with the request ID from the log:
 
-- The MCP tool `shieldlabs_get_identification` with `{"request_id": "<id>"}` (shieldlabs-investigate
+- The MCP tool `shieldlabs_get_identification` with `{"domain": "example.com", "request_id": "<id>", "wait": true}` (shieldlabs-investigate
   skill).
 - Node.js:
 
@@ -71,8 +75,8 @@ Any of these, with the request ID from the log:
 
 ## 6. Negative paths
 
-- [ ] Sending the same `requestId` again is refused (`replayed`).
-- [ ] Sending the action without a `requestId` follows the unverified path (step-up, review or a
+- [ ] Sending the same `identificationId` again is refused (`replayed`).
+- [ ] Sending the action without an `identificationId` follows the unverified path (step-up, review or a
   refusal, as the policy says), never "allow as clean".
 - [ ] A unit test with the policy helper's `now` option set 10 minutes after `observed_at` gives
   `stale`.

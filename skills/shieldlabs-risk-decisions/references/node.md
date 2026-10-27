@@ -11,13 +11,13 @@ import { userHid } from '@shieldlabs-ai/node';
 import { decide } from './risk-policy';
 
 app.post('/api/payout', express.json(), async (req, res) => {
-  const identification = await readIdentification(req.body.requestId); // shieldlabs-server skill; null on any failure
-  const firstUse = identification ? await claimRequestId(identification.request_id) : false;
+  const identification = await readIdentification(req.body.identificationId); // shieldlabs-server skill; null on any failure
+  const firstUse = identification ? await claimRequestId(identification.identification_id) : false;
   const { decision, reason } = decide(identification, 'high', {
     firstUse,
     expectedUserHid: userHid(String(req.user.id), process.env.USER_HID_SECRET!),
   });
-  logger.info({ requestId: identification?.request_id, decision, reason }, 'payout decision');
+  logger.info({ identificationId: identification?.identification_id, decision, reason }, 'payout decision');
 
   switch (decision) {
     case 'allow':

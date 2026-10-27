@@ -6,19 +6,20 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [1.1.0] - 2026-10-27
 
+Release candidate prepared on this date; public publication is pending.
+
 - Connect the hosted HTTP MCP with OAuth instead of starting a local API-key server.
 - Document all 21 current tools, account/domain selection, webhook lifecycle and real-visit verification.
-- Separate application SDK credentials from MCP sign-in and preserve published SDK identifier names.
+- Separate application SDK credentials from MCP sign-in and distinguish published 1.0.1 names from the compatible 1.1.0 candidates.
 - Add current-tool contract checks and package the complete plugin, including MCP configuration.
 - Document public installation and release verification for maintainers.
 - Re-audit all eight skills after source refresh; gate old SDK normalization, preserve raw webhook envelopes, dedupe current event IDs and correct Test/retry assumptions.
 
-## [Unreleased]
-
-### Added
-
-- Grok plugin manifests in `.grok-plugin/` and Grok install steps. The plugin starts the local
-  MCP server. The hosted server still only confirms sign-in.
+- Add `/shieldlabs:get-started` as an entry point, with OAuth MCP by default and the dashboard fallback.
+- Keep first install scoped to the existing app, with no invented backend or mandatory webhook.
+- Document the current 20-flag Node model and current-wire History mock; preserve explicit legacy tests.
+- Correct remaining Node reference identifiers, SDK compatibility wording and webhook Test semantics.
+- Retain Grok metadata, with remote HTTP/OAuth support explicitly unverified in that client.
 
 ## [1.0.0] - 2026-09-30
 

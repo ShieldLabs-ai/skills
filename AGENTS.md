@@ -9,7 +9,7 @@ first, then only the reference files for the stack at hand.
 
 | Task | Skill |
 |---|---|
-| Add ShieldLabs to a project, plan the integration, or audit an existing one | [skills/shieldlabs-setup](skills/shieldlabs-setup/SKILL.md) |
+| Add ShieldLabs to a project with OAuth MCP by default or dashboard fallback, plan the integration, or audit an existing one | [skills/shieldlabs-setup](skills/shieldlabs-setup/SKILL.md) |
 | Install and use the browser SDK (plain JavaScript, React, Next.js, Vue and Nuxt, Angular, Svelte and SvelteKit) | [skills/shieldlabs-browser](skills/shieldlabs-browser/SKILL.md) |
 | Read verdicts on the server (Node.js, Python, Go, PHP, Java, .NET) | [skills/shieldlabs-server](skills/shieldlabs-server/SKILL.md) |
 | Receive and verify webhooks | [skills/shieldlabs-webhooks](skills/shieldlabs-webhooks/SKILL.md) |
@@ -51,8 +51,8 @@ An investigation stays read-only. Mutations need user intent, are never automati
 require `confirm: true` for destructive operations. Keep secrets masked unless an authorized installer
 needs a one-time credential. Never repeat secrets in chat or use private dashboard APIs as a fallback.
 
-Published JS/Node 1.0.1 SDKs use `identificationId` / `request_id`; newer GitHub main branches may use
-`identificationId` / `identification_id`. Check installed package types. MCP currently uses
+Published JS/Node 1.0.1 SDKs use `requestId` / `request_id`; the compatible 1.1.0 candidates use
+`identificationId` / `identification_id`. These examples target the candidates; check the installed package types. MCP currently uses
 `request_id`. History can omit detailed weights (`signals: []`) even with a nonzero Risk Score.
 
 ## Working on this repository

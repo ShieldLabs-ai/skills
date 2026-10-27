@@ -56,7 +56,7 @@ class HistoryMockTest(unittest.TestCase):
 
     def test_rows_file_overrides_and_not_found(self) -> None:
         row = self.mock.search("request_id", BAD.upper(), 1, 0)[1]["data"][0]
-        self.assertEqual((row["score"], row["is_antidetect"], row["request_id"]), (80, True, BAD))
+        self.assertEqual((row["score"], row["is_antidetect"], row["identification_id"]), (80, True, BAD))
         self.assertEqual(self.mock.search("request_id", MISSING, 1, 0)[1], {"data": [], "total": 0})
         old = self.mock.search("request_id", OLD, 1, 0)[1]["data"][0]
         age = datetime.now(timezone.utc) - parse_created_at(old["created_at"])
@@ -66,10 +66,27 @@ class HistoryMockTest(unittest.TestCase):
     def test_other_lookups_search_the_file_newest_first(self) -> None:
         status, body = self.mock.search("user_hid", HID, 100, 0)
         self.assertEqual(status, 200)
-        self.assertEqual([row["request_id"] for row in body["data"]], [BAD, OLD])
+        self.assertEqual([row["identification_id"] for row in body["data"]], [BAD, OLD])
         self.assertEqual(self.mock.search("user_hid", HID.upper(), 100, 0)[1]["total"], 0)  # exact match
-        self.assertEqual(self.mock.search("user_hid", HID, 1, 1)[1]["data"][0]["request_id"], OLD)
+        self.assertEqual(self.mock.search("user_hid", HID, 1, 1)[1]["data"][0]["identification_id"], OLD)
         self.assertEqual(self.mock.search("user_hid", HID, 500, 0)[1]["total"], 2)  # limit 500 becomes 20
+
+    def test_current_wire_id_does_not_hide_legacy_sdk_mismatch(self) -> None:
+        row = self.mock.search("request_id", BAD, 1, 0)[1]["data"][0]
+        self.assertEqual(row["identification_id"], BAD)
+        self.assertNotIn("request_id", row)
+        self.assertIn("is_ai_bot", row)
+        self.assertIn("is_device_spoof", row)
+        self.assertEqual(self.mock.search("identification_id", BAD, 1, 0)[1]["data"], [row])
+
+    def test_legacy_contract_is_explicit(self) -> None:
+        mock = history_mock.HistoryMock({}, contract="legacy")
+        row = mock.search("request_id", BAD, 1, 0)[1]["data"][0]
+        self.assertEqual(row["request_id"], BAD)
+        self.assertNotIn("identification_id", row)
+        self.assertNotIn("is_ai_bot", row)
+        with self.assertRaises(ValueError):
+            history_mock.HistoryMock({}, contract="invalid")
 
     def test_invalid_values_behave_like_the_api(self) -> None:
         self.assertEqual(self.mock.search("request_id", "not-a-uuid", 1, 0)[0], 500)

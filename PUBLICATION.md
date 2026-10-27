@@ -82,3 +82,15 @@ An incorrect UUID-only event_id check in the QA receiver initially rejected real
 Core uses a stable 40-character hex event ID. The receiver was corrected and SDK regression
 coverage now includes opaque IDs. Public SDK/skills examples already accepted opaque event keys.
 The first missing identification remains awaiting the developer's production log search.
+
+## One-link onboarding release
+
+Publish the canonical https://shieldlabs.ai/get-started.md entry point with the compatible SDKs.
+Check that it returns HTTP 200 and raw Markdown; the landing Prompt and editor links must use
+that same guide. The guide and setup skill choose OAuth MCP by default or the ShieldLabs dashboard
+fallback, execute one path and verify the same browser identification. Browser-only projects do
+not need an invented backend; report server enforcement as not configured.
+
+The landing can offer Prompt, Skills and MCP in one control. `npx skills add` installs instructions,
+not SDKs or an OAuth grant. Verify that command anonymously after opening the repository; do not
+advertise a private repository as publicly installable. Do not add a ShieldLabs CLI requirement.

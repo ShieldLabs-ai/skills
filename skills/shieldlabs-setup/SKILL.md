@@ -35,22 +35,36 @@ https://github.com/ShieldLabs-ai/shieldlabs-skills.
 - **Audit**: the user asks to review, audit or fix an existing integration, or runs
   `/shieldlabs:audit`. Jump to [Audit mode](#audit-mode).
 
-## Connect and configure through MCP
+## Choose one account setup path
 
-Use [shieldlabs-investigate](../shieldlabs-investigate/SKILL.md) for the hosted OAuth connection,
-all 21 tools and domain/webhook lifecycle. Start with `shieldlabs_check_connection` and
-`shieldlabs_list_domains`; reuse the intended domain and webhook. Domain registration and
-`allow_subdomains` are account settings, not DNS provisioning. Use management UUIDs from returned
-state and hostnames for history. Only change settings within the user's requested scope.
+Use **OAuth MCP by default**. Use the **ShieldLabs dashboard** only when the user chooses it or
+MCP is unavailable. Do one path, then install the SDKs. While OAuth approval is pending, wait;
+do not start a second flow or switch to the dashboard path.
 
-OAuth replaces MCP API-key configuration. Application SDK keys still belong in a private backend
-secret store ([environment.md](references/environment.md)). Keep one-time credentials masked unless
-an authorized installer needs them. Verify with a real browser visit and the same identification
-UUID in History; a successful connection or sample webhook alone does not complete installation.
+### OAuth MCP
 
-These JS/Node examples target the compatible 1.1.0 candidates. The npm 1.0.1 packages still
-use `requestId` / `request_id` and do not satisfy the current contract. Until 1.1.0 is publicly
-released, use only validated candidate archives for QA. MCP inputs remain `request_id`.
+Use [shieldlabs-investigate](../shieldlabs-investigate/SKILL.md) and its [client setup](../shieldlabs-investigate/references/clients.md).
+Give the user the fresh authorization URL directly and let them approve in their browser.
+Run `shieldlabs_check_connection` and `shieldlabs_list_domains`; select the requested domain.
+Reuse configured keys. If absent, create only the authorized domain with `shieldlabs_add_domain`.
+Opt into `include_secret=true` only when installing a needed server credential; save it privately
+([environment.md](references/environment.md)). An existing server key is masked: ask for secure
+configuration or explicit rotation approval, never rotate automatically.
+
+Use returned UUIDs for domain management and hostnames for History. Inspect `allow_subdomains`
+before using a subdomain; registering a domain does not create DNS or deploy the application.
+OAuth authenticates MCP; the app's SDK still uses its domain keys. Never extract OAuth tokens or
+call private dashboard APIs. The MCP client may retain one-time credential responses.
+
+### ShieldLabs dashboard
+
+Guide the user to https://app.shieldlabs.ai to add or select the intended domain and configure
+its keys locally. Never request private keys in chat. Continue with SDK installation without
+requiring MCP; verify through the backend and dashboard instead.
+
+These JS/Node examples target the compatible 1.1.0 candidates. npm 1.0.1 uses
+`requestId` / `request_id` and does not satisfy the current contract. Check registry availability
+before installing; validated candidate archives are for authorized QA only. MCP uses `request_id`.
 
 ## Setup workflow
 
@@ -58,15 +72,14 @@ released, use only validated candidate archives for QA. MCP inputs remain `reque
    ([detect_stack.py](scripts/detect_stack.py)) when Python is available; otherwise read the
    manifests with the table below ([stack-detection.md](references/stack-detection.md) has the
    details, monorepos and existing ShieldLabs code).
-2. **List the protected actions** with the user: signup, login, checkout, payout, payment method
-   change, password or email change, promo or trial redemption. Give each a sensitivity (low,
-   medium, high).
-3. **Present the plan** with the template below and wait for the user to confirm it before
-   changing files. When the request already names the protected actions and what should happen,
-   or nobody can answer (an automated or delegated run), print the plan with the defaults you
-   chose for open points and continue.
-4. **Keys and environment.** Add the variables to the environment and to `.env.example`, keep
-   `.env` out of git, never hardcode a key ([environment.md](references/environment.md)).
+2. **Inspect existing integration and select the action.** Preserve working setup. Ask before
+   replacing an existing integration. Use the actions the user requested, or a relevant existing
+   action for a basic install; do not invent signup, billing or account flows.
+3. **State the plan and choose one setup path above.** A request to install authorizes the
+   necessary project changes; proceed within that scope. Clarify genuinely missing decisions,
+   and obtain approval before destructive changes or credential rotation.
+4. **Keys and environment.** Configure through the chosen path. Add variable placeholders to
+   `.env.example`, keep `.env` out of git and never hardcode keys ([environment.md](references/environment.md)).
 5. **Browser.** Install the browser package, set it up once at the app root, and call
    `identify()` in the handler of each protected action, sending the `identificationId` with the action
    (shieldlabs-browser, [../shieldlabs-browser/SKILL.md](../shieldlabs-browser/SKILL.md)).
@@ -74,13 +87,20 @@ released, use only validated candidate archives for QA. MCP inputs remain `reque
    request ID once, run the policy helper and map the result to an action
    (shieldlabs-server, [../shieldlabs-server/SKILL.md](../shieldlabs-server/SKILL.md), and
    shieldlabs-risk-decisions, [../shieldlabs-risk-decisions/SKILL.md](../shieldlabs-risk-decisions/SKILL.md)).
-7. **Signed-in users.** Compute a User HID on the server and pass it to the browser SDK
+7. **Signed-in users, when needed.** Compute a User HID on the server and pass it to the browser SDK
    (shieldlabs-user-linking, [../shieldlabs-user-linking/SKILL.md](../shieldlabs-user-linking/SKILL.md)).
-   For signups, rewards and payouts, add account-level checks
+   When account-abuse protection is requested, add the relevant account-level checks
    (shieldlabs-account-abuse, [../shieldlabs-account-abuse/SKILL.md](../shieldlabs-account-abuse/SKILL.md)).
 8. **Webhook** (optional): only for asynchronous work such as storing device IDs per account or
    alerts (shieldlabs-webhooks, [../shieldlabs-webhooks/SKILL.md](../shieldlabs-webhooks/SKILL.md)).
-9. **Verify** with the checklist below ([verification.md](references/verification.md)).
+9. **Verify the first result.** Match the browser UUID to its stored identification and Risk Score
+   through MCP (`wait=true`) or the dashboard, and to the backend result when present. Run the
+   applicable checklist below ([verification.md](references/verification.md)). Webhooks and
+   additional account checks are optional and do not block a basic install.
+
+If the app has no backend, install browser identification and verify through MCP or the dashboard.
+Do not create a backend unless requested, expose private keys in the frontend or claim a browser-only
+integration enforces server-side decisions. Mark server verification as not configured.
 
 ## Detect the stack
 
@@ -206,8 +226,8 @@ The server SDKs for Python (`shieldlabs`), Go, PHP, Java and .NET have the same 
 
 ## Pitfalls
 
-- Changing files in an interactive run before the user confirmed the plan, or planning only the
-  browser half: without the server check nothing is protected.
+- Replacing a working integration without approval, or describing browser identification alone
+  as server-side protection.
 - Keys pasted into code, examples or chat instead of environment variables and `.env.example`
   placeholders.
 - Identifying in a layout, on page load or on route changes instead of at the protected action.
@@ -218,6 +238,9 @@ The server SDKs for Python (`shieldlabs`), Go, PHP, Java and .NET have the same 
 
 ## Verification checklist
 
+Apply server checks only when a backend is in scope. For a browser-only installation, verify the
+first UUID and score through the selected path; report server enforcement as not configured.
+
 - [ ] The build passes and no `sec_` or `whsec_` value appears in the frontend output (or, without
   a build step, in the folder the server serves).
 - [ ] The app runs on a registered domain over HTTPS (not `localhost`).
@@ -226,8 +249,8 @@ The server SDKs for Python (`shieldlabs`), Go, PHP, Java and .NET have the same 
 - [ ] The History API returns the row for that request ID (MCP tool
   `shieldlabs_get_identification`, a server SDK one-liner, or `curl`).
 - [ ] Reusing the request ID is refused; an action without one takes the unverified path.
-- [ ] Webhooks (if any): Verify and Test in the analytics dashboard get a 2xx; a repeated Test is
-  processed once.
+- [ ] Webhooks (if any): Verify and Test in the analytics dashboard get a 2xx; two Test clicks are two
+  events, while replaying the exact same signed delivery has one business effect.
 - [ ] The identification appears in the analytics dashboard.
 
 Commands and details: [verification.md](references/verification.md).

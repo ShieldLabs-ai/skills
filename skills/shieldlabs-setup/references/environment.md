@@ -3,7 +3,12 @@
 These variables are for the application SDKs. The hosted MCP uses client OAuth and needs none
 of them in its configuration. Keep application keys when migrating an old local MCP connection.
 
-Every domain registered in the analytics dashboard (https://app.shieldlabs.ai, Integration >
+Domains can be configured through OAuth MCP or the ShieldLabs dashboard. For a new domain,
+`shieldlabs_add_domain` returns the public key; an installer may request the needed one-time
+server credential with `include_secret=true` and store it privately. Existing secrets stay masked.
+Do not rotate to recover a missing key without explicit approval.
+
+Every domain registered in the dashboard (https://app.shieldlabs.ai, Integration >
 Domains) has its own keys under Integration > API keys. Each webhook endpoint has its own signing
 secret under Integration > Webhooks.
 
@@ -100,8 +105,8 @@ The Public Key is public by design; never write any other ShieldLabs key into a 
 
 ## Development and staging
 
-Register a separate domain for development or staging (for example `staging.example.com`, a
-hostname that resolves in public DNS) and use its keys there. The hosts are the same everywhere.
+Use an authorized development or staging hostname with the registered domain's keys. Inspect
+`allow_subdomains` before using a child hostname; do not assume each subdomain needs separate registration. The hosts are the same everywhere.
 Identifications from pages on `localhost` are not recorded, even though the page receives a
 request ID.
 

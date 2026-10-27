@@ -36,9 +36,10 @@ rotating a secret invalidates the old one immediately. Do not automatically retr
 
 ## Workflow
 
-1. Register the endpoint in the analytics dashboard (https://app.shieldlabs.ai, Integration >
-   Webhooks > Add endpoint) with a public HTTPS URL on a route the backend controls. Copy its
-   signing secret (`whsec_...`) into `SHIELDLABS_WEBHOOK_SECRET` on the server.
+1. Use the chosen setup path: create or reuse the endpoint through OAuth MCP by default,
+   or through the ShieldLabs dashboard (https://app.shieldlabs.ai, Integration > Webhooks).
+   Use an authorized public HTTPS route the backend controls. Save the needed one-time signing
+   secret (`whsec_...`) privately as `SHIELDLABS_WEBHOOK_SECRET`; never rotate an existing one automatically.
 2. Make that route receive the raw body bytes: no JSON body parser before verification.
 3. Verify and parse with the SDK's `constructEvent(rawBody, signatureHeader, secrets)`. Answer 401
    on a signature error and 400 on a parse error. Read the secrets once at startup; when none is
@@ -48,8 +49,9 @@ rotating a secret invalidates the old one immediately. Do not automatically retr
    in one atomic operation; answer 2xx promptly, preferably within one second. Never mark an event
    processed before its job is durable. Use `data.identification_id` to correlate the visit.
 5. Handle `identification.scored` (parse its `data` with the installed SDK; History may omit detailed signal weights). Acknowledge `webhook.ping` and unknown event types with 2xx.
-6. In the analytics dashboard press **Verify** (sends `webhook.ping`) and **Test** (sends a sample
-   `identification.scored`), then check the server logs.
+6. Run MCP **Verify** and **Test** or use those buttons in the dashboard, following the chosen
+   path. They send `webhook.ping` and a sample `identification.scored`; check the receiver evidence.
+   Match a real identification separately before claiming live delivery works.
 
 ## SDK entry points
 

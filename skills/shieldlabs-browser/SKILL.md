@@ -1,6 +1,6 @@
 ---
 name: shieldlabs-browser
-description: Adds the ShieldLabs browser SDK to a web frontend so that each protected action (signup, login, checkout, payout, password change) runs one fresh identification and sends its request ID to the backend. Covers @shieldlabs-ai/js for plain JavaScript and pages without a bundler, @shieldlabs-ai/react, @shieldlabs-ai/next, @shieldlabs-ai/vue with Nuxt, @shieldlabs-ai/angular and @shieldlabs-ai/svelte with SvelteKit, plus Content Security Policy, consent, server-side rendering and the call budget. Use when the user asks to install or load the ShieldLabs agent or snippet, get a identificationId in the browser, call identify() on a form, add ShieldLabsProvider, provideShieldLabs, createShieldLabs or setShieldLabs, load the agent only after consent (autoLoad, load()), identify early with getAgent(), fix load_failed, timeout, not_initialized or unsupported_environment errors, or wire the ShieldLabs Public Key into a frontend.
+description: Adds the ShieldLabs browser SDK to a web frontend so that each protected action (signup, login, checkout, payout, password change) runs one fresh identification and sends its request ID to the backend. Covers @shieldlabs-ai/js for plain JavaScript and pages without a bundler, @shieldlabs-ai/react, @shieldlabs-ai/next, @shieldlabs-ai/vue with Nuxt, @shieldlabs-ai/angular and @shieldlabs-ai/svelte with SvelteKit, plus Content Security Policy, consent, server-side rendering and the call budget. Use when the user asks to install or load the ShieldLabs agent or snippet, get an identificationId in the browser, call identify() on a form, add ShieldLabsProvider, provideShieldLabs, createShieldLabs or setShieldLabs, load the agent only after consent (autoLoad, load()), identify early with getAgent(), fix load_failed, timeout, not_initialized or unsupported_environment errors, or wire the ShieldLabs Public Key into a frontend.
 ---
 
 # ShieldLabs in the browser
@@ -44,8 +44,8 @@ visitor ID or a device ID: the backend reads the verdict (shieldlabs-server skil
 
 `@shieldlabs-ai/js` is the shared loader: the framework packages list it as a peer dependency, so
 install it next to them. The Public Key is the only ShieldLabs credential that belongs in browser
-code. Copy it from the analytics dashboard at https://app.shieldlabs.ai (Integration > API keys;
-the Install tab shows a ready snippet with it) and expose it with the framework's public prefix:
+code. Obtain it through the selected MCP or dashboard setup path, reuse existing configuration and
+expose it with the framework's public prefix. The dashboard is at https://app.shieldlabs.ai:
 
 | Framework | Variable |
 |---|---|
@@ -79,7 +79,7 @@ form.addEventListener('submit', async (event) => {
   } catch (error) {
     if (error instanceof ShieldLabsError) console.warn('ShieldLabs:', error.code);
   }
-  // Same request as the protected action. Without a identificationId the server treats it as unverified.
+  // Same request as the protected action. Without an identificationId the server treats it as unverified.
   await fetch('/api/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

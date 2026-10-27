@@ -171,8 +171,8 @@ With Hono, read the bytes with `new Uint8Array(await c.req.arrayBuffer())` and t
 
 ## Typed data
 
-`event.data` is an `Identification`: `request_id`, `visitor_id`, `device_id`, `session_id`,
+`event.data` in the compatible Node 1.1.0 candidate is an `Identification`: `identification_id`, `visitor_id`, `device_id`, `session_id`,
 `cookie_id`, `user_hid` (`string | null`), `domain`, `public_ip` and `local_ip` (`{ ip, country }`),
 `connection_type`, `os`, `browser`, `device_type`, `traffic_source`, `risk_score`, `signals`
-(`{ name, weight, description: null }`), `detection_flags` (19 booleans), `observed_at`,
+(`{ name, weight, description: null }`), `detection_flags` (20 booleans), `observed_at`,
 `source: 'webhook'` and `raw`. Use `riskBand(event.data.risk_score)` for the band.

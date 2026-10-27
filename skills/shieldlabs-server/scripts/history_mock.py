@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """A local stand-in for the ShieldLabs History API, for offline tests of a backend.
 
-Usage: python3 history_mock.py [--port 4010] [--host 127.0.0.1] [--rows ROWS.json] [--only-rows] [--quiet]
+Usage: python3 history_mock.py [--port 4010] [--host 127.0.0.1] [--rows ROWS.json] [--only-rows] [--contract current|legacy] [--quiet]
 
 Answers GET /api/v1/history/{type}/{value}?limit=&offset= with the same JSON shape as the History
 API: {"data": [rows, newest first], "total": n}, History rows with History field names (score,
@@ -9,6 +9,7 @@ created_at, ip, country, score_details, is_* columns). Point a server SDK at it 
 SHIELDLABS_API_BASE_URL=http://127.0.0.1:4010 and a placeholder key such as
 sec_test0000-test0000-test0000.
 
+- Current rows use identification_id by default; --contract legacy emits request_id instead.
 - Without --rows, every request_id lookup finds one trusted identification (Risk Score 0, no
   flags) observed just now, so the freshness check passes.
 - ROWS.json maps request IDs to overrides of History row fields, for example
@@ -34,8 +35,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, unquote, urlsplit
 
-LOOKUPS = ("ip", "user_hid", "visitor_id", "request_id", "device_id", "session_id", "cookie_id")
-UUID_LOOKUPS = {"visitor_id", "request_id", "device_id", "session_id", "cookie_id"}
+LOOKUPS = ("ip", "user_hid", "visitor_id", "request_id", "identification_id", "device_id", "session_id", "cookie_id")
+UUID_LOOKUPS = {"visitor_id", "request_id", "identification_id", "device_id", "session_id", "cookie_id"}
 PATH_RE = re.compile(r"^/api/v1/history/([^/]+)/([^/]+)/?$")
 UUID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 IPV4_RE = re.compile(r"^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$")
@@ -45,6 +46,9 @@ FLAG_COLUMNS = (
     "is_os_not_detected", "is_timezone_mismatch", "is_js_disabled", "is_browser_automation",
     "is_incognito", "is_search_bot",
 )
+CURRENT_FLAG_COLUMNS = tuple(dict.fromkeys(FLAG_COLUMNS + (
+    "is_latency_test", "is_device_spoof", "is_rate_limited", "is_ai_bot", "is_ai_browser",
+)))
 NAMESPACE = uuid.UUID("6f1c2e8a-3b5d-4c7e-8f9a-0b1c2d3e4f5a")
 
 
@@ -54,12 +58,14 @@ def history_time(moment: datetime) -> str:
     return moment.strftime("%Y-%m-%d %H:%M:%S.") + f"{moment.microsecond // 1000:03d}"
 
 
-def make_row(request_id: str, overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def make_row(request_id: str, overrides: Optional[Dict[str, Any]] = None, contract: str = "current") -> Dict[str, Any]:
     """One History row: a trusted identification observed now, then the overrides."""
+    if contract not in ("current", "legacy"):
+        raise ValueError("contract must be current or legacy")
     overrides = dict(overrides or {})
     moment = datetime.now(timezone.utc) - timedelta(minutes=float(overrides.pop("minutes_ago", 0)))
     row: Dict[str, Any] = {
-        "request_id": request_id.lower(),
+        ("identification_id" if contract == "current" else "request_id"): request_id.lower(),
         "session_id": str(uuid.uuid5(NAMESPACE, "session:" + request_id.lower())),
         "cookie_id": "4449bb58-590c-444c-ae1f-d1ddc768dbdd",
         "domain": "example.com",
@@ -77,12 +83,12 @@ def make_row(request_id: str, overrides: Optional[Dict[str, Any]] = None) -> Dic
         "created_at": history_time(moment),
         "ver": int(time.time() * 1000),
     }
-    row.update({column: False for column in FLAG_COLUMNS})
+    row.update({column: False for column in (CURRENT_FLAG_COLUMNS if contract == "current" else FLAG_COLUMNS)})
     row.update(overrides)
     return row
 
 
-def load_rows(path: Optional[Path]) -> Dict[str, Optional[Dict[str, Any]]]:
+def load_rows(path: Optional[Path], contract: str = "current") -> Dict[str, Optional[Dict[str, Any]]]:
     """Reads ROWS.json: {request_id: overrides or null}."""
     if path is None:
         return {}
@@ -95,15 +101,18 @@ def load_rows(path: Optional[Path]) -> Dict[str, Optional[Dict[str, Any]]]:
             raise ValueError(f"{path}: {request_id!r} is not a request ID (a UUID)")
         if overrides is not None and not isinstance(overrides, dict):
             raise ValueError(f"{path}: the value for {request_id} must be an object or null")
-        rows[request_id.lower()] = None if overrides is None else make_row(request_id, overrides)
+        rows[request_id.lower()] = None if overrides is None else make_row(request_id, overrides, contract=contract)
     return rows
 
 
 class HistoryMock:
     """The lookup logic, separate from HTTP so that tests can call it directly."""
 
-    def __init__(self, rows: Dict[str, Optional[Dict[str, Any]]], only_rows: bool = False) -> None:
+    def __init__(self, rows: Dict[str, Optional[Dict[str, Any]]], only_rows: bool = False, contract: str = "current") -> None:
+        if contract not in ("current", "legacy"):
+            raise ValueError("contract must be current or legacy")
         self.rows = rows
+        self.contract = contract
         self.only_rows = only_rows
 
     def search(self, lookup: str, value: str, limit: int, offset: int) -> Tuple[int, Dict[str, Any]]:
@@ -113,12 +122,12 @@ class HistoryMock:
             return 500, {"error": f"cannot parse {value!r} as a UUID"}  # the real API answers 500 too
         if lookup == "ip" and not IPV4_RE.match(value):
             return 500, {"error": f"cannot parse {value!r} as an IPv4 address"}
-        if lookup == "request_id":
+        if lookup in ("request_id", "identification_id"):
             key = value.lower()
             if key in self.rows:
                 found = [self.rows[key]] if self.rows[key] is not None else []
             else:
-                found = [] if self.only_rows else [make_row(key)]
+                found = [] if self.only_rows else [make_row(key, contract=self.contract)]
         else:
             def matches(row: Dict[str, Any]) -> bool:  # UUIDs match in any case, the rest exactly
                 field = str(row.get(lookup, ""))
@@ -180,9 +189,11 @@ def main(argv: List[str]) -> int:
     parser.add_argument("--rows", type=Path, help="JSON file that maps request IDs to row overrides or null")
     parser.add_argument("--only-rows", action="store_true", help="request IDs missing from --rows are not found")
     parser.add_argument("--quiet", action="store_true", help="do not log requests")
+    parser.add_argument("--contract", choices=("current", "legacy"), default="current",
+                        help="wire ID contract (default current: identification_id)")
     args = parser.parse_args(argv[1:])
     try:
-        mock = HistoryMock(load_rows(args.rows), only_rows=args.only_rows)
+        mock = HistoryMock(load_rows(args.rows, contract=args.contract), only_rows=args.only_rows, contract=args.contract)
     except (OSError, ValueError) as error:
         print(error, file=sys.stderr)
         return 2

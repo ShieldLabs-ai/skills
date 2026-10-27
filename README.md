@@ -93,12 +93,21 @@ cp -R shieldlabs-skills-main/skills/* ~/.claude/skills/
 | OpenCode | `~/.config/opencode/skills/` |
 | Other Agent Skills clients | the client's skills directory |
 
+## One-link setup
+
+Give your coding agent: **Read https://shieldlabs.ai/get-started.md and follow its instructions to install ShieldLabs in this project.**
+
+The guide and the setup skill use the same workflow: inspect the project, reuse existing integration,
+configure through OAuth MCP by default or the dashboard when chosen, install the matching SDKs and
+verify the first identification and Risk Score. Choose one setup path; do not run both. No separate
+ShieldLabs CLI is required. Skills installation and MCP connection are separate operations.
+
 ## Quick start
 
 After installing, open your project and ask the agent:
 
 - "Add ShieldLabs to this app and protect signup and checkout", or run
-  `/shieldlabs:setup signup and checkout`. The agent detects the stack, states a plan, and uses the scope you authorized to add the browser identification, the server-side check, environment variables
+  `/shieldlabs:get-started signup and checkout` (or `/shieldlabs:setup`). The agent detects the stack, states a plan, and uses the scope you authorized to add the browser identification, the server-side check, environment variables
   and a verification checklist.
 - "Audit our ShieldLabs integration", or run `/shieldlabs:audit`, for a report of problems by
   severity with fixes.
@@ -120,7 +129,7 @@ After installing, open your project and ask the agent:
 
 Also in the plugin:
 
-- **Slash commands**: [`/shieldlabs:setup`](commands/setup.md) and [`/shieldlabs:audit`](commands/audit.md).
+- **Slash commands**: [`/shieldlabs:get-started`](commands/get-started.md), [`/shieldlabs:setup`](commands/setup.md) and [`/shieldlabs:audit`](commands/audit.md).
 - **Cursor rule**: [`rules/shieldlabs.mdc`](rules/shieldlabs.mdc), attached when a task needs it.
 - **Agent guide**: [`AGENTS.md`](AGENTS.md) for Codex and other agents that read it.
 - **Helper scripts** in shieldlabs-setup: stack detection and a read-only audit scan (Python 3,
@@ -144,7 +153,7 @@ Node.js, a domain API key or a pasted bearer token for this connection. For skil
 ```sh
 # Codex
 codex mcp add shieldlabs --url https://mcp.shieldlabs.ai/mcp
-codex mcp login shieldlabs
+codex mcp login shieldlabs --no-browser
 
 # Claude Code: then authenticate through /mcp
 claude mcp add --transport http shieldlabs https://mcp.shieldlabs.ai/mcp
@@ -192,7 +201,7 @@ As checked on 2026-10-27, npm publishes `@shieldlabs-ai/js` 1.0.1 and `@shieldla
 Their identifier fields are `requestId` and `request_id`. Some GitHub main branches already use
 `identificationId` / `identification_id`; match the **installed package's types** when upgrading.
 The hosted MCP still accepts `request_id`. These names refer to the identification UUID, not a
-webhook delivery's event ID. Examples retain the published SDK names but require the
+webhook delivery's event ID. Examples target the compatible 1.1.0 candidates and require the
 [SDK contract preflight](skills/shieldlabs-server/references/sdk-contract.md). Node 1.0.1 can
 leave the ID empty on current History/webhook input; a working MCP connection does not prove
 application SDK compatibility. Webhook handlers preserve the verified raw envelope and event ID.

@@ -11,7 +11,7 @@ unverified, never a valid key for replay protection or webhook deduplication. MC
 OAuth adapter; a successful MCP read does not validate an application SDK.
 
 
-One identification describes one browser session. Abuse across accounts shows up in the
+One identification describes one check by the browser agent. Abuse across accounts shows up in the
 identifiers over time: many accounts on one device, one account on many devices, an account that
 jumps between countries. ShieldLabs detects four **High-Risk Events** on your users
 (Multi-accounting, Account sharing, Impossible travel, Account takeover), each with Medium or High

@@ -134,13 +134,17 @@ References with the same policy: [node.md](references/node.md), [python.md](refe
 
 ## Flags worth a rule of their own
 
+The table uses the compatible Node 1.1.0 model. Read the [current/legacy mapping](references/flags-and-signals.md)
+for all 20 flags; never interpret an unsupported old-SDK field as a confirmed negative. AI flags
+are booleans and do not provide bot identity or confidence metadata.
+
 | Flag | Meaning | Starting point |
 |---|---|---|
 | `browser_automation`, `javascript_disabled` | Automated or scripted browsing | Block on protected actions (the SDK default) |
 | `anti_detect_browser` | A browser that masks its real configuration | Step-up on medium actions, block on high |
 | `tor` | A Tor exit node | Step-up on medium actions, review or block on high |
 | `vpn`, `private_relay`, `proxy`, `tor` | A masked or hosted network | Already in the score. Many legitimate users (companies, privacy tools) use them: step-up on high-value actions instead of blocking outright |
-| `incognito`, `ip_mismatch`, `check_incomplete`, `stun_not_checked` | Context | Log only |
+| `incognito`, `ip_mismatch`, `check_incomplete`, `network_check_incomplete` | Context | Log only |
 
 ## Rules that keep decisions sound
 
