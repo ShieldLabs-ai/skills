@@ -175,8 +175,8 @@ export const POST = createWebhookHandler({
 | 413 | The body is larger than `maxBodySize` (default 1 MiB; a delivery is about 2 KB) |
 | 500 | `onEvent` threw, or no signing secret is configured |
 
-The handler reads the raw body only when the signature header is well formed. Deliveries time out
-after 1 second: keep `onEvent` short (write one row or enqueue a job). `onError(error, { request,
+The handler reads the raw body only when the signature header is well formed. Keep `onEvent`
+short and durably enqueue before acknowledging; sender/probe timeout budgets vary. `onError(error, { request,
 status })` is called before a 400, 401, 413 or 500. More in the shieldlabs-webhooks skill.
 
 ## Pages Router

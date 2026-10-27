@@ -129,7 +129,7 @@ app.use(express.json()); // global parsers after the webhook route
 
 | `event_type` | When | Payload |
 |---|---|---|
-| `identification.scored` | Every scored identification, and the **Test** button | `data`: the `Identification` (`request_id`, `visitor_id`, `device_id`, `user_hid`, `public_ip`, `local_ip`, `connection_type`, `risk_score`, `signals`, `detection_flags`, `traffic_source`, `observed_at`, ...) |
+| `identification.scored` | Every scored identification, and the **Test** button | Verified raw `data` uses `identification_id`, identifiers, score, flags and optional current fields. Older typed SDKs may expose a smaller model; keep the raw envelope |
 | `webhook.ping` | The **Verify** button | no `data` |
 | anything else | Event types added later | acknowledge with 2xx; the SDKs return an "unknown event" instead of throwing |
 
