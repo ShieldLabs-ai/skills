@@ -39,6 +39,15 @@ url = "https://mcp.shieldlabs.ai/mcp"
 Run the login command after saving the config. Do not add a bearer token or API key.
 See [Codex MCP documentation](https://developers.openai.com/codex/mcp).
 
+When the user wants to sign in in their own browser, run `codex mcp login shieldlabs --no-browser`
+and give them the new authorization URL before opening it anywhere yourself. Complete the entire
+flow in that browser. Keep one pending flow: overlapping consent tabs or moving an already-open
+consent page to another browser can cause `binding_mismatch` / "Cannot connect this app". Restart
+the login with a fresh authorization URL if that occurs. Do not weaken the browser-binding check.
+The local native client receives the loopback callback; never ask the user to paste an OAuth code,
+callback URL containing a code, access token or refresh token into chat.
+
+
 ## Cursor
 
 Use the plugin's `.mcp.json` when supported, or add this to the client's user/project MCP config:

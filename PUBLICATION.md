@@ -71,3 +71,14 @@ unavailable on subsequent History/MCP reads and still needs investigation. Do no
 entire production installation as fully verified or publish the skills as generally compatible
 with npm 1.0.1. Publish compatible SDKs first, reinstall from the public registry, and repeat
 this installation and webhook delivery before public release.
+
+## Follow-up OAuth and external webhook proof (2026-10-28)
+
+A new native Codex OAuth login succeeded after the user completed a fresh `--no-browser` flow in
+their own browser. Existing authentication was not extracted. New external Test deliveries and
+two real visit deliveries passed signature verification using the Node 1.1.0 edge candidate on
+the authorized EMD receiver; identification UUIDs and scores matched OAuth MCP (30/Suspicious).
+An incorrect UUID-only event_id check in the QA receiver initially rejected real deliveries;
+Core uses a stable 40-character hex event ID. The receiver was corrected and SDK regression
+coverage now includes opaque IDs. Public SDK/skills examples already accepted opaque event keys.
+The first missing identification remains awaiting the developer's production log search.

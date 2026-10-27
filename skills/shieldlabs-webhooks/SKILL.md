@@ -101,6 +101,10 @@ app.post('/webhooks/shieldlabs', express.raw({ type: 'application/json', limit: 
 app.use(express.json()); // global parsers after the webhook route
 ```
 
+Treat `event_id` as an opaque, nonempty string. Production Core can send a 40-character hex
+ID, while Test can send a UUID. Do not impose a UUID regex on the event key. The
+`data.identification_id` used to correlate a visit is a separate UUID.
+
 ## The signature
 
 - Header: `X-Shield-Signature: sha256=<lowercase hex HMAC-SHA256>`.
