@@ -99,7 +99,9 @@ Give your coding agent: **Read https://shieldlabs.ai/get-started.md and follow i
 
 The guide and the setup skill use the same workflow: inspect the project, reuse existing integration,
 configure through OAuth MCP by default or the dashboard when chosen, install the matching SDKs and
-verify the first identification and Risk Score. Choose one setup path; do not run both. No separate
+verify the first identification and Risk Score. A guided menu then offers unfinished server,
+webhook and user-linking stages, or finish. Already selected stages continue without repeated
+approval, and routine file/package changes do not each need a question. Choose one setup path; do not run both. No separate
 ShieldLabs CLI is required. Skills installation and MCP connection are separate operations.
 
 ## Quick start
