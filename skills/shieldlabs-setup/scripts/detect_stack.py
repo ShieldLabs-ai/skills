@@ -163,6 +163,8 @@ def detect_node(manifest: Path, root: Path) -> Optional[dict]:
         if dep in deps:
             app["server"] = f"Node.js ({name})"
             break
+    if app["server"] is None and "@cloudflare/vite-plugin" in deps:
+        app["server"] = "Cloudflare Workers (fetch handler; Node SDK edge export conditions)"
     packages = list(browser_packages)
     if app["server"] and "@shieldlabs-ai/node" not in packages:
         packages.append("@shieldlabs-ai/node")

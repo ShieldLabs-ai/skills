@@ -65,7 +65,7 @@ export function SignupForm() {
     await fetch('/api/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, requestId: result?.requestId ?? null }),
+      body: JSON.stringify({ email, identificationId: result?.identificationId ?? null }),
     });
   }
 
@@ -79,7 +79,7 @@ export function SignupForm() {
 ```
 
 `useIdentify({ userId?, runOnMount? })` returns `{ identify, result, isLoading, error, reset }`.
-`identify(options?)` resolves `{ requestId, userId }`, or `null` with the `ShieldLabsError` in
+`identify(options?)` resolves `{ identificationId, userId }`, or `null` with the `ShieldLabsError` in
 `error`, and never rejects. While a call of the same hook with the same User HID and the same
 effective timeout runs, it returns that call, so a double submit costs one identification; a call
 without `timeout` counts as one with the provider `timeout`. The call's `timeout` (default: the
@@ -103,8 +103,8 @@ export function SignupForm() {
   async function onSubmit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const result = await identify(); // null: submit without a requestId, the action treats it as unverified
-    if (result) formData.set('requestId', result.requestId);
+    const result = await identify(); // null: submit without a identificationId, the action treats it as unverified
+    if (result) formData.set('identificationId', result.identificationId);
     submit(formData, { method: 'post' });
   }
 
@@ -113,7 +113,7 @@ export function SignupForm() {
 ```
 
 Import `useSubmit` from `react-router-dom` or `@remix-run/react` in older versions. The server
-action reads `requestId` from the form data (shieldlabs-server skill).
+action reads `identificationId` from the form data (shieldlabs-server skill).
 
 ## Signed-in users
 
@@ -173,7 +173,7 @@ export function SignupForm() {
     await fetch('/api/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, requestId: result?.requestId ?? null }),
+      body: JSON.stringify({ email, identificationId: result?.identificationId ?? null }),
     });
   }
 
@@ -193,8 +193,8 @@ While users keep interacting with the form, a new identification starts at most 
 removes the listeners. With `autoLoad={false}`, `getAgent()` waits for `load()`, so the form is
 armed once `load()` has been called and the agent has loaded. When the load fails or times out,
 `getAgent()` rejects with the load error and the form stays unarmed: the submit handler then calls
-`identify()`, which loads again. For a classic full-page post, put `result?.requestId ?? ''` in a
-hidden `requestId` field and call `form.submit()` instead of `fetch()`.
+`identify()`, which loads again. For a classic full-page post, put `result?.identificationId ?? ''` in a
+hidden `identificationId` field and call `form.submit()` instead of `fetch()`.
 
 ## Identify when a component mounts
 
@@ -202,7 +202,7 @@ hidden `requestId` field and call `form.submit()` instead of `fetch()`.
 ready. When the load fails or times out, it resolves `null` with the load error in `error` and
 does not run again when the agent arrives later. Use it only in a component that is itself the
 protected step (for example an account recovery page), never in a layout, a list item or a
-component that mounts on every route. Send `result?.requestId` with the single request that the
+component that mounts on every route. Send `result?.identificationId` with the single request that the
 step protects. With `autoLoad={false}`, a `runOnMount` identification that starts before `load()`
 resolves `null` at once with a `not_initialized` error and does not run again after `load()`: when
 consent is known at the first render, pass it as `autoLoad={consentGiven}` ([Consent](#consent)).
@@ -252,7 +252,7 @@ function ConsentBanner() {
 When the consent state already lives in React, pass it instead:
 `<ShieldLabsProvider publicKey={publicKey} autoLoad={consentGiven}>`. Until the agent may load,
 the rest of the app works unchanged: `identify()` from `useIdentify()` resolves `null` at once
-with a `not_initialized` error (forms go out without a `requestId`, unverified), and so does a
+with a `not_initialized` error (forms go out without a `identificationId`, unverified), and so does a
 `runOnMount` identification, which does not run again after `load()`;
 `useShieldLabs().identify()` rejects with `not_initialized` and `useShieldLabs().check()` resolves
 `null`; `getAgent()` waits; `status` stays `'loading'`. `checkOnLoad` runs once the agent is ready.
@@ -262,5 +262,5 @@ Setting `autoLoad` back to `false` does not unload an agent that has loaded.
 
 Mock `@shieldlabs-ai/react` with your test runner (for example `vi.mock` or `jest.mock`) so that unit
 tests never load the agent from the CDN: return a `useIdentify` whose `identify` resolves a fixed
-`{ requestId, userId: null }` (or `null` to test the unverified path), and a `ShieldLabsProvider`
+`{ identificationId, userId: null }` (or `null` to test the unverified path), and a `ShieldLabsProvider`
 that renders its children.

@@ -23,7 +23,7 @@ first, then only the reference files for the stack at hand.
 - The agent loads only from `https://cdn.shieldlabs.ai` through a ShieldLabs browser package. Never
   self-host, proxy or bundle it.
 - One identification per protected action: call `identify()` in the action's handler and send the
-  `requestId` in the same request. Never identify on render or on route changes.
+  `identificationId` in the same request. Never identify on render or on route changes.
 - Only the Public Key reaches the browser. `SHIELDLABS_API_KEY`, `SHIELDLABS_SECRET_KEY`,
   `SHIELDLABS_WEBHOOK_SECRET` and `USER_HID_SECRET` stay on the server, in environment variables.
 - The backend reads the verdict with `identifications.get`, claims each request ID once, refuses
@@ -51,7 +51,7 @@ An investigation stays read-only. Mutations need user intent, are never automati
 require `confirm: true` for destructive operations. Keep secrets masked unless an authorized installer
 needs a one-time credential. Never repeat secrets in chat or use private dashboard APIs as a fallback.
 
-Published JS/Node 1.0.1 SDKs use `requestId` / `request_id`; newer GitHub main branches may use
+Published JS/Node 1.0.1 SDKs use `identificationId` / `request_id`; newer GitHub main branches may use
 `identificationId` / `identification_id`. Check installed package types. MCP currently uses
 `request_id`. History can omit detailed weights (`signals: []`) even with a nonzero Risk Score.
 

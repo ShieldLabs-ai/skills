@@ -139,7 +139,7 @@ References with the same policy: [node.md](references/node.md), [python.md](refe
 | `browser_automation`, `javascript_disabled` | Automated or scripted browsing | Block on protected actions (the SDK default) |
 | `anti_detect_browser` | A browser that masks its real configuration | Step-up on medium actions, block on high |
 | `tor` | A Tor exit node | Step-up on medium actions, review or block on high |
-| `vpn`, `privacy_relay`, `proxy`, `browser_vpn_proxy`, `datacenter_ip` | A masked or hosted network | Already in the score. Many legitimate users (companies, privacy tools) use them: step-up on high-value actions instead of blocking outright |
+| `vpn`, `private_relay`, `proxy`, `tor` | A masked or hosted network | Already in the score. Many legitimate users (companies, privacy tools) use them: step-up on high-value actions instead of blocking outright |
 | `incognito`, `ip_mismatch`, `check_incomplete`, `stun_not_checked` | Context | Log only |
 
 ## Rules that keep decisions sound

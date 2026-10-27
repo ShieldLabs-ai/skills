@@ -48,8 +48,9 @@ secret store ([environment.md](references/environment.md)). Keep one-time creden
 an authorized installer needs them. Verify with a real browser visit and the same identification
 UUID in History; a successful connection or sample webhook alone does not complete installation.
 
-Published npm JS/Node 1.0.1 use `requestId` / `request_id`; newer GitHub main names may differ.
-Check installed types before changing field names. MCP inputs remain `request_id`.
+These JS/Node examples target the compatible 1.1.0 candidates. The npm 1.0.1 packages still
+use `requestId` / `request_id` and do not satisfy the current contract. Until 1.1.0 is publicly
+released, use only validated candidate archives for QA. MCP inputs remain `request_id`.
 
 ## Setup workflow
 
@@ -67,7 +68,7 @@ Check installed types before changing field names. MCP inputs remain `request_id
 4. **Keys and environment.** Add the variables to the environment and to `.env.example`, keep
    `.env` out of git, never hardcode a key ([environment.md](references/environment.md)).
 5. **Browser.** Install the browser package, set it up once at the app root, and call
-   `identify()` in the handler of each protected action, sending the `requestId` with the action
+   `identify()` in the handler of each protected action, sending the `identificationId` with the action
    (shieldlabs-browser, [../shieldlabs-browser/SKILL.md](../shieldlabs-browser/SKILL.md)).
 6. **Server.** Create one client per process, read the verdict in each action's handler, claim the
    request ID once, run the policy helper and map the result to an action
@@ -143,7 +144,7 @@ export function SignupForm() {
     event.preventDefault();
     const email = new FormData(event.currentTarget).get('email');
     const result = await identify(); // never rejects: null when there is no identification (unverified)
-    await fetch('/api/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, requestId: result?.requestId ?? null }) });
+    await fetch('/api/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, identificationId: result?.identificationId ?? null }) });
   }
   return <form onSubmit={onSubmit}>{/* fields */}</form>;
 }
@@ -155,18 +156,18 @@ import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identificatio
 
 const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY! });
 
-export async function checkSignup(requestId: string | null) {
+export async function checkSignup(identificationId: string | null) {
   let identification: Identification | null = null;
-  if (requestId) {
+  if (identificationId) {
     try {
-      identification = await shieldlabs.identifications.get(requestId); // waits until scored
-      if (identification && identification.request_id !== requestId) identification = null; // schema mismatch
+      identification = await shieldlabs.identifications.get(identificationId); // waits until scored
+      if (identification && identification.identification_id !== identificationId) identification = null; // schema mismatch
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error; // unverified, never clean
     }
   }
   // claimRequestId: an insert on a unique key (or Redis SET NX); true on first use only.
-  const firstUse = identification ? await claimRequestId(identification.request_id) : false;
+  const firstUse = identification ? await claimRequestId(identification.identification_id) : false;
   return evaluateIdentification(identification, { isReplay: () => !firstUse }); // { ok, reason, band }
 }
 ```
@@ -179,7 +180,7 @@ The server SDKs for Python (`shieldlabs`), Go, PHP, Java and .NET have the same 
 - The agent loads only from `https://cdn.shieldlabs.ai` through a ShieldLabs browser package. Never
   self-host, proxy or bundle it.
 - One identification per protected action: call `identify()` in the action's handler and send the
-  `requestId` in the same request. Never identify on render or on route changes.
+  `identificationId` in the same request. Never identify on render or on route changes.
 - Only the Public Key reaches the browser. `SHIELDLABS_API_KEY`, `SHIELDLABS_SECRET_KEY`,
   `SHIELDLABS_WEBHOOK_SECRET` and `USER_HID_SECRET` stay on the server, in environment variables.
 - The backend reads the verdict with `identifications.get`, claims each request ID once, refuses
@@ -220,7 +221,7 @@ The server SDKs for Python (`shieldlabs`), Go, PHP, Java and .NET have the same 
 - [ ] The build passes and no `sec_` or `whsec_` value appears in the frontend output (or, without
   a build step, in the folder the server serves).
 - [ ] The app runs on a registered domain over HTTPS (not `localhost`).
-- [ ] Triggering a protected action sends a `requestId`, and the server log shows the verdict it
+- [ ] Triggering a protected action sends a `identificationId`, and the server log shows the verdict it
   read and the decision.
 - [ ] The History API returns the row for that request ID (MCP tool
   `shieldlabs_get_identification`, a server SDK one-liner, or `curl`).

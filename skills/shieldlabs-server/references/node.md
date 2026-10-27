@@ -41,11 +41,11 @@ import { Pool } from 'pg';
 const pool = new Pool();
 // CREATE TABLE used_request_ids (request_id uuid PRIMARY KEY, used_at timestamptz NOT NULL DEFAULT now());
 
-export async function claimRequestId(requestId: string): Promise<boolean> {
+export async function claimRequestId(identificationId: string): Promise<boolean> {
   try {
     const result = await pool.query(
       'INSERT INTO used_request_ids (request_id) VALUES ($1) ON CONFLICT DO NOTHING',
-      [requestId],
+      [identificationId],
     );
     return result.rowCount === 1;
   } catch {
@@ -54,19 +54,19 @@ export async function claimRequestId(requestId: string): Promise<boolean> {
 }
 ```
 
-With Redis (for example ioredis): `(await redis.set('shieldlabs:used:' + requestId, '1', 'EX', 86400, 'NX')) === 'OK'`.
+With Redis (for example ioredis): `(await redis.set('shieldlabs:used:' + identificationId, '1', 'EX', 86400, 'NX')) === 'OK'`.
 Delete rows older than a day in a scheduled job.
 
 ## `identifications.get` options
 
 ```ts
-const identification = await shieldlabs.identifications.get(requestId, {
+const identification = await shieldlabs.identifications.get(identificationId, {
   timeout: 5_000, // total budget: the last poll runs 5 s after the call (default 10 000)
   pollInterval: 250, // waits of p, 2p, 4p, 6p, then 8p, each at most max(2 s, p)
   signal: AbortSignal.timeout(6_000), // hard limit, including the last request
 });
 
-const latest = await shieldlabs.identifications.get(requestId, { wait: false }); // one lookup, usual retries
+const latest = await shieldlabs.identifications.get(identificationId, { wait: false }); // one lookup, usual retries
 ```
 
 Each poll is one HTTP attempt, and a 429, a 5xx, a connection error or an attempt timeout keeps it
@@ -105,7 +105,7 @@ polls of `identifications.get` are single attempts: its schedule takes the place
 
 ## Frameworks
 
-- **Fastify, Koa, Hono, NestJS**: the same code in the route handler. Read `requestId` from the
+- **Fastify, Koa, Hono, NestJS**: the same code in the route handler. Read `identificationId` from the
   parsed JSON body of that route.
 - **Nuxt** server routes and **SvelteKit** actions: see the shieldlabs-browser skill references
   `vue-nuxt.md` and `svelte-sveltekit.md`.

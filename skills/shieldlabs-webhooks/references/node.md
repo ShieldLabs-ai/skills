@@ -87,7 +87,7 @@ export class ShieldLabsWebhookController {
       throw new BadRequestException();
     }
     if (event.event_type === 'identification.scored') {
-      await this.jobs.enqueue(event.raw);
+      await this.jobs.enqueueOnce(event.raw.event_id as string, event.raw);
     }
     return { received: true };
   }

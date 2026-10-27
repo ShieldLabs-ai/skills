@@ -43,7 +43,7 @@ call private dashboard endpoints as a fallback.
 - Bands are trusted 0–29, suspicious 30–59 and dangerous 60–100. `999` is a rate-limit marker.
   An all-zero device UUID gives no usable device evidence.
 - The live MCP input/output is named `request_id`. Published JavaScript SDK 1.0.1 returns
-  `requestId`; published Node SDK 1.0.1 returns `request_id`. GitHub main may use
+  `requestId`; published Node SDK 1.0.1 returns `request_id`. The JS/Node 1.1.0 candidates and these application examples use
   `identificationId` / `identification_id` ahead of a package release. Check the installed package's
   types and map the same UUID to MCP `request_id`; do not rename MCP arguments from an SDK README.
 

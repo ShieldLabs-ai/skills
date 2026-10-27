@@ -23,7 +23,7 @@ from typing import Dict, Iterable, List, Optional, Pattern, Tuple
 
 SKIP_DIRS = {
     ".git", "node_modules", "vendor", "dist", "build", "out", "target", "bin", "obj", ".next",
-    ".nuxt", ".output", ".svelte-kit", ".angular", ".turbo", ".vercel", ".venv", "venv", "env",
+    ".nuxt", ".cloudflare", ".output", ".svelte-kit", ".angular", ".turbo", ".vercel", ".venv", "venv", "env",
     "__pycache__", ".tox", ".mypy_cache", ".pytest_cache", "coverage", ".idea", ".vscode", ".gradle",
 }
 CODE_EXT = {".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".vue", ".svelte", ".astro", ".html", ".htm",
@@ -73,7 +73,7 @@ CHECKS: Dict[str, Tuple[str, str, str]] = {
 
 SECRET_RES = [re.compile(r"\bsec_[a-z0-9]{8}-[a-z0-9]{8}-[a-z0-9]{8}\b"), re.compile(r"\bwhsec_[0-9a-f]{32}\b")]
 # Key-shaped placeholders that the ShieldLabs docs and test data use: never real keys.
-KNOWN_FAKE_SECRETS = {"sec_test0000-test0000-test0000", "whsec_00112233445566778899aabbccddeeff",
+KNOWN_FAKE_SECRETS = {"sec_xxxxxxxx-xxxxxxxx-xxxxxxxx", "sec_test0000-test0000-test0000", "whsec_00112233445566778899aabbccddeeff",
                       "whsec_0123456789abcdef0123456789abcdef"}
 PUBLIC_PREFIX_RE = re.compile(r"\b(NEXT_PUBLIC_|VITE_|NUXT_PUBLIC_|PUBLIC_|REACT_APP_|EXPO_PUBLIC_|GATSBY_)SHIELDLABS_(API_KEY|SECRET_KEY|WEBHOOK_SECRET)\b")
 SERVER_ONLY_RE = re.compile(r"\b(SHIELDLABS_API_KEY|SHIELDLABS_SECRET_KEY|SHIELDLABS_WEBHOOK_SECRET|USER_HID_SECRET)\b|['\"]@shieldlabs-ai/(node|next/server)['\"]")
@@ -187,7 +187,7 @@ class Scanner:
                 continue
             for entry in entries:
                 if entry.is_dir():
-                    if entry.name not in SKIP_DIRS:
+                    if entry.name not in SKIP_DIRS and not (entry.name == "skills" and entry.parent.name in {".agents", ".codex", ".claude"}):
                         stack.append(entry)
                 elif entry.is_file() and self.wanted(entry):
                     yield entry

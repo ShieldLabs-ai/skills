@@ -69,7 +69,7 @@ export class SignupForm {
     const email = new FormData(event.target as HTMLFormElement).get('email');
     // null when there is no identification: send the signup anyway, the server treats it as unverified.
     const result = await this.identification.identify();
-    await firstValueFrom(this.http.post('/api/signup', { email, requestId: result?.requestId ?? null }));
+    await firstValueFrom(this.http.post('/api/signup', { email, identificationId: result?.identificationId ?? null }));
   }
 }
 ```
@@ -77,7 +77,7 @@ export class SignupForm {
 In Angular 17 and 18, add `standalone: true` to the component. `injectIdentify({ userId?,
 runOnMount? })` must run in an injection context (a field initializer or the constructor). It
 returns `{ result, isLoading, error, identify, reset }`: signals plus `identify(options?)`, which
-resolves `{ requestId, userId }`, or `null` with the `ShieldLabsError` in `error()`, and never
+resolves `{ identificationId, userId }`, or `null` with the `ShieldLabsError` in `error()`, and never
 rejects. While a call of the same helper with the same User HID and the same effective timeout
 runs, `identify()` returns that call, so a double click creates one identification; a call without
 `timeout` counts as one with the provider's. The call's `timeout` (else the provider's, else 10
@@ -146,7 +146,7 @@ export class SignupForm {
     // take(): the identification started by the first interaction while it is fresh, or a new one.
     const result = await this.early?.then((early) => early.take()).catch(() => null);
     try {
-      await firstValueFrom(this.http.post('/api/signup', { email, requestId: result?.requestId ?? null }));
+      await firstValueFrom(this.http.post('/api/signup', { email, identificationId: result?.identificationId ?? null }));
     } finally {
       this.submitting.set(false);
     }
@@ -227,5 +227,5 @@ TestBed does not use the application config: add `provideShieldLabs({ publicKey,
 to the spec's providers, so that nothing loads from the CDN unless a test calls `load()`. To test
 what a component does with the result, mock `@shieldlabs-ai/angular` itself (with `vi.mock` or
 `jest.mock`) and return an `injectIdentify` whose `identify` resolves a fixed
-`{ requestId, userId: null }`, or `null` for the unverified path. A mock of `@shieldlabs-ai/js` does
+`{ identificationId, userId: null }`, or `null` for the unverified path. A mock of `@shieldlabs-ai/js` does
 not reach the import inside `@shieldlabs-ai/angular` under the Angular CLI test runner.

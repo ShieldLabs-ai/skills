@@ -4,6 +4,15 @@ The published JS/Node packages checked on 2026-10-28 are 1.0.1; framework bindin
 They are not the same contract as the newer SDK GitHub main branches. The hosted OAuth MCP has
 its own adapter and 21-tool contract; its working reads do not prove an application SDK is compatible.
 
+## Compatible candidate
+
+JS and Node 1.1.0 are local, unpublished release candidates built from current main.
+The JS/Node and framework examples use `identificationId` in the browser and
+`identification_id` in normalized Node results. MCP arguments stay `request_id`.
+Do not install npm 1.0.1 and copy these examples unchanged. Public installation remains
+gated on publishing and checking the compatible packages. Other language contracts
+require their own current-wire verification.
+
 ## Required preflight
 
 1. Check the installed package version and types, then use an actual current API row or a current

@@ -22,9 +22,9 @@ about 10 seconds. `identifications.get` waits for it with backoff.
 1. Detect the backend language, pick the SDK from the table below and read its reference file.
 2. Put the Private API Key (`sec_...`) in `SHIELDLABS_API_KEY` in the server environment. Create
    one client per process and reuse it: clients are safe for concurrent use.
-3. In the handler of each protected action, read `requestId` from the same request and call
-   `identifications.get(requestId)` when it is present.
-4. Treat every failure as **unverified**: no `requestId`, a malformed ID (`ValidationError`), no
+3. In the handler of each protected action, read `identificationId` from the same request and call
+   `identifications.get(identificationId)` when it is present.
+4. Treat every failure as **unverified**: no `identificationId`, a malformed ID (`ValidationError`), no
    identification after the wait, an API or network error. Unverified is never clean.
 5. Claim the request ID atomically (first use only), then run the SDK policy helper with that
    replay result and the 5-minute freshness window.
@@ -36,12 +36,12 @@ about 10 seconds. `identifications.get` waits for it with backoff.
 
 | Language | Install | Client | Read one verdict | Policy helper | Reference |
 |---|---|---|---|---|---|
-| Node.js 18+, Bun, Deno, edge runtimes | `npm install @shieldlabs-ai/node` | `new ShieldLabs({ apiKey })` | `await shieldlabs.identifications.get(requestId)` | `evaluateIdentification(identification, options)` | [node.md](references/node.md) |
+| Node.js 18+, Bun, Deno, edge runtimes | `npm install @shieldlabs-ai/node` | `new ShieldLabs({ apiKey })` | `await shieldlabs.identifications.get(identificationId)` | `evaluateIdentification(identification, options)` | [node.md](references/node.md) |
 | Python 3.9+ | `pip install shieldlabs` | `ShieldLabs()` or `AsyncShieldLabs()` | `client.identifications.get(request_id)` | `evaluate_identification(identification, ...)` | [python.md](references/python.md) |
 | Go 1.23+ | `go get github.com/ShieldLabs-ai/shieldlabs-go` | `shieldlabs.NewClient(apiKey)` | `client.Identifications.Get(ctx, requestID, nil)` | `shieldlabs.EvaluateIdentification(ident, opts)` | [go.md](references/go.md) |
-| PHP 8.1+ | `composer require shieldlabs/shieldlabs-php` | `new ShieldLabs()` | `$shieldlabs->identifications->get($requestId)` | `Risk::evaluate($identification, $options)` | [php.md](references/php.md) |
-| Java 11+ | Maven `ai.shieldlabs:shieldlabs-java` | `ShieldLabsClient.fromEnvironment()` | `client.identifications().get(requestId)` | `Risk.evaluate(identification, options)` | [java.md](references/java.md) |
-| .NET 8, .NET Standard 2.0 | `dotnet add package ShieldLabs` | `new ShieldLabsClient(options)` | `await client.Identifications.GetAsync(requestId)` | `Risk.Evaluate(identification, options)` | [dotnet.md](references/dotnet.md) |
+| PHP 8.1+ | `composer require shieldlabs/shieldlabs-php` | `new ShieldLabs()` | `$shieldlabs->identifications->get($identificationId)` | `Risk::evaluate($identification, $options)` | [php.md](references/php.md) |
+| Java 11+ | Maven `ai.shieldlabs:shieldlabs-java` | `ShieldLabsClient.fromEnvironment()` | `client.identifications().get(identificationId)` | `Risk.evaluate(identification, options)` | [java.md](references/java.md) |
+| .NET 8, .NET Standard 2.0 | `dotnet add package ShieldLabs` | `new ShieldLabsClient(options)` | `await client.Identifications.GetAsync(identificationId)` | `Risk.Evaluate(identification, options)` | [dotnet.md](references/dotnet.md) |
 
 The Node.js and Go SDKs never read environment variables: pass the key. The Python and PHP clients
 read `SHIELDLABS_API_KEY` when no key is passed, Java reads it in `fromEnvironment()`, and .NET
@@ -59,13 +59,13 @@ import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identificatio
 const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY! }); // one per process
 
 app.post('/api/signup', express.json(), async (req, res) => {
-  const requestId = typeof req.body?.requestId === 'string' ? req.body.requestId : '';
+  const identificationId = typeof req.body?.identificationId === 'string' ? req.body.identificationId : '';
 
   let identification: Identification | null = null;
-  if (requestId) {
+  if (identificationId) {
     try {
-      identification = await shieldlabs.identifications.get(requestId); // waits up to 10 s
-      if (identification && identification.request_id !== requestId) identification = null; // schema mismatch: unverified
+      identification = await shieldlabs.identifications.get(identificationId); // waits up to 10 s
+      if (identification && identification.identification_id !== identificationId) identification = null; // schema mismatch: unverified
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error;
       console.warn('ShieldLabs lookup failed:', error.name); // the signup stays unverified
@@ -73,11 +73,11 @@ app.post('/api/signup', express.json(), async (req, res) => {
   }
 
   // One identification authorizes one action: claim the request ID before trusting it.
-  const firstUse = identification ? await claimRequestId(identification.request_id) : false;
+  const firstUse = identification ? await claimRequestId(identification.identification_id) : false;
   const verdict = evaluateIdentification(identification, { isReplay: () => !firstUse });
 
   if (!verdict.ok) {
-    console.info('signup refused', { reason: verdict.reason, band: verdict.band, requestId });
+    console.info('signup refused', { reason: verdict.reason, band: verdict.band, identificationId });
     return res.status(403).json({ error: 'signup_refused' });
   }
   // Create the account. Store identification.device_id with it for later account-abuse checks.

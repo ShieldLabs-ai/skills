@@ -68,7 +68,7 @@ const hid = userHid(String(user.id), process.env.USER_HID_SECRET!);
 | `@shieldlabs-ai/svelte` | `useIdentify(() => ({ userId: data.userHid }))` |
 | Background checks | `check({ userId })`, or `checkOnLoad: { userId }` on the provider, plugin or setup |
 
-`identify()` resolves `{ requestId, userId }`: `userId` is the User HID that was sent (the
+`identify()` resolves `{ identificationId, userId }`: `userId` is the User HID that was sent (the
 framework identify helpers resolve `null` when there is no identification). Details per framework:
 shieldlabs-browser skill ([../shieldlabs-browser/SKILL.md](../shieldlabs-browser/SKILL.md)).
 

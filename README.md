@@ -23,6 +23,13 @@ A ShieldLabs integration always has three steps, and the skills teach an agent e
 3. **Decision.** Your backend acts on the Risk Score (trusted 0-29, suspicious 30-59, dangerous
    60-100), the detection flags and the identifiers, for example how many accounts one device has.
 
+## Release readiness
+
+The JS/Node examples target the compatible 1.1.0 candidates. npm 1.0.1 still has the older
+contract; use the [SDK preflight](skills/shieldlabs-server/references/sdk-contract.md) before
+application integration. Public release is gated on compatible SDK publication and a clean
+registry installation. See [publication checklist](PUBLICATION.md).
+
 ## Install
 
 ### Claude Code

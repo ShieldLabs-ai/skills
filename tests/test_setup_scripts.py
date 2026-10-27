@@ -36,6 +36,15 @@ def write(root: Path, files: dict) -> None:
 
 
 class DetectStackTest(unittest.TestCase):
+    def test_cloudflare_worker_with_react(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root, {"package.json": json.dumps({"dependencies": {"react": "19", "@cloudflare/vite-plugin": "2"}})})
+            app = detect_stack.detect_node(root / "package.json", root)
+            self.assertIn("Cloudflare Workers", app["server"])
+            self.assertIn("shieldlabs-server (references/node.md)", app["skills"])
+            self.assertIn("@shieldlabs-ai/node", " ".join(app["install"]))
+
     def test_monorepo(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -225,6 +234,18 @@ class AuditScanTest(unittest.TestCase):
         for check in ("SL01", "SL02", "SL04", "SL06", "SL07", "SL08", "SL09", "SL11", "SL12", "SL13", "SL15"):
             self.assertIn(check, found, f"{check} not reported: {sorted(found)}")
         self.assertTrue(result["shieldlabs_integration_found"])
+
+    def test_generated_worker_and_installed_skills_are_not_application_code(self) -> None:
+        result = self.scan({
+            ".cloudflare/output/bundle.js": BAD_SERVER,
+            ".agents/skills/shieldlabs-setup/scripts/audit_scan.py": BAD_SERVER,
+            "server.js": GOOD_SERVER,
+        })
+        self.assertEqual(result["findings"], [])
+
+    def test_sdk_format_placeholder_is_not_a_secret(self) -> None:
+        result = self.scan({"server.js": "const message = 'apiKey must look like sec_xxxxxxxx-xxxxxxxx-xxxxxxxx';"})
+        self.assertNotIn("SL01", self.checks(result))
 
     def test_masks_secrets(self) -> None:
         result = self.scan({"api/signup.js": BAD_SERVER, ".env": "SHIELDLABS_API_KEY=sec_realkey1-realkey2-realkey3\n"})
