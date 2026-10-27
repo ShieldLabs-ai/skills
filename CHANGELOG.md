@@ -6,6 +6,9 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [1.1.0] - 2026-10-28
 
+- Add guided checkpoints for account setup and major integration stages, a next-step menu and
+  clear completion status, without repeated approval for already selected work.
+
 Public release of the hosted OAuth MCP skills and installation workflows.
 
 - Connect the hosted HTTP MCP with OAuth instead of starting a local API-key server.

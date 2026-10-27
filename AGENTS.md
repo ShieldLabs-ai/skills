@@ -18,6 +18,14 @@ first, then only the reference files for the stack at hand.
 | Link identifications to user accounts with a User HID | [skills/shieldlabs-user-linking](skills/shieldlabs-user-linking/SKILL.md) |
 | Connect OAuth MCP, manage domains/webhooks and investigate requests, users and devices with the ShieldLabs MCP server | [skills/shieldlabs-investigate](skills/shieldlabs-investigate/SKILL.md) |
 
+## Guided installation
+
+Follow the setup skill's major-stage checkpoints. Ask about an account only when unknown and no
+connection exists. A general install starts with browser identification and a verified result,
+then offers only unfinished server verification, webhook or user-linking stages, or finish.
+Already requested stages need no repeated question; do not ask before every file or package.
+A failed verification is resolved before advancing. Report unconfigured stages at the end.
+
 ## Core rules
 
 - The agent loads only from `https://cdn.shieldlabs.ai` through a ShieldLabs browser package. Never

@@ -35,6 +35,32 @@ https://github.com/ShieldLabs-ai/skills.
 - **Audit**: the user asks to review, audit or fix an existing integration, or runs
   `/shieldlabs:audit`. Jump to [Audit mode](#audit-mode).
 
+## Guided checkpoints
+
+Use questions between major stages, not before every file edit or package install. Reuse the
+user's choices and approvals. If several stages are already requested, complete those without
+asking again. Audit mode reports findings first and follows the authorized fix scope.
+
+- If no authenticated connection exists and account status is unknown, ask once whether the
+  user has a ShieldLabs account or needs to create one. Then guide the fresh OAuth flow below;
+  do not start separate concurrent login flows.
+- Show the detected stack, domain, existing action and proposed changes. Ask for confirmation
+  only if the scope has not already been approved. An explicit installation request authorizes
+  the necessary changes; an existing integration needs agreement on the proposed changes.
+- For a general install request, complete browser identification and verify its first stored
+  result before offering additional stages. Server checks, webhooks and user linking run now
+  only when already requested or selected. The numbered workflow below supplies implementation
+  details; it is not a requirement to run every optional stage.
+- After each verified stage, ask **"What would you like to set up next?"** Offer only applicable,
+  unfinished choices: server-side verification; signed webhooks; signed-in user linking and
+  account-abuse checks; finish for now. Do not ask again for a next stage already selected.
+- For a backend in another repository, ask its path. For a webhook, ask for its authorized HTTPS
+  receiver if unknown. Do not add a backend or invent a user/account action without a request.
+- Run the selected stage, verify it, then offer what remains. If verification fails, explain and
+  resolve that stage before advancing. If the user chooses finish, stop and report both verified
+  stages and what remains unconfigured. Browser-only identification does not prove server-side
+  protection. Credential rotation and destructive changes retain their explicit approval rules.
+
 ## Choose one account setup path
 
 Use **OAuth MCP by default**. Use the **ShieldLabs dashboard** only when the user chooses it or
@@ -85,11 +111,11 @@ before installing; validated candidate archives are for authorized QA only. MCP 
 5. **Browser.** Install the browser package, set it up once at the app root, and call
    `identify()` in the handler of each protected action, sending the `identificationId` with the action
    (shieldlabs-browser, [../shieldlabs-browser/SKILL.md](../shieldlabs-browser/SKILL.md)).
-6. **Server.** Create one client per process, read the verdict in each action's handler, claim the
+6. **Server, when selected.** Create one client per process, read the verdict in each action's handler, claim the
    request ID once, run the policy helper and map the result to an action
    (shieldlabs-server, [../shieldlabs-server/SKILL.md](../shieldlabs-server/SKILL.md), and
    shieldlabs-risk-decisions, [../shieldlabs-risk-decisions/SKILL.md](../shieldlabs-risk-decisions/SKILL.md)).
-7. **Signed-in users, when needed.** Compute a User HID on the server and pass it to the browser SDK
+7. **Signed-in users, when selected.** Compute a User HID on the server and pass it to the browser SDK
    (shieldlabs-user-linking, [../shieldlabs-user-linking/SKILL.md](../shieldlabs-user-linking/SKILL.md)).
    When account-abuse protection is requested, add the relevant account-level checks
    (shieldlabs-account-abuse, [../shieldlabs-account-abuse/SKILL.md](../shieldlabs-account-abuse/SKILL.md)).
@@ -98,7 +124,8 @@ before installing; validated candidate archives are for authorized QA only. MCP 
 9. **Verify the first result.** Match the browser UUID to its stored identification and Risk Score
    through MCP (`wait=true`) or the dashboard, and to the backend result when present. Run the
    applicable checklist below ([verification.md](references/verification.md)). Webhooks and
-   additional account checks are optional and do not block a basic install.
+   additional account checks are optional and do not block verified browser identification.
+   After a selected stage passes, return to the guided checkpoint above.
 
 If the app has no backend, install browser identification and verify through MCP or the dashboard.
 Do not create a backend unless requested, expose private keys in the frontend or claim a browser-only

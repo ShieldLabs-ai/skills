@@ -13,3 +13,9 @@ pending OAuth approval. Install only the SDKs and code needed for the requested 
 and resources; do not rotate credentials automatically. For a frontend-only app, do not add a
 backend unless requested. Verify the same browser identification and Risk Score through the
 chosen path, matching the backend result when present. Report what passed and any blocker.
+
+Use the setup skill's guided checkpoints. A general install starts with browser identification
+and a verified first result, then offers applicable unfinished stages: server verification,
+signed webhooks, user linking/account checks, or finish. Ask for account status only if unknown
+and no authenticated connection exists. Reuse stages and approvals already selected; do not
+ask before each file edit or package install.
