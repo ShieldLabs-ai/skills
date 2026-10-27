@@ -11,6 +11,7 @@ All notable changes to this project are documented in this file. The format foll
 - Separate application SDK credentials from MCP sign-in and preserve published SDK identifier names.
 - Add current-tool contract checks and package the complete plugin, including MCP configuration.
 - Document public installation and release verification for maintainers.
+- Re-audit all eight skills after source refresh; gate old SDK normalization, preserve raw webhook envelopes, dedupe current event IDs and correct Test/retry assumptions.
 
 ## [Unreleased]
 

@@ -1,5 +1,13 @@
 # Webhooks in Node.js, Next.js and edge runtimes
 
+Use the verified raw envelope for current deliveries. Its `event_id` is the delivery key;
+`data.identification_id` correlates the visit. The older typed SDK model can omit these fields.
+The application-provided enqueue-once service must reject an empty key and atomically persist
+its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
+This queue API is application code, not a ShieldLabs SDK method.
+Do not enqueue only the old normalized data model.
+
+
 All examples use `@shieldlabs-ai/node` (or `@shieldlabs-ai/next/server`, which wraps it). They read
 `SHIELDLABS_WEBHOOK_SECRET` once at startup, as a comma-separated list while you rotate a secret,
 and answer 500 when it is empty:
@@ -9,9 +17,6 @@ const secrets = (process.env.SHIELDLABS_WEBHOOK_SECRET ?? '').split(',').map((s)
 if (secrets.length === 0) console.error('SHIELDLABS_WEBHOOK_SECRET is not set: webhook deliveries get 500');
 ```
 
-`claimDelivery(requestId)` stands for your atomic "first time" check (an insert on a unique key,
-or Redis `SET shieldlabs:delivered:<request_id> 1 NX EX 86400`), kept separate from the store of
-request IDs that authorized actions.
 
 ## Express
 
@@ -46,10 +51,10 @@ createServer(async (req, res) => {
   } catch (error) {
     return res.writeHead(error instanceof SignatureVerificationError ? 401 : 400).end();
   }
-  res.writeHead(200).end(); // answer first, then process
-  if (event.event_type === 'identification.scored' && (await claimDelivery(event.data.request_id))) {
-    await jobs.enqueue(event.data);
+  if (event.event_type === 'identification.scored') {
+    await jobs.enqueueOnce(event.raw.event_id as string, event.raw);
   }
+  res.writeHead(200).end(); // after atomic durable acceptance
 }).listen(3000);
 ```
 
@@ -81,8 +86,8 @@ export class ShieldLabsWebhookController {
       if (error instanceof SignatureVerificationError) throw new UnauthorizedException();
       throw new BadRequestException();
     }
-    if (event.event_type === 'identification.scored' && (await claimDelivery(event.data.request_id))) {
-      await this.jobs.enqueue(event.data);
+    if (event.event_type === 'identification.scored') {
+      await this.jobs.enqueue(event.raw);
     }
     return { received: true };
   }
@@ -104,8 +109,8 @@ fastify.register(async (scope) => {
     } catch (error) {
       return reply.code(error instanceof SignatureVerificationError ? 401 : 400).send();
     }
-    if (event.event_type === 'identification.scored' && (await claimDelivery(event.data.request_id))) {
-      await jobs.enqueue(event.data);
+    if (event.event_type === 'identification.scored') {
+      await jobs.enqueueOnce(event.raw.event_id as string, event.raw);
     }
     return reply.code(200).send();
   });
@@ -121,7 +126,7 @@ import { createWebhookHandler } from '@shieldlabs-ai/next/server';
 export const POST = createWebhookHandler({
   onEvent: async (event) => {
     if (event.event_type !== 'identification.scored') return;
-    if (await claimDelivery(event.data.request_id)) await jobs.enqueue(event.data);
+    await jobs.enqueueOnce(event.raw.event_id as string, event.raw);
   },
   // secret: optional; default SHIELDLABS_WEBHOOK_SECRET, comma-separated while you rotate
   // maxBodySize: optional; default 1 MiB
@@ -154,7 +159,7 @@ export default {
       return new Response(null, { status: error instanceof SignatureVerificationError ? 401 : 400 });
     }
     if (event.event_type === 'identification.scored') {
-      ctx.waitUntil(processOnce(event.data)); // answer now, finish the work in the background
+      await processOnce(event.raw); // atomic durable enqueue before acknowledging
     }
     return new Response(null, { status: 200 });
   },

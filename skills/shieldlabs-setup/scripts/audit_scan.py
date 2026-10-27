@@ -57,8 +57,8 @@ CHECKS: Dict[str, Tuple[str, str, str]] = {
              "Call identify() in the handler of the protected action. Use runOnMount only in the component of a protected step, never in a layout (shieldlabs-browser)."),
     "SL12": ("high", "The agent is self-hosted, proxied or bundled",
              "Load the agent only from https://cdn.shieldlabs.ai through a ShieldLabs browser package (shieldlabs-browser)."),
-    "SL13": ("medium", "Webhook handler without deduplication on request_id",
-             "Make the handler idempotent on data.request_id with an atomic insert, and answer 2xx within one second (shieldlabs-webhooks)."),
+    "SL13": ("medium", "Webhook handler without delivery deduplication",
+             "Use the verified event_id and atomic durable enqueue, and answer 2xx promptly (shieldlabs-webhooks)."),
     "SL14": ("medium", "Content Security Policy without the ShieldLabs origins",
              "Add https://cdn.shieldlabs.ai to script-src, and https://rest.shieldlabs.ai wss://rest.shieldlabs.ai https://webrtc.shieldlabs.ai stun:ice.shieldlabs.ai:3478 to connect-src."),
     "SL15": ("high", "Environment file with ShieldLabs keys is committed or not ignored",
@@ -123,7 +123,7 @@ STATIC_AGENT_IMPORT_RE = re.compile(r"^\s*import\s+[^;(]*?\bfrom\s+['\"]https://
 SELF_HOSTED_TAG_RE = re.compile(r"<script[^>]*\bsrc=['\"](?!https://(dev\.)?cdn\.shieldlabs\.ai)[^'\"]*(snippet|shield-loader)\.js", re.I)
 PROXY_RE = re.compile(r"(destination|target|upstream|proxy_pass)\s*[:=]?\s*['\"]?https://(dev\.)?cdn\.shieldlabs\.ai", re.I)
 SCRIPT_URL_RE = re.compile(r"scriptUrl\s*[:=]\s*['\"](?!https://(dev\.)?cdn\.shieldlabs\.ai)")
-DEDUPE_RE = re.compile(r"request_id|RequestId|RequestID|getRequestId|requestId")
+DEDUPE_RE = re.compile(r"event_id|eventId|EventId|enqueueOnce|enqueue_once|EnqueueOnce|request_id|RequestId|RequestID|getRequestId|requestId")
 STORAGE_CLEAR_RE = re.compile(r"localStorage\.clear\s*\(\s*\)")
 STORED_REQUEST_ID_RE = re.compile(r"(localStorage|sessionStorage)\.setItem\s*\([^)]*request_?[iI]d", re.I)
 MANAGEMENT_RE = re.compile(r"\bgetProfile(Async)?\s*\(|\bget_profile\s*\(|\bGetProfile(Async)?\s*\(")

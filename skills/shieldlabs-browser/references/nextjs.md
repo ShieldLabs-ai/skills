@@ -161,7 +161,7 @@ export const POST = createWebhookHandler({
   // commas while you rotate one). webhook.ping is acknowledged and never reaches onEvent.
   onEvent: async (event) => {
     if (event.event_type !== 'identification.scored') return; // a newer event type: acknowledge it
-    await saveIdentificationOnce(event.data); // idempotent on event.data.request_id, and fast
+    await jobs.enqueueOnce(event.raw.event_id as string, event.raw); // atomic durable acceptance
   },
 });
 ```
@@ -258,7 +258,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } catch (error) {
     return res.status(error instanceof SignatureVerificationError ? 401 : 400).end();
   }
-  if (event.event_type === 'identification.scored') await saveIdentificationOnce(event.data);
+  if (event.event_type === 'identification.scored') await jobs.enqueueOnce(event.raw.event_id as string, event.raw);
   return res.status(200).json({ received: true });
 }
 ```

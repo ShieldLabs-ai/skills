@@ -5,6 +5,12 @@ not a claim that this repository is already public or listed in an official plug
 
 ## Before publication
 
+The 2026-10-28 audit reproduced a contract mismatch: published Node 1.0.1 preserves the signed
+current webhook in `raw`, but its normalized identification ID can be empty. Resolve the
+application-SDK compatibility preflight before advertising a complete application integration;
+passing MCP checks or Markdown tests does not close it. See
+[the SDK contract checklist](skills/shieldlabs-server/references/sdk-contract.md).
+
 - Merge the reviewed release PR after CI passes. Check all plugin/marketplace versions and the
   changelog agree. This release targets 1.1.0.
 - Confirm that the repository and its history can be public, including tags and non-default

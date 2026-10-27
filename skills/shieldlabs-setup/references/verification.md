@@ -82,8 +82,10 @@ Any of these, with the request ID from the log:
 
 - [ ] **Verify** on the endpoint (analytics dashboard, Integration > Webhooks) gets a 2xx and the
   endpoint shows as delivering.
-- [ ] **Test** gets a 2xx within one second; pressing it twice processes the sample once (it
-  always has the same `request_id`).
+- [ ] **Test** receives 2xx promptly. Two clicks have different `event_id` values and are two
+  events even though their synthetic identification UUID is fixed.
+- [ ] Replaying the exact same valid signed event has one business effect. A simulated enqueue
+  failure remains retryable; the event is not permanently marked processed before its job exists.
 - [ ] A request with a wrong `X-Shield-Signature` gets 401.
 
 ## 8. The analytics dashboard

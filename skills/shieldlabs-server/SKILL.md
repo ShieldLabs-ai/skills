@@ -5,6 +5,12 @@ description: Reads ShieldLabs verdicts on the backend with the official server S
 
 # ShieldLabs on the server
 
+Before application integration, [check the installed SDK contract](references/sdk-contract.md).
+Published SDKs can lag the current wire schema: an empty normalized identification ID is
+unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
+OAuth adapter; a successful MCP read does not validate an application SDK.
+
+
 The backend half of a ShieldLabs integration. The page sends a request ID with the protected
 action; the backend reads the verdict for it from the **History API**
 (`https://account.shieldlabs.ai`) with a server SDK, then acts on it. Scoring is asynchronous: the
@@ -59,6 +65,7 @@ app.post('/api/signup', express.json(), async (req, res) => {
   if (requestId) {
     try {
       identification = await shieldlabs.identifications.get(requestId); // waits up to 10 s
+      if (identification && identification.request_id !== requestId) identification = null; // schema mismatch: unverified
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error;
       console.warn('ShieldLabs lookup failed:', error.name); // the signup stays unverified

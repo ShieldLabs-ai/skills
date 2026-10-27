@@ -2,6 +2,7 @@
 from __future__ import annotations
 import importlib.util
 import json
+import re
 from pathlib import Path
 import tempfile
 import unittest
@@ -40,6 +41,17 @@ class HostedMcpTest(unittest.TestCase):
             self.assertIn('domain', [p['name'] for p in tools[name]['parameters']])
         self.assertEqual({name for name, tool in tools.items() if any(p['name'] == 'response_format' for p in tool['parameters'])},
                          {'get_identification', 'search_history', 'summarize_entity', 'explain_risk_score'})
+
+    def test_active_skill_tool_names_exist_in_the_hosted_catalog(self):
+        catalog = json.loads((ROOT / 'skills/shieldlabs-investigate/references/mcp-catalog.json').read_text())
+        known = {tool['name'] for tool in catalog['tools']}
+        pattern = re.compile(r'\b(shieldlabs_(?:verify|get|current|list|add|patch|delete|rotate|create|disable|enable|test|check|search|summarize|explain)_[a-z_]+)\b')
+        for path in (ROOT / 'skills').rglob('*.md'):
+            if path.name == 'tools.md':  # contains the explicit migration list of removed tools
+                continue
+            with self.subTest(path=str(path.relative_to(ROOT))):
+                unknown = set(pattern.findall(path.read_text())) - known
+                self.assertEqual(unknown, set())
 
     def test_archive_is_reproducible_and_installs_hidden_config_with_skills(self):
         with tempfile.TemporaryDirectory() as directory:

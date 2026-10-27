@@ -1,14 +1,19 @@
 # Webhooks in Python
 
+Use the verified raw envelope for current deliveries. Its `event_id` is the delivery key;
+`data.identification_id` correlates the visit. The older typed SDK model can omit these fields.
+The application-provided enqueue-once service must reject an empty key and atomically persist
+its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
+This queue API is application code, not a ShieldLabs SDK method.
+Do not enqueue only the old normalized data model.
+
+
 `from shieldlabs import webhooks`. `webhooks.construct_event(payload, signature_header, secret)`
 takes the raw body as `bytes` (or `str`), the header value (or `None`), and one secret or a list.
 It returns `IdentificationScoredEvent`, `WebhookPingEvent` or `UnknownWebhookEvent`, and raises
 `SignatureVerificationError` or `WebhookParseError`. `webhooks.verify_signature(...)` returns a
 `bool`. `webhooks.SIGNATURE_HEADER` is `"X-Shield-Signature"`.
 
-`claim_delivery(request_id)` below stands for your atomic "first time" check (an insert on a unique
-key, or Redis `SET shieldlabs:delivered:<request_id> 1 NX EX 86400`), separate from the store of
-request IDs that authorized actions.
 
 ```python
 import logging
@@ -49,8 +54,8 @@ async def shieldlabs_webhook(request: Request) -> Response:
     except WebhookParseError:
         return Response(status_code=400)
 
-    if isinstance(event, IdentificationScoredEvent) and await claim_delivery(event.data.request_id):
-        await queue.enqueue(event.data.to_dict())  # fast; answer within 1 second
+    if isinstance(event, IdentificationScoredEvent):
+        await queue.enqueue_once(event.raw["event_id"], dict(event.raw))  # fast; answer within 1 second
     return Response(status_code=200)  # webhook.ping and unknown event types: acknowledge
 ```
 
@@ -74,8 +79,8 @@ def shieldlabs_webhook():
         return "", 401
     except WebhookParseError:
         return "", 400
-    if isinstance(event, IdentificationScoredEvent) and claim_delivery(event.data.request_id):
-        queue.enqueue(event.data.to_dict())
+    if isinstance(event, IdentificationScoredEvent):
+        queue.enqueue_once(event.raw["event_id"], dict(event.raw))
     return "", 200
 ```
 
@@ -99,8 +104,8 @@ def shieldlabs_webhook(request):
         return HttpResponse(status=401)
     except WebhookParseError:
         return HttpResponse(status=400)
-    if isinstance(event, IdentificationScoredEvent) and claim_delivery(event.data.request_id):
-        queue.enqueue(event.data.to_dict())
+    if isinstance(event, IdentificationScoredEvent):
+        queue.enqueue_once(event.raw["event_id"], dict(event.raw))
     return HttpResponse(status=200)
 ```
 

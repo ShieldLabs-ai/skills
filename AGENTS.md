@@ -33,7 +33,7 @@ first, then only the reference files for the stack at hand.
 - Bands: trusted 0-29, suspicious 30-59, dangerous 60-100. Branch on bands and detection flags;
   never add up signal weights.
 - Webhooks: verify `X-Shield-Signature` over the raw body before parsing, deduplicate on
-  `data.request_id`, answer within one second.
+  verified envelope `event_id`, durably enqueue before answering promptly.
 - User HIDs come from the SDK `userHid` helpers on the server, never raw emails or IDs.
 - Use only the public SDK APIs, and confirm package versions on the registry and at
   https://docs.shieldlabs.ai.

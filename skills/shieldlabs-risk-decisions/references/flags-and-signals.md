@@ -6,8 +6,10 @@ https://docs.shieldlabs.ai/features/risk-signals.
 
 ## Detection flags
 
-Every identification carries exactly these 19 booleans (`detection_flags`). A flag missing from a
-payload reads as `false` in the SDKs.
+The table below is the legacy 19-flag normalized model of the published Node 1.0.1 contract.
+It is not the complete current wire model. Read [the SDK contract preflight](../../shieldlabs-server/references/sdk-contract.md)
+before interpreting absent fields. Old SDKs default missing flags to false; that default is not
+evidence that a newer detection was checked and absent.
 
 | Flag | Set when | Notes |
 |---|---|---|
@@ -34,7 +36,7 @@ payload reads as `false` in the SDKs.
 ## Risk signals
 
 `signals` lists the weighted reasons behind the Risk Score as `{ name, weight }` (History rows
-also carry a `description`). Known names:
+also carry a `description`). Legacy known names (not an exhaustive current server catalog):
 
 | Name | Meaning |
 |---|---|

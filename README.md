@@ -185,7 +185,10 @@ As checked on 2026-10-27, npm publishes `@shieldlabs-ai/js` 1.0.1 and `@shieldla
 Their identifier fields are `requestId` and `request_id`. Some GitHub main branches already use
 `identificationId` / `identification_id`; match the **installed package's types** when upgrading.
 The hosted MCP still accepts `request_id`. These names refer to the identification UUID, not a
-webhook delivery's event ID. Examples here retain the published SDK contract.
+webhook delivery's event ID. Examples retain the published SDK names but require the
+[SDK contract preflight](skills/shieldlabs-server/references/sdk-contract.md). Node 1.0.1 can
+leave the ID empty on current History/webhook input; a working MCP connection does not prove
+application SDK compatibility. Webhook handlers preserve the verified raw envelope and event ID.
 
 ## Compatibility
 

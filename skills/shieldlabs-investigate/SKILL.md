@@ -5,6 +5,12 @@ description: Connects to the hosted ShieldLabs MCP with OAuth, selects the accou
 
 # ShieldLabs MCP
 
+Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
+Published SDKs can lag the current wire schema: an empty normalized identification ID is
+unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
+OAuth adapter; a successful MCP read does not validate an application SDK.
+
+
 Connect to `https://mcp.shieldlabs.ai/mcp` with the client's OAuth sign-in. No API key, local npm
 server or pasted bearer token is needed. [Client setup](references/clients.md).
 The current server exposes **21 tools**. [Tool inputs and behavior](references/tools.md),

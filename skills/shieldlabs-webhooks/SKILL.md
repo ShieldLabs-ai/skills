@@ -1,9 +1,15 @@
 ---
 name: shieldlabs-webhooks
-description: Receives ShieldLabs webhooks safely. Verifies the X-Shield-Signature HMAC over the raw request body before parsing, turns identification.scored and webhook.ping deliveries into typed events with the server SDKs, deduplicates on data.request_id and answers within one second. Covers Express, Next.js route handlers, NestJS, edge runtimes, FastAPI, Flask, Django, Go net/http, plain PHP, Laravel, Symfony, Spring and ASP.NET Core. Use when the user asks to verify a ShieldLabs webhook, add a ShieldLabs webhook endpoint or receiver, handle identification.scored events, debug an invalid or failing webhook signature, rotate a whsec_ signing secret, or choose between webhooks and the History API.
+description: Receives ShieldLabs webhooks safely. Verifies the X-Shield-Signature HMAC over the raw request body before parsing, turns identification.scored and webhook.ping deliveries into typed events with the server SDKs, deduplicates on the verified event_id and answers within one second. Covers Express, Next.js route handlers, NestJS, edge runtimes, FastAPI, Flask, Django, Go net/http, plain PHP, Laravel, Symfony, Spring and ASP.NET Core. Use when the user asks to verify a ShieldLabs webhook, add a ShieldLabs webhook endpoint or receiver, handle identification.scored events, debug an invalid or failing webhook signature, rotate a whsec_ signing secret, or choose between webhooks and the History API.
 ---
 
 # ShieldLabs webhooks
+
+Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
+Published SDKs can lag the current wire schema: an empty normalized identification ID is
+unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
+OAuth adapter; a successful MCP read does not validate an application SDK.
+
 
 ShieldLabs posts a signed `identification.scored` event to each enabled endpoint when it finishes
 scoring an identification: usually a few seconds after the browser call, and at most about 10
@@ -17,7 +23,7 @@ dependable read.
 |---|---|
 | Decide on the action that carries the request ID (signup, login, checkout, payout) | `identifications.get` at the action, not the webhook |
 | React asynchronously: store `device_id` and `user_hid` per account, alert on the dangerous band, flag accounts for review, feed analytics | The webhook |
-| The latest state, or anything a delivery may have missed | The History API: rows can be refined after the webhook was sent, and the webhook is not sent again |
+| The latest state, or anything a delivery may have missed | The History API: rows can be refined after the webhook was sent, so a delivery is not a live view of the row |
 
 ## Configure through OAuth MCP
 
@@ -38,8 +44,9 @@ rotating a secret invalidates the old one immediately. Do not automatically retr
    on a signature error and 400 on a parse error. Read the secrets once at startup; when none is
    set, log it and answer 500: a missing secret is a configuration error, and a 401 would look
    like a wrong secret.
-4. Deduplicate on `data.request_id` with an atomic insert, answer 2xx within one second, and hand
-   slow work to a queue.
+4. Deduplicate by the verified envelope `event_id` and durably enqueue the complete raw envelope
+   in one atomic operation; answer 2xx promptly, preferably within one second. Never mark an event
+   processed before its job is durable. Use `data.identification_id` to correlate the visit.
 5. Handle `identification.scored` (parse its `data` with the installed SDK; History may omit detailed signal weights). Acknowledge `webhook.ping` and unknown event types with 2xx.
 6. In the analytics dashboard press **Verify** (sends `webhook.ping`) and **Test** (sends a sample
    `identification.scored`), then check the server logs.
@@ -83,8 +90,10 @@ app.post('/webhooks/shieldlabs', express.raw({ type: 'application/json', limit: 
   }
 
   if (event.event_type === 'identification.scored') {
-    // Atomic "first time" check, then enqueue. Both must be fast: the sender waits 1 second.
-    if (await claimDelivery(event.data.request_id)) await jobs.enqueue(event.data);
+    const eventId = event.raw.event_id;
+    if (typeof eventId !== 'string' || eventId.length === 0) return res.sendStatus(400);
+    // Application-provided atomic dedup + durable enqueue; rejects/rolls back on storage failure.
+    await jobs.enqueueOnce(eventId, event.raw);
   }
   return res.sendStatus(200); // webhook.ping and unknown event types: acknowledge
 });
@@ -100,17 +109,18 @@ app.use(express.json()); // global parsers after the webhook route
 - Message: the raw request body exactly as received. Parsing and re-serializing the JSON breaks the
   signature (the sender escapes `&` as `\u0026`, and Verify and Test bodies have sorted keys).
 - The SDKs compare in constant time, accept upper-case hex in the header, and accept several
-  secrets. There is no timestamp, delivery ID or event-type header: the idempotency key is
-  `data.request_id`.
+  secrets. The signature check does not require a timestamp header. Current deliveries carry
+  `event_id` in the signed body; Core may also send `X-Shield-Event-Id`. Use the body ID for
+  delivery deduplication, after verifying the original bytes.
 
 ## Delivery rules
 
-- One delivery per identification per endpoint, sent when scoring finishes, with a 1-second
-  timeout. Today each identification is delivered once; a later release adds retries that resend
-  identical bytes. Make the handler idempotent on `data.request_id` now.
-- Answer 2xx fast. A handler that takes longer than one second counts as a failed delivery.
+- Delivery is not an exactly-once guarantee. Keep retries idempotent on `event_id`; preserve the
+  whole envelope and schema version in the durable job. Profiles and timeout budgets can differ.
+- Answer 2xx promptly, preferably within one second, after durable acceptance. Portal Verify/Test
+  probes have a five-second budget; this is not a reason to block the receiver for five seconds.
 - The webhook is a snapshot taken when it was sent. The History row can be refined afterwards and
-  the webhook is not sent again: read the History API for the latest state.
+  a delivery is a snapshot, not a live row: read the History API for the latest state.
 - Up to 10 endpoints per domain, each with its own secret; every endpoint gets the same body bytes.
 - Never redirect the webhook URL: a 301 or 302 turns the POST into a GET without a body.
 - A paused endpoint receives no deliveries.
@@ -125,17 +135,17 @@ app.use(express.json()); // global parsers after the webhook route
 
 - A `risk_score` of `999` with the single signal `rate_limited` is the rate-limit marker: the
   visitor IP was blocked for sending too many identifications. It is not a score.
-- The Test delivery always carries the same `request_id`, a `null` `user_hid`, 17 of the 19
-  detection flags (the SDKs read missing flags as `false`) and second-precision timestamps. A
-  handler that deduplicates on `request_id` processes it once.
+- Current Test uses a fixed synthetic `data.identification_id` but a fresh `event_id` on every
+  click. Process two Test clicks as two events; replaying the same signed event has one effect.
+  Preserve fields absent from an old typed SDK by using its verified `raw` envelope.
 
 ## Rotate the signing secret
 
 **Rotate secret** in the analytics dashboard replaces the endpoint secret at once: the old one
 stops working immediately. Deploy the new secret right after rotating and keep both secrets
 configured while the change rolls out (the SDKs accept a list; `createWebhookHandler` and the
-examples read `SHIELDLABS_WEBHOOK_SECRET` as a comma-separated list). Deliveries that fail in the
-gap are not sent again; the History API still has those identifications.
+examples read `SHIELDLABS_WEBHOOK_SECRET` as a comma-separated list). Do not assume that retries bridge the
+gap; the History API remains available for reconciliation.
 
 ## Test the receiver
 
@@ -147,13 +157,14 @@ gap are not sent again; the History API still has those identifications.
   ```js
   import { createHmac } from 'node:crypto';
 
-  const body = '{"created_at":"2026-09-30T12:34:56Z","event_type":"webhook.ping","schema_version":"2026-06-01"}';
+  const body = JSON.stringify({ event_id: "6f1c2e8a-3b5d-4c7e-8f9a-0b1c2d3e4f5a", created_at: "2026-10-28T00:00:00Z", event_type: "webhook.ping", schema_version: "2026-10-13", site_id: 7 });
   const signature = 'sha256=' + createHmac('sha256', 'whsec_test_secret').update(body).digest('hex');
   // POST `body` with the header X-Shield-Signature: signature, and expect 200.
   ```
 
-- The MCP tool `shieldlabs_verify_webhook_signature` (shieldlabs-investigate skill) checks a
-  received delivery and names the usual mistake when the signature does not match.
+- Signature verification runs locally with the receiver SDK. OAuth MCP provides
+  `shieldlabs_verify_webhook` (a ping) and `shieldlabs_test_webhook` (a sample delivery); neither
+  is an offline verifier of a pasted body.
 
 ## Pitfalls
 
@@ -164,12 +175,12 @@ gap are not sent again; the History API still has those identifications.
 - Passing `SHIELDLABS_WEBHOOK_SECRET` unsplit (two secrets during a rotation become one wrong
   secret), or answering 401 when it is not set: Verify then looks like a wrong secret.
 - Slow work (HTTP calls, heavy database writes) before the 2xx.
-- Not deduplicating: later releases resend identical bytes.
+- Treating delivery as exactly once, or using the identification UUID as the current event ID.
 - Sharing one store between webhook deduplication and the request IDs that authorized actions:
   the webhook would mark a request ID as used before the signup handler claims it. Use a separate
   table or key prefix (for example `shieldlabs:delivered:` next to `shieldlabs:used:`).
 - Gating the user's action on the webhook: it races with the user's request.
-- Throwing on unknown event types, or on the 17-flag Test delivery.
+- Throwing on unknown event types, or silently discarding newer fields from a verified payload.
 - Logging whole payloads: `traffic_source.landing_url` can hold query-string personal data. Log
   `request_id`, `risk_score` and the band instead.
 

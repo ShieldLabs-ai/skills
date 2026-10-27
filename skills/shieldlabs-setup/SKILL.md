@@ -5,6 +5,12 @@ description: Plans and implements a complete ShieldLabs integration in the curre
 
 # Set up ShieldLabs
 
+Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
+Published SDKs can lag the current wire schema: an empty normalized identification ID is
+unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
+OAuth adapter; a successful MCP read does not validate an application SDK.
+
+
 ShieldLabs identifies visitors and scores risk: "Detect risky users. Stop abuse of your product."
 This skill is the entry point. It plans the integration and hands each step to a focused skill:
 shieldlabs-browser, shieldlabs-server, shieldlabs-webhooks, shieldlabs-risk-decisions,
@@ -154,6 +160,7 @@ export async function checkSignup(requestId: string | null) {
   if (requestId) {
     try {
       identification = await shieldlabs.identifications.get(requestId); // waits until scored
+      if (identification && identification.request_id !== requestId) identification = null; // schema mismatch
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error; // unverified, never clean
     }
@@ -182,7 +189,7 @@ The server SDKs for Python (`shieldlabs`), Go, PHP, Java and .NET have the same 
 - Bands: trusted 0-29, suspicious 30-59, dangerous 60-100. Branch on bands and detection flags;
   never add up signal weights.
 - Webhooks: verify `X-Shield-Signature` over the raw body before parsing, deduplicate on
-  `data.request_id`, answer within one second.
+  verified envelope `event_id`, durably enqueue before answering promptly.
 - User HIDs come from the SDK `userHid` helpers on the server, never raw emails or IDs.
 - Use only the public SDK APIs, and confirm package versions on the registry and at
   https://docs.shieldlabs.ai.
@@ -193,8 +200,8 @@ The server SDKs for Python (`shieldlabs`), Go, PHP, Java and .NET have the same 
   origins, and the agent loads only after consent where consent is required (`autoLoad: false`,
   then `load()`).
 - Limits: History API about 15 requests per second per domain; Management API about 15 per minute
-  per IP, then a 10-minute block. Each identification is delivered once per endpoint by webhook
-  today; the History API is the dependable read.
+  per IP, then a 10-minute block. Webhook delivery must be idempotent;
+  use the History API for reconciliation.
 
 ## Pitfalls
 

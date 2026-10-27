@@ -5,6 +5,12 @@ description: Adds the ShieldLabs browser SDK to a web frontend so that each prot
 
 # ShieldLabs in the browser
 
+Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
+Published SDKs can lag the current wire schema: an empty normalized identification ID is
+unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
+OAuth adapter; a successful MCP read does not validate an application SDK.
+
+
 The browser half of a ShieldLabs integration. The ShieldLabs agent runs an identification in the
 visitor's browser and hands the page a **request ID**. The page sends that request ID to the
 backend in the same request as the protected action. The browser never receives a Risk Score, a
