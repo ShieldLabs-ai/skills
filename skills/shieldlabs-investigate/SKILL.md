@@ -5,12 +5,6 @@ description: Connects to the hosted ShieldLabs MCP with OAuth, selects the accou
 
 # ShieldLabs MCP
 
-Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
-Published SDKs can lag the current wire schema: an empty normalized identification ID is
-unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
-OAuth adapter; a successful MCP read does not validate an application SDK.
-
-
 Connect to `https://mcp.shieldlabs.ai/mcp` with the client's OAuth sign-in. No API key, local npm
 server or pasted bearer token is needed. [Client setup](references/clients.md).
 The current server exposes **21 tools**. [Tool inputs and behavior](references/tools.md),
@@ -42,16 +36,21 @@ call private dashboard endpoints as a fallback.
   with a nonzero score: detailed weights may be absent. Do not invent weights or recompute the score.
 - Bands are trusted 0–29, suspicious 30–59 and dangerous 60–100. `999` is a rate-limit marker.
   An all-zero device UUID gives no usable device evidence.
-- The live MCP input/output is named `request_id`. Published JavaScript SDK 1.0.1 returns
-  `requestId`; published Node SDK 1.0.1 returns `request_id`. The JS/Node 1.1.0 candidates and these application examples use
-  `identificationId` / `identification_id` ahead of a package release. Check the installed package's
-  types and map the same UUID to MCP `request_id`; do not rename MCP arguments from an SDK README.
+- MCP takes `request_id`. Pass the browser's `identificationId` or server SDK's
+  `identification_id` as that argument; they refer to the same identification UUID.
 
 ## Investigate an entity
 
 Use `shieldlabs_summarize_entity` for a bounded recent window, then `shieldlabs_search_history`
 when individual rows matter. Summary types are `user_hid`, `device_id`, `visitor_id`, `cookie_id`
 and `ip`; history additionally accepts `request_id` and `session_id`.
+
+When the installed schema exposes [History filters](references/tools.md#optional-history-filters),
+pass optional `from`/`to`, `score_from`/`score_to` and the 20 public boolean query fields.
+They are AND-only inside this identifier/domain. Preserve explicit `false`/`0` and keep the same
+filters on every page. For dangerous use 60-100 to exclude marker 999. Report the filtered scope;
+an empty filtered result does not mean no account activity. If the installed schema lacks a
+requested filter, report it as unsupported instead of dropping it or scanning another API.
 
 Report `window.complete`, analyzed count and total matching. Aggregates are computed from returned
 rows, not backend High-Risk Event verdicts. Do not present sample counts as the full account history.

@@ -1,7 +1,7 @@
 # Webhooks in .NET
 
 Use the verified raw envelope for current deliveries. Its `event_id` is the delivery key;
-`data.identification_id` correlates the visit. The older typed SDK model can omit these fields.
+`data.identification_id` correlates the visit. Use the verified envelope for these identifiers.
 The application-provided enqueue-once service must reject an empty key and atomically persist
 its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
 This queue API is application code, not a ShieldLabs SDK method.

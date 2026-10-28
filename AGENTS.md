@@ -59,9 +59,9 @@ An investigation stays read-only. Mutations need user intent, are never automati
 require `confirm: true` for destructive operations. Keep secrets masked unless an authorized installer
 needs a one-time credential. Never repeat secrets in chat or use private dashboard APIs as a fallback.
 
-Published JS/Node 1.0.1 SDKs use `requestId` / `request_id`; the compatible 1.1.0 candidates use
-`identificationId` / `identification_id`. These examples target the candidates; check the installed package types. MCP currently uses
-`request_id`. History can omit detailed weights (`signals: []`) even with a nonzero Risk Score.
+Use the browser's `identificationId` and the server SDK's `identification_id` for the same UUID.
+MCP takes it as `request_id`. History can omit detailed weights (`signals: []`) even with a
+nonzero Risk Score. Deduplicate webhook deliveries by the verified envelope's `event_id`.
 
 ## Working on this repository
 

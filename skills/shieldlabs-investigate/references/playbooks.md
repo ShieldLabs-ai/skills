@@ -67,3 +67,27 @@ Read `get_webhook`, then use verify/test only for an authorized receiver. A 4xx,
 an endpoint result, not automatically an MCP failure. Inspect the receiver's raw-body handling,
 correct secret and response path. Verify signatures locally with the SDK; do not ask the user to
 paste a secret. A valid ping does not prove the scored-event branch works.
+
+## Filter a known entity's history
+
+First inspect the installed schema for filter availability. Each request still needs the known
+identifier and selected domain. Replace placeholders with the actual identifier.
+
+```json
+{"domain":"example.com","type":"user_hid","value":"<User HID>","from":"2026-10-01","to":"2026-10-28","score_from":60,"score_to":100,"is_vpn":true,"is_proxy":false,"response_format":"json"}
+```
+
+Use these inputs with `shieldlabs_search_history` or `shieldlabs_summarize_entity`. This asks for
+VPN=true AND proxy=false AND dangerous scores within one account's UTC window, not all site visits.
+Keep filters on every page and in any summary-to-detail follow-up.
+
+```json
+{"domain":"example.com","type":"device_id","value":"<device UUID>","score_from":0,"score_to":0,"is_search_bot":true,"response_format":"json"}
+```
+
+```json
+{"domain":"example.com","type":"ip","value":"203.0.113.24","score_from":999,"score_to":999,"response_format":"json"}
+```
+
+The last query selects rate-limit markers, not a risk band. Report errors and unsupported inputs
+explicitly. Do not remove a constraint to make a request succeed.

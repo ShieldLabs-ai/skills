@@ -2,8 +2,8 @@
 
 ShieldLabs returns detector results, separately from Risk Score. Read the verified public
 payload (or current MCP projection), keeping `status`, `reason`, `level` and `cluster_id`.
-If an older SDK lacks these fields, use its verified `raw` data and the current public schema;
-do not add an invented SDK method or reconstruct a backend verdict from a History count.
+Use the verified public payload for these fields. Keep the detector verdict separate from
+application heuristics based on History counts.
 
 | Delivery | Result |
 |---|---|

@@ -7,12 +7,6 @@ description: Integrates ShieldLabs backend High-Risk Events for multi-accounting
 
 Use the [backend High-Risk Event workflow](references/high-risk-events.md) first. The History recipes below are optional application policies and must not be reported as detector verdicts.
 
-Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
-Published SDKs can lag the current wire schema: an empty normalized identification ID is
-unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
-OAuth adapter; a successful MCP read does not validate an application SDK.
-
-
 One identification describes one check by the browser agent. Abuse across accounts shows up in the
 identifiers over time: many accounts on one device, one account on many devices, an account that
 jumps between countries. ShieldLabs detects four **High-Risk Events** on your users
@@ -24,7 +18,7 @@ login, reward claim, payout.
 Build these checks only on fields the installed SDK actually supports. These are bounded
 application-side History recipes, not backend High-Risk Event verdicts. Current webhook contracts
 also expose HRE data/events; use their verified public schema when requested, and never infer
-those verdicts from a sample count or invent fields for an older SDK.
+those verdicts from a sample count or invent response fields.
 
 ## Workflow
 

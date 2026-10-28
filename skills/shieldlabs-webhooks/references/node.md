@@ -1,7 +1,7 @@
 # Webhooks in Node.js, Next.js and edge runtimes
 
 Use the verified raw envelope for current deliveries. Its `event_id` is the delivery key;
-`data.identification_id` correlates the visit. The older typed SDK model can omit these fields.
+`data.identification_id` correlates the visit. Use the verified envelope for these identifiers.
 The application-provided enqueue-once service must reject an empty key and atomically persist
 its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
 This queue API is application code, not a ShieldLabs SDK method.
@@ -178,7 +178,7 @@ With Hono, read the bytes with `new Uint8Array(await c.req.arrayBuffer())` and t
 
 ## Typed data
 
-`event.data` in the compatible Node 1.1.0 candidate is an `Identification`: `identification_id`, `visitor_id`, `device_id`, `session_id`,
+`event.data` is an `Identification`: `identification_id`, `visitor_id`, `device_id`, `session_id`,
 `cookie_id`, `user_hid` (`string | null`), `domain`, `public_ip` and `local_ip` (`{ ip, country }`),
 `connection_type`, `os`, `browser`, `device_type`, `traffic_source`, `risk_score`, `signals`
 (`{ name, weight, description: null }`), `detection_flags` (20 booleans), `observed_at`,

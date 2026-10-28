@@ -5,12 +5,6 @@ description: Receives ShieldLabs webhooks safely. Verifies the X-Shield-Signatur
 
 # ShieldLabs webhooks
 
-Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
-Published SDKs can lag the current wire schema: an empty normalized identification ID is
-unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
-OAuth adapter; a successful MCP read does not validate an application SDK.
-
-
 ShieldLabs posts a signed `identification.scored` event to each enabled endpoint when it finishes
 scoring an identification: usually a few seconds after the browser call, and at most about 10
 seconds after the identification arrives when follow-up network checks run. Webhooks are optional. The History API read at the protected action
@@ -50,7 +44,7 @@ rotating a secret invalidates the old one immediately. Do not automatically retr
    processed before its job is durable. Use `data.identification_id` to correlate a scored visit; group events have no such field.
 5. Validate known events against the [current public wire schema](assets/webhook-event.schema.json).
    Route both `identification.scored` and `hre.multi_account.changed`, preserving the complete
-   verified envelope even when an older SDK calls it unknown. Use the
+   verified envelope. Use the
    [High-Risk Event consumer](references/high-risk-events.md). Acknowledge `webhook.ping` and
    unknown future types with 2xx. A schema-valid multi-account notification is not a scored visit.
 6. Run MCP **Verify** and **Test** or use those buttons in the dashboard, following the chosen
@@ -146,7 +140,7 @@ ID, while Test can send a UUID. Do not impose a UUID regex on the event key. The
 
 | `event_type` | When | Payload |
 |---|---|---|
-| `identification.scored` | Every scored identification, and the **Test** button | Verified raw `data` uses `identification_id`, identifiers, score, flags and optional current fields. Older typed SDKs may expose a smaller model; keep the raw envelope |
+| `identification.scored` | Every scored identification, and the **Test** button | Verified raw `data` uses `identification_id`, identifiers, score, flags and optional current fields. Keep the verified envelope for correlation and asynchronous processing |
 | `hre.multi_account.changed` | Opt-in group transition | Complete group membership, action and decimal-string revision; no identification UUID or Risk Score |
 | `webhook.ping` | The **Verify** button | no `data` |
 | anything else | Event types added later | acknowledge with 2xx; the SDKs return an "unknown event" instead of throwing |

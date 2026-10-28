@@ -1,8 +1,7 @@
 # Hosted MCP tools
 
-Baseline connected OAuth catalog checked on 2026-10-27; current contract additions checked in the 2026-10-28 release candidate with a real MCP Client in Node and Workers. Confirm deployed schema after rollout. Endpoint
-`https://mcp.shieldlabs.ai/mcp`; **21 tools**. The client may add a namespace before these names.
-Use the client's current tool schema if it changes; never guess an argument.
+Endpoint: `https://mcp.shieldlabs.ai/mcp`; **21 tools**. The client may add a namespace before
+these names. Use the client's tool schema for argument names and types.
 
 [Input snapshot](mcp-catalog.json) records names, required fields and types without account data.
 
@@ -64,6 +63,30 @@ ID lookups use UUIDs. IP searches support IPv4 and IPv4-mapped IPv6, not pure IP
 exact and case-sensitive; `/`, `.` and `..` are invalid lookup values. Do not double-encode values.
 Never reuse a value marked escaped or truncated as an exact lookup identifier.
 
+## Optional History filters
+
+Both `search_history` and `summarize_entity` accept:
+
+- `from`, `to`: inclusive UTC bounds. `YYYY-MM-DD` covers the full day (start `00:00:00`,
+  end `23:59:59.999`). Exact time uses `YYYY-MM-DD HH:MM:SS` with up to nine fractional
+  digits. Do not send `T`, `Z` or timezone offsets; convert unambiguous input to UTC first.
+- `score_from`, `score_to`: integers 0-999, minimum not above maximum. `0` is an explicit bound.
+  `999` is a rate-limit marker, not dangerous risk. For dangerous use both 60 and 100.
+- Boolean flags: `is_vpn`, `is_tor`, `is_proxy`, `is_privacy_relay`, `network_check_incomplete`, `check_incomplete`, `is_antidetect`, `is_os_mismatch`, `is_os_not_detected`, `is_timezone_mismatch`, `is_js_disabled`, `is_browser_automation`, `is_incognito`, `is_search_bot`, `ip_mismatch`, `latency_test`, `device_spoofing`, `banned_ip`, `ai_bot`, `ai_browser`.
+  Values are JSON `true` or `false`, never strings. For accepted search bots, AI bots
+  and AI browsers, `check_incomplete`, `is_js_disabled`, `is_incognito` and `ip_mismatch` are false.
+
+All constraints are ANDed inside the selected **identifier and domain**. Omission means no
+constraint; preserve explicit `false` and `0`. Required `type` and `value` remain required.
+No domain-wide enumeration, OR predicates, HRE/identity, country, campaign or arbitrary row-field
+filters are added. Use the exact query names above; normalized output flag names can differ.
+
+Keep every filter unchanged on subsequent pages. JSON/Markdown report supplied filters;
+`total`, `window.total_matching` and aggregates cover only matching rows. Empty filtered results
+mean no matching rows, not no activity or a clean user. New rows can shift offset pages;
+deduplicate by identification ID. A server `400` is an input error, never retry it or fall back
+to an unfiltered query.
+
 ## Mutation contract
 
 All writes need user intent for that operation. A requested installation can include registering
@@ -113,7 +136,7 @@ server SDK for raw-body signature verification. Do not copy a webhook secret int
 
 ## Current public results
 
-The candidate exposes the 20 canonical flags, with `null` when the public response did not
+MCP exposes the 20 canonical flags, with `null` when the public response did not
 provide a value. Six legacy keys remain for compatibility; aliases are not additional signals
 and their counts/weights must not be added. MCP `request_id` still names the wire
 `identification_id`. HRE, client identity and owner labels are optional, allowlisted and bounded;
