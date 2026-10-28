@@ -55,7 +55,7 @@ Check these by reading the code and the deployed app:
 - **The policy matches each action**: missing, `999` and all-zero device IDs lead to step-up or
   review; the dangerous band and automation flags are handled; signed-in actions check
   `user_hid` against the session user (shieldlabs-risk-decisions).
-- **Webhook handlers answer within one second**, keep their deduplication store separate from the
+- **Webhook handlers acknowledge promptly after durable acceptance**, keep their deduplication store separate from the
   request IDs that authorized actions, and do not gate user actions.
 - **Consent**: where required, the agent loads only after consent.
 - **The deployed Content Security Policy** (response headers, not only config files) allows the
@@ -63,7 +63,7 @@ Check these by reading the code and the deployed app:
 - **Testing happens on a registered domain**, not on `localhost`.
 - **Logs** record request IDs, reasons and bands, not raw personal data or full webhook bodies.
 - **History iteration is bounded** (`maxItems`) on request paths, and results are cached.
-- **Keys are per environment**: development and staging use their own registered domain and keys.
+- **Domain coverage is explicit**: inventory production/staging/preview hostnames; inspect parent `allow_subdomains`. Separate keys are an isolation choice, not a requirement to register every child.
 
 ## Report
 

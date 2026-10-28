@@ -6,6 +6,13 @@ The application-provided enqueue-once service must reject an empty key and atomi
 its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
 This queue API is application code, not a ShieldLabs SDK method.
 Do not enqueue only the old normalized data model.
+Route by the verified raw `event_type`, including `hre.multi_account.changed` even when the SDK
+represents it as an unknown event. Validate known current shapes against the bundled
+[wire schema](../assets/webhook-event.schema.json) before enqueueing; reject an invalid known
+payload with 400. Require a nonempty signed `event_id`. Use the
+[High-Risk Event consumer](high-risk-events.md) for the queued group transition.
+Queue failures must return a retryable non-2xx; never acknowledge a lost job.
+
 
 
 `ShieldLabs\Webhook::constructEvent(string $payload, ?string $header, string|array $secret)`
@@ -46,7 +53,7 @@ try {
     exit;
 }
 
-if ($event instanceof IdentificationScoredEvent) {
+if (in_array($event->raw['event_type'] ?? '', ['identification.scored', 'hre.multi_account.changed'], true)) {
     enqueueOnce($event->raw['event_id'], $event->raw); // atomic durable acceptance
 }
 http_response_code(200);
@@ -107,7 +114,7 @@ class ShieldLabsWebhookController extends Controller
             return response()->noContent(400);
         }
 
-        if ($event instanceof IdentificationScoredEvent) {
+        if (in_array($event->raw['event_type'] ?? '', ['identification.scored', 'hre.multi_account.changed'], true)) {
             app(DurableWebhookQueue::class)->enqueueOnce($event->raw['event_id'], $event->raw);
         }
         return response()->noContent(200);
@@ -156,7 +163,7 @@ final class ShieldLabsWebhookController
         } catch (WebhookParseException) {
             return new Response(status: 400);
         }
-        if ($event instanceof IdentificationScoredEvent) {
+        if (in_array($event->raw['event_type'] ?? '', ['identification.scored', 'hre.multi_account.changed'], true)) {
             $this->queue->enqueueOnce($event->raw['event_id'], $event->raw);
         }
         return new Response(status: 200);

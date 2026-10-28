@@ -72,6 +72,12 @@ class HostedMcpTest(unittest.TestCase):
             config = json.loads((installed / '.mcp.json').read_text())
             self.assertEqual(config['mcpServers']['shieldlabs']['url'], 'https://mcp.shieldlabs.ai/mcp')
             self.assertTrue((installed / 'skills/shieldlabs-investigate/references/mcp-catalog.json').is_file())
+            assets = installed / 'skills/shieldlabs-webhooks/assets'
+            helper = (assets / 'validate_event.mjs').read_text()
+            self.assertIn("'./webhook-event.schema.json'", helper)
+            wire = json.loads((assets / 'webhook-event.schema.json').read_text())
+            self.assertIn('MultiaccountChangedEvent', wire['$defs'])
+            self.assertTrue((assets / 'apply_multiaccount.py').is_file())
 
 
 if __name__ == '__main__':

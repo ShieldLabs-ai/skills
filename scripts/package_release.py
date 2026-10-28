@@ -9,7 +9,7 @@ import zipfile
 
 FILES = ('README.md', 'LICENSE', 'CHANGELOG.md', 'CONTRIBUTING.md', 'PUBLICATION.md', 'AGENTS.md', '.mcp.json')
 DIRECTORIES = ('skills', 'commands', 'rules', '.claude-plugin', '.cursor-plugin', '.codex-plugin', '.grok-plugin', '.agents/plugins')
-SUFFIXES = {'.md', '.mdc', '.json', '.py'}
+SUFFIXES = {'.md', '.mdc', '.json', '.py', '.mjs'}
 
 
 def build(root: Path, output: Path) -> Path:

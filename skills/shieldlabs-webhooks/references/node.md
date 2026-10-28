@@ -6,6 +6,13 @@ The application-provided enqueue-once service must reject an empty key and atomi
 its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
 This queue API is application code, not a ShieldLabs SDK method.
 Do not enqueue only the old normalized data model.
+Route by the verified raw `event_type`, including `hre.multi_account.changed` even when the SDK
+represents it as an unknown event. Validate known current shapes against the bundled
+[wire schema](../assets/webhook-event.schema.json) before enqueueing; reject an invalid known
+payload with 400. Require a nonempty signed `event_id`. Use the
+[High-Risk Event consumer](high-risk-events.md) for the queued group transition.
+Queue failures must return a retryable non-2xx; never acknowledge a lost job.
+
 
 
 All examples use `@shieldlabs-ai/node` (or `@shieldlabs-ai/next/server`, which wraps it). They read
@@ -51,7 +58,7 @@ createServer(async (req, res) => {
   } catch (error) {
     return res.writeHead(error instanceof SignatureVerificationError ? 401 : 400).end();
   }
-  if (event.event_type === 'identification.scored') {
+  if (['identification.scored', 'hre.multi_account.changed'].includes(String(event.raw.event_type))) {
     await jobs.enqueueOnce(event.raw.event_id as string, event.raw);
   }
   res.writeHead(200).end(); // after atomic durable acceptance
@@ -86,7 +93,7 @@ export class ShieldLabsWebhookController {
       if (error instanceof SignatureVerificationError) throw new UnauthorizedException();
       throw new BadRequestException();
     }
-    if (event.event_type === 'identification.scored') {
+    if (['identification.scored', 'hre.multi_account.changed'].includes(String(event.raw.event_type))) {
       await this.jobs.enqueueOnce(event.raw.event_id as string, event.raw);
     }
     return { received: true };
@@ -109,7 +116,7 @@ fastify.register(async (scope) => {
     } catch (error) {
       return reply.code(error instanceof SignatureVerificationError ? 401 : 400).send();
     }
-    if (event.event_type === 'identification.scored') {
+    if (['identification.scored', 'hre.multi_account.changed'].includes(String(event.raw.event_type))) {
       await jobs.enqueueOnce(event.raw.event_id as string, event.raw);
     }
     return reply.code(200).send();
@@ -125,7 +132,7 @@ import { createWebhookHandler } from '@shieldlabs-ai/next/server';
 
 export const POST = createWebhookHandler({
   onEvent: async (event) => {
-    if (event.event_type !== 'identification.scored') return;
+    if (!['identification.scored', 'hre.multi_account.changed'].includes(String(event.raw.event_type))) return;
     await jobs.enqueueOnce(event.raw.event_id as string, event.raw);
   },
   // secret: optional; default SHIELDLABS_WEBHOOK_SECRET, comma-separated while you rotate
@@ -158,7 +165,7 @@ export default {
     } catch (error) {
       return new Response(null, { status: error instanceof SignatureVerificationError ? 401 : 400 });
     }
-    if (event.event_type === 'identification.scored') {
+    if (['identification.scored', 'hre.multi_account.changed'].includes(String(event.raw.event_type))) {
       await processOnce(event.raw); // atomic durable enqueue before acknowledging
     }
     return new Response(null, { status: 200 });

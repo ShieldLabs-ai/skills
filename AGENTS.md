@@ -20,7 +20,7 @@ first, then only the reference files for the stack at hand.
 
 ## Guided installation
 
-Follow the setup skill's major-stage checkpoints. Ask about an account only when unknown and no
+Show the setup skill's progress/resume map and follow its major-stage checkpoints. Ask about an account only when unknown and no
 connection exists. A general install starts with browser identification and a verified result,
 then offers only unfinished server verification, webhook or user-linking stages, or finish.
 Already requested stages need no repeated question; do not ask before every file or package.

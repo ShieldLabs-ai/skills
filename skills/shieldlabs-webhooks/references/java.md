@@ -6,6 +6,13 @@ The application-provided enqueue-once service must reject an empty key and atomi
 its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
 This queue API is application code, not a ShieldLabs SDK method.
 Do not enqueue only the old normalized data model.
+Route by the verified raw `event_type`, including `hre.multi_account.changed` even when the SDK
+represents it as an unknown event. Validate known current shapes against the bundled
+[wire schema](../assets/webhook-event.schema.json) before enqueueing; reject an invalid known
+payload with 400. Require a nonempty signed `event_id`. Use the
+[High-Risk Event consumer](high-risk-events.md) for the queued group transition.
+Queue failures must return a retryable non-2xx; never acknowledge a lost job.
+
 
 
 `ai.shieldlabs.Webhooks.constructEvent(payload, signatureHeader, secrets...)` takes the raw body as
@@ -57,7 +64,7 @@ class ShieldLabsWebhookController {
         } catch (WebhookParseException e) {
             return ResponseEntity.badRequest().build();
         }
-        if (event instanceof IdentificationScoredEvent) {
+        if (java.util.Set.of("identification.scored", "hre.multi_account.changed").contains(event.raw().get("event_type"))) {
             Map<String, Object> envelope = event.raw();
             queue.enqueueOnce((String) envelope.get("event_id"), envelope); // commit before 2xx
         }
@@ -81,7 +88,7 @@ server.createContext("/webhooks/shieldlabs", exchange -> {
     } else {
         try {
             WebhookEvent event = Webhooks.constructEvent(body, signature, secrets);
-            if (event instanceof IdentificationScoredEvent) {
+            if (java.util.Set.of("identification.scored", "hre.multi_account.changed").contains(event.raw().get("event_type"))) {
                 Map<String, Object> envelope = event.raw();
                 queue.enqueueOnce((String) envelope.get("event_id"), envelope);
             }

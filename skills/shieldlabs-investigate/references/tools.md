@@ -1,6 +1,6 @@
 # Hosted MCP tools
 
-Verified against the connected OAuth server on 2026-10-27. Endpoint
+Baseline connected OAuth catalog checked on 2026-10-27; current contract additions checked in the 2026-10-28 release candidate with a real MCP Client in Node and Workers. Confirm deployed schema after rollout. Endpoint
 `https://mcp.shieldlabs.ai/mcp`; **21 tools**. The client may add a namespace before these names.
 Use the client's current tool schema if it changes; never guess an argument.
 
@@ -12,7 +12,7 @@ Use the client's current tool schema if it changes; never guess an argument.
 |---|---|---|
 | `shieldlabs_add_domain` | `allow_subdomains` (optional), `domain`, `include_secret` (optional) | Add an existing domain to your ShieldLabs account for installation |
 | `shieldlabs_check_connection` | None | Check that this connection to the hosted ShieldLabs server works: ShieldLabs checks the access token the user signed in with |
-| `shieldlabs_create_webhook` | `domain_id`, `include_secret` (optional), `name`, `url` | Create a new multi-endpoint webhook with name and public HTTPS URL |
+| `shieldlabs_create_webhook` | `domain_id`, `include_secret` (optional), `multiaccount` (optional), `name`, `url` | Create a new multi-endpoint webhook with name and public HTTPS URL |
 | `shieldlabs_delete_domain` | `confirm`, `domain_id` | Delete an owned domain and its integrations |
 | `shieldlabs_delete_webhook` | `confirm`, `domain_id`, `webhook_id` | Delete a webhook endpoint |
 | `shieldlabs_disable_webhook` | `confirm`, `domain_id`, `webhook_id` | Disable webhook delivery |
@@ -24,7 +24,7 @@ Use the client's current tool schema if it changes; never guess an argument.
 | `shieldlabs_list_domains` | None | List owned domains, including disabled domains |
 | `shieldlabs_list_webhooks` | `domain_id` | List the new multi-endpoint webhooks of an owned domain, with status and masked secrets |
 | `shieldlabs_patch_domain` | `allow_subdomains` (optional), `confirm` (optional), `domain_id`, `enabled` (optional) | Update enabled and/or allow_subdomains on an owned domain |
-| `shieldlabs_patch_webhook` | `confirm` (optional), `domain_id`, `name` (optional), `url` (optional), `webhook_id` | Update webhook name and/or URL; omitted fields are preserved |
+| `shieldlabs_patch_webhook` | `confirm` (optional), `domain_id`, `multiaccount` (optional), `name` (optional), `url` (optional), `webhook_id` | Update webhook name and/or URL; omitted fields are preserved |
 | `shieldlabs_rotate_server_key` | `confirm`, `domain_id`, `include_secret` (optional) | Rotate the domain server key |
 | `shieldlabs_rotate_webhook_secret` | `confirm`, `domain_id`, `include_secret` (optional), `webhook_id` | Replace the webhook signing secret |
 | `shieldlabs_search_history` | `domain` (optional), `limit` (optional), `offset` (optional), `response_format` (optional), `type`, `value` | Read paginated identification history, newest first |
@@ -110,3 +110,21 @@ The hosted catalog replaces the old seven-tool npm setup. It does not expose
 `shieldlabs_get_domain_profile`, `shieldlabs_current_time` or `shieldlabs_verify_webhook_signature`.
 Use domain reads for current configuration, a trusted clock for freshness, and the application's
 server SDK for raw-body signature verification. Do not copy a webhook secret into MCP chat.
+
+## Current public results
+
+The candidate exposes the 20 canonical flags, with `null` when the public response did not
+provide a value. Six legacy keys remain for compatibility; aliases are not additional signals
+and their counts/weights must not be added. MCP `request_id` still names the wire
+`identification_id`. HRE, client identity and owner labels are optional, allowlisted and bounded;
+read warnings/truncation before using displayed evidence. Missing data is unknown.
+
+`hre` reports account_sharing/account_takeover/impossible_travel snapshots, separately from
+Risk Score. `summarize_entity` counts only reported snapshots in the returned window; it does
+not create detector verdicts. Client claims and verified subjects stay separate; provider proof
+never proves an agent or service. Follow the [identity guidance](../../shieldlabs-risk-decisions/references/client-identity.md).
+
+Webhook create/patch accept optional `multiaccount`. Omission defaults a new subscription to
+false and preserves an existing one. Read it back. Use the [HRE workflow](../../shieldlabs-account-abuse/references/high-risk-events.md)
+for release-profile limits and group delivery tests. An older deployed schema may lack this
+field; report that limitation and reconnect after deployment, never substitute dashboard APIs.

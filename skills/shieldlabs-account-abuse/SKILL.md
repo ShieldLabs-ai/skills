@@ -1,9 +1,11 @@
 ---
 name: shieldlabs-account-abuse
-description: Builds account-abuse checks on the ShieldLabs History API with lookups by device_id, user_hid, visitor_id and ip. Covers multi-accounting (accounts per device or visitor), account sharing (devices per account), impossible travel (the action's country against the account's previous hour), account takeover (a known account on a new device and a new country), ban evasion, and promo, bonus or free-trial abuse, with helpers for the Node.js, Python, Go, PHP, Java and .NET SDKs, and explains the High-Risk Events that ShieldLabs detects in the analytics dashboard. Use when the user asks to block multi-accounting, stop duplicate or fake accounts, limit a promo, bonus or free trial to one per person, detect account sharing, flag impossible travel, catch account takeover at login, keep banned users from coming back, or count how many accounts use one device.
+description: Integrates ShieldLabs backend High-Risk Events for multi-accounting, account sharing, impossible travel and account takeover, with optional bounded History recipes for application policy, promo abuse and ban evasion. Use when connecting account-abuse detection, consuming hre results or multi-account group webhooks, reviewing linked accounts, or protecting rewards and signed-in actions.
 ---
 
 # Account-abuse checks
+
+Use the [backend High-Risk Event workflow](references/high-risk-events.md) first. The History recipes below are optional application policies and must not be reported as detector verdicts.
 
 Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
 Published SDKs can lag the current wire schema: an empty normalized identification ID is
@@ -31,7 +33,7 @@ those verdicts from a sample count or invent fields for an older SDK.
    depend on it.
 2. At the action, read the current identification (shieldlabs-server skill) and apply the base
    policy first (shieldlabs-risk-decisions skill): replay, freshness, missing, `999`, automation.
-3. Run the recipe for the abuse in question, with a bounded History window.
+3. Read the backend HRE result/status when available. Add a bounded History recipe only for a separately requested application requirement.
 4. Map the result to an action (hold the reward, step-up, review, block) and log the evidence:
    counts, request IDs, countries.
 5. Store `device_id` (and `visitor_id`) with accounts, rewards and bans in your own database, so

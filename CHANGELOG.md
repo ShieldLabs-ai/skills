@@ -6,6 +6,14 @@ All notable changes to this project are documented in this file. The format foll
 
 ## [1.1.0] - 2026-10-28
 
+- Add evidence-based setup progress/resume, hostname coverage, backend HRE consumption,
+  multi-account subscription/consumer and claim-versus-proof identity guidance.
+- Route signed group events in all six server language references, ship pinned public wire
+  schemas and an executable transactional consumer with ordering, retry and rollback tests.
+- Add application-owned order/promo context joins, including webhook-first arrival.
+- Update the candidate MCP catalog for multiaccount and 20 current flags; deployed capability
+  and published SDK versions still require their separate release checks.
+
 - Add guided checkpoints for account setup and major integration stages, a next-step menu and
   clear completion status, without repeated approval for already selected work.
 
