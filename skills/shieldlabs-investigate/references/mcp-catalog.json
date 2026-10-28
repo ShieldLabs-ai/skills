@@ -1,7 +1,7 @@
 {
   "endpoint": "https://mcp.shieldlabs.ai/mcp",
   "authentication": "OAuth",
-  "verified_at": "2026-10-27",
+  "verified_at": "2026-10-28",
   "tools": [
     {
       "name": "shieldlabs_add_domain",
@@ -52,6 +52,11 @@
           "name": "url",
           "required": true,
           "type": "string"
+        },
+        {
+          "name": "multiaccount",
+          "required": false,
+          "type": "boolean"
         }
       ]
     },
@@ -278,6 +283,11 @@
           "name": "webhook_id",
           "required": true,
           "type": "string"
+        },
+        {
+          "name": "multiaccount",
+          "required": false,
+          "type": "boolean"
         }
       ]
     },
@@ -427,5 +437,6 @@
         }
       ]
     }
-  ]
+  ],
+  "verification": "Candidate source contract, checked with actual MCP Client in Node and Workers. Refresh the deployed schema after rollout."
 }

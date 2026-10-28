@@ -5,6 +5,8 @@ description: Turns a ShieldLabs identification into an allow, step-up, review or
 
 # Decide on a ShieldLabs verdict
 
+For crawlers and AI traffic, use [client identity and proof scope](references/client-identity.md). Missing attribution is unknown; claimed names do not authorize protected actions.
+
 Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
 Published SDKs can lag the current wire schema: an empty normalized identification ID is
 unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own

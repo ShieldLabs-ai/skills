@@ -103,6 +103,8 @@ The Public Key is public by design; never write any other ShieldLabs key into a 
 - Next.js: never prefix server keys with `NEXT_PUBLIC_`. SvelteKit: read them from
   `$env/static/private` or `$env/dynamic/private`. Vite: never prefix them with `VITE_`.
 
+Inventory production, staging and preview hostnames with the [progress map](progress.md).
+
 ## Development and staging
 
 Use an authorized development or staging hostname with the registered domain's keys. Inspect

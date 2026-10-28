@@ -5,6 +5,8 @@ description: Reads ShieldLabs verdicts on the backend with the official server S
 
 # ShieldLabs on the server
 
+When connecting results to orders, promos or other actions, follow the [business context join](references/business-context.md), including webhook-first arrival and tenant scope.
+
 Before application integration, [check the installed SDK contract](references/sdk-contract.md).
 Published SDKs can lag the current wire schema: an empty normalized identification ID is
 unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
@@ -172,8 +174,7 @@ anonymous one: treat it as unverified.
 
 ## Environments
 
-The hosts are the same everywhere. For development and staging, register a separate domain in the
-analytics dashboard (Integration > Domains) and use its keys. For offline tests,
+The hosts are the same everywhere. For development and staging, inspect parent `allow_subdomains` and use an authorized covered hostname with its keys. Separate registration/keys are an isolation choice. For offline tests,
 `SHIELDLABS_API_BASE_URL` points the SDK at a local stand-in of the History API: the skill ships
 one in [scripts/history_mock.py](scripts/history_mock.py), and [testing.md](references/testing.md) explains it with the
 History row format and example rows for every branch of the policy helper.

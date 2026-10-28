@@ -5,6 +5,8 @@ description: Plans and implements a complete ShieldLabs integration in the curre
 
 # Set up ShieldLabs
 
+Start by showing the [progress and resume map](references/progress.md). Keep it current after each verified stage.
+
 Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
 Published SDKs can lag the current wire schema: an empty normalized identification ID is
 unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
@@ -263,7 +265,7 @@ The server SDKs for Python (`shieldlabs`), Go, PHP, Java and .NET have the same 
 - Testing on `localhost` and concluding the backend is broken: identifications are recorded only
   on registered domains.
 - Deciding in the webhook handler instead of at the action; forgetting to claim request IDs.
-- Using production keys in development instead of a separate registered domain.
+- Mixing production and test data without choosing isolation: inspect the parent domain and allow_subdomains before using an authorized staging hostname.
 
 ## Verification checklist
 

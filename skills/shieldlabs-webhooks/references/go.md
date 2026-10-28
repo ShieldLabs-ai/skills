@@ -6,6 +6,13 @@ The application-provided enqueue-once service must reject an empty key and atomi
 its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
 This queue API is application code, not a ShieldLabs SDK method.
 Do not enqueue only the old normalized data model.
+Route by the verified raw `event_type`, including `hre.multi_account.changed` even when the SDK
+represents it as an unknown event. Validate known current shapes against the bundled
+[wire schema](../assets/webhook-event.schema.json) before enqueueing; reject an invalid known
+payload with 400. Require a nonempty signed `event_id`. Use the
+[High-Risk Event consumer](high-risk-events.md) for the queued group transition.
+Queue failures must return a retryable non-2xx; never acknowledge a lost job.
+
 
 
 Package `github.com/ShieldLabs-ai/shieldlabs-go/webhook`. `webhook.ConstructEvent(payload, header,
@@ -19,6 +26,8 @@ a `bool`; `webhook.SignatureHeader` is `"X-Shield-Signature"`.
 
 ```go
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -64,22 +73,24 @@ func (a *app) shieldlabsWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch e := event.(type) {
-	case *webhook.IdentificationScoredEvent:
-		eventID, ok := e.Raw["event_id"].(string)
+	if event.Type() == "identification.scored" || event.Type() == "hre.multi_account.changed" {
+		// Decode the same already-verified bytes; keep all fields and numeric precision.
+		var envelope map[string]any
+		decoder := json.NewDecoder(bytes.NewReader(body))
+		decoder.UseNumber()
+		if err := decoder.Decode(&envelope); err != nil {
+			http.Error(w, "invalid payload", http.StatusBadRequest)
+			return
+		}
+		eventID, ok := envelope["event_id"].(string)
 		if !ok || eventID == "" {
 			http.Error(w, "missing event_id", http.StatusBadRequest)
 			return
 		}
-		// Application queue: atomic deduplication and durable enqueue.
-		if err := a.jobs.EnqueueOnce(r.Context(), eventID, e.Raw); err != nil {
+		if err := a.jobs.EnqueueOnce(r.Context(), eventID, envelope); err != nil {
 			http.Error(w, "queue unavailable", http.StatusServiceUnavailable)
 			return
 		}
-	case *webhook.PingEvent:
-		log.Print("webhook.ping received")
-	default:
-		log.Printf("ignoring event type %s", event.Type())
 	}
 	w.WriteHeader(http.StatusOK)
 }

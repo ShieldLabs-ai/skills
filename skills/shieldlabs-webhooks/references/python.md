@@ -6,6 +6,13 @@ The application-provided enqueue-once service must reject an empty key and atomi
 its dedup record and job (transaction/outbox). Roll back on failure and commit before 2xx.
 This queue API is application code, not a ShieldLabs SDK method.
 Do not enqueue only the old normalized data model.
+Route by the verified raw `event_type`, including `hre.multi_account.changed` even when the SDK
+represents it as an unknown event. Validate known current shapes against the bundled
+[wire schema](../assets/webhook-event.schema.json) before enqueueing; reject an invalid known
+payload with 400. Require a nonempty signed `event_id`. Use the
+[High-Risk Event consumer](high-risk-events.md) for the queued group transition.
+Queue failures must return a retryable non-2xx; never acknowledge a lost job.
+
 
 
 `from shieldlabs import webhooks`. `webhooks.construct_event(payload, signature_header, secret)`
@@ -54,8 +61,8 @@ async def shieldlabs_webhook(request: Request) -> Response:
     except WebhookParseError:
         return Response(status_code=400)
 
-    if isinstance(event, IdentificationScoredEvent):
-        await queue.enqueue_once(event.raw["event_id"], dict(event.raw))  # fast; answer within 1 second
+    if event.raw.get("event_type") in ("identification.scored", "hre.multi_account.changed"):
+        await queue.enqueue_once(event.raw["event_id"], dict(event.raw))  # fast; acknowledge promptly after durable acceptance
     return Response(status_code=200)  # webhook.ping and unknown event types: acknowledge
 ```
 
@@ -79,7 +86,7 @@ def shieldlabs_webhook():
         return "", 401
     except WebhookParseError:
         return "", 400
-    if isinstance(event, IdentificationScoredEvent):
+    if event.raw.get("event_type") in ("identification.scored", "hre.multi_account.changed"):
         queue.enqueue_once(event.raw["event_id"], dict(event.raw))
     return "", 200
 ```
@@ -104,7 +111,7 @@ def shieldlabs_webhook(request):
         return HttpResponse(status=401)
     except WebhookParseError:
         return HttpResponse(status=400)
-    if isinstance(event, IdentificationScoredEvent):
+    if event.raw.get("event_type") in ("identification.scored", "hre.multi_account.changed"):
         queue.enqueue_once(event.raw["event_id"], dict(event.raw))
     return HttpResponse(status=200)
 ```

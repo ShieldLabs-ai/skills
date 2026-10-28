@@ -39,8 +39,7 @@ on an earlier call; `false` loads nothing until `load()`, see [Consent](#consent
 
 The Public Key can also come from the CLI `define` option, for example
 `ng build --define "SHIELDLABS_PUBLIC_KEY='0123456789abcdef0123456789abcdef'"` with
-`declare const SHIELDLABS_PUBLIC_KEY: string;` in a `.d.ts` file. Register a separate domain with
-its own keys for development and staging.
+`declare const SHIELDLABS_PUBLIC_KEY: string;` in a `.d.ts` file. Use an authorized staging hostname covered by the registered parent and `allow_subdomains`, or separate keys when isolation is required.
 
 ## Identify on submit
 

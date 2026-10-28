@@ -1,6 +1,6 @@
 ---
 name: shieldlabs-webhooks
-description: Receives ShieldLabs webhooks safely. Verifies the X-Shield-Signature HMAC over the raw request body before parsing, turns identification.scored and webhook.ping deliveries into typed events with the server SDKs, deduplicates on the verified event_id and answers within one second. Covers Express, Next.js route handlers, NestJS, edge runtimes, FastAPI, Flask, Django, Go net/http, plain PHP, Laravel, Symfony, Spring and ASP.NET Core. Use when the user asks to verify a ShieldLabs webhook, add a ShieldLabs webhook endpoint or receiver, handle identification.scored events, debug an invalid or failing webhook signature, rotate a whsec_ signing secret, or choose between webhooks and the History API.
+description: Receives ShieldLabs webhooks safely. Verifies the X-Shield-Signature HMAC over the raw request body before parsing, routes scored identifications and multi-account group events, deduplicates on the verified event_id and acknowledges after durable acceptance. Covers Express, Next.js route handlers, NestJS, edge runtimes, FastAPI, Flask, Django, Go net/http, plain PHP, Laravel, Symfony, Spring and ASP.NET Core. Use when the user asks to verify a ShieldLabs webhook, add a ShieldLabs webhook endpoint or receiver, handle identification.scored events, debug an invalid or failing webhook signature, rotate a whsec_ signing secret, or choose between webhooks and the History API.
 ---
 
 # ShieldLabs webhooks
@@ -47,8 +47,12 @@ rotating a secret invalidates the old one immediately. Do not automatically retr
    like a wrong secret.
 4. Deduplicate by the verified envelope `event_id` and durably enqueue the complete raw envelope
    in one atomic operation; answer 2xx promptly, preferably within one second. Never mark an event
-   processed before its job is durable. Use `data.identification_id` to correlate the visit.
-5. Handle `identification.scored` (parse its `data` with the installed SDK; History may omit detailed signal weights). Acknowledge `webhook.ping` and unknown event types with 2xx.
+   processed before its job is durable. Use `data.identification_id` to correlate a scored visit; group events have no such field.
+5. Validate known events against the [current public wire schema](assets/webhook-event.schema.json).
+   Route both `identification.scored` and `hre.multi_account.changed`, preserving the complete
+   verified envelope even when an older SDK calls it unknown. Use the
+   [High-Risk Event consumer](references/high-risk-events.md). Acknowledge `webhook.ping` and
+   unknown future types with 2xx. A schema-valid multi-account notification is not a scored visit.
 6. Run MCP **Verify** and **Test** or use those buttons in the dashboard, following the chosen
    path. They send `webhook.ping` and a sample `identification.scored`; check the receiver evidence.
    Match a real identification separately before claiming live delivery works.
@@ -73,6 +77,7 @@ Every SDK also has a boolean `verifySignature` (`verify_signature`, `VerifySigna
 
 ```js
 import express from 'express';
+import { validateKnownEvent } from './validate_event.mjs'; // copy the asset below
 import { SignatureVerificationError, webhooks } from '@shieldlabs-ai/node';
 
 const app = express();
@@ -91,17 +96,23 @@ app.post('/webhooks/shieldlabs', express.raw({ type: 'application/json', limit: 
     return res.sendStatus(error instanceof SignatureVerificationError ? 401 : 400);
   }
 
-  if (event.event_type === 'identification.scored') {
+  if (!validateKnownEvent(event.raw)) return res.sendStatus(400);
+  if (['identification.scored', 'hre.multi_account.changed'].includes(String(event.raw.event_type))) {
     const eventId = event.raw.event_id;
     if (typeof eventId !== 'string' || eventId.length === 0) return res.sendStatus(400);
     // Application-provided atomic dedup + durable enqueue; rejects/rolls back on storage failure.
     await jobs.enqueueOnce(eventId, event.raw);
   }
-  return res.sendStatus(200); // webhook.ping and unknown event types: acknowledge
+  return res.sendStatus(200); // webhook.ping and unknown future event types: acknowledge
 });
 
 app.use(express.json()); // global parsers after the webhook route
 ```
+
+Copy [validate_event.mjs](assets/validate_event.mjs) and its JSON schema into the application,
+install/pin `@cfworker/json-schema` using the existing package manager, and adapt the import path.
+This helper is application code; it is not a ShieldLabs SDK method. Other language receivers
+use a JSON Schema 2020-12 validator for the same asset. Validate before the queue call.
 
 Treat `event_id` as an opaque, nonempty string. Production Core can send a 40-character hex
 ID, while Test can send a UUID. Do not impose a UUID regex on the event key. The
@@ -136,10 +147,11 @@ ID, while Test can send a UUID. Do not impose a UUID regex on the event key. The
 | `event_type` | When | Payload |
 |---|---|---|
 | `identification.scored` | Every scored identification, and the **Test** button | Verified raw `data` uses `identification_id`, identifiers, score, flags and optional current fields. Older typed SDKs may expose a smaller model; keep the raw envelope |
+| `hre.multi_account.changed` | Opt-in group transition | Complete group membership, action and decimal-string revision; no identification UUID or Risk Score |
 | `webhook.ping` | The **Verify** button | no `data` |
 | anything else | Event types added later | acknowledge with 2xx; the SDKs return an "unknown event" instead of throwing |
 
-- A `risk_score` of `999` with the single signal `rate_limited` is the rate-limit marker: the
+- A `risk_score` of `999` with the single current signal `banned_ip` (legacy `rate_limited`) is the rate-limit marker: the
   visitor IP was blocked for sending too many identifications. It is not a score.
 - Current Test uses a fixed synthetic `data.identification_id` but a fresh `event_id` on every
   click. Process two Test clicks as two events; replaying the same signed event has one effect.

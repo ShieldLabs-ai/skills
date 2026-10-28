@@ -103,3 +103,7 @@ On 401 reconnect OAuth; on access/domain errors check ownership and enabled stat
 respect the returned retry guidance and keep reads bounded. On a failed mutation inspect state;
 for `test_webhook`, inspect `delivered`, `status_code`, `latency_ms` and `timed_out` even if the
 MCP call itself succeeded. Report reproducible errors without guessing their cause.
+
+For backend HRE and group subscriptions use the [High-Risk Event workflow](../shieldlabs-account-abuse/references/high-risk-events.md).
+For attribution use [client identity scope](../shieldlabs-risk-decisions/references/client-identity.md).
+Absent fields and explicit unavailable outcomes are unknown; a summary is not a backend verdict.
