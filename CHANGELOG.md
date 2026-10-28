@@ -11,7 +11,7 @@ All notable changes to this project are documented in this file. The format foll
 - Route signed group events in all six server language references, ship pinned public wire
   schemas and an executable transactional consumer with ordering, retry and rollback tests.
 - Add application-owned order/promo context joins, including webhook-first arrival.
-- Update the candidate MCP catalog for multiaccount and 20 current flags; deployed capability
+- Update the MCP catalog for multiaccount and 20 current flags; deployed capability
   and published SDK versions still require their separate release checks.
 
 - Add guided checkpoints for account setup and major integration stages, a next-step menu and
@@ -21,7 +21,7 @@ Public release of the hosted OAuth MCP skills and installation workflows.
 
 - Connect the hosted HTTP MCP with OAuth instead of starting a local API-key server.
 - Document all 21 current tools, account/domain selection, webhook lifecycle and real-visit verification.
-- Separate application SDK credentials from MCP sign-in and distinguish published 1.0.1 names from the compatible 1.1.0 candidates.
+- Separate application SDK credentials from MCP sign-in and document the identifier field names.
 - Add current-tool contract checks and package the complete plugin, including MCP configuration.
 - Document public installation and release verification for maintainers.
 - Re-audit all eight skills after source refresh; gate old SDK normalization, preserve raw webhook envelopes, dedupe current event IDs and correct Test/retry assumptions.

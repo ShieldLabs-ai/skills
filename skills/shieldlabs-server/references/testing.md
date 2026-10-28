@@ -25,11 +25,8 @@ export SHIELDLABS_API_KEY=sec_test0000-test0000-test0000
   Python, PHP, Java's `ShieldLabsClient.fromEnvironment()` and `getIdentification` of
   `@shieldlabs-ai/next/server` read `SHIELDLABS_API_BASE_URL`; .NET takes `BaseUrl` in its options.
 - Without `--rows`, every request ID finds a trusted identification observed just now.
-- The default `--contract current` emits `identification_id` without a legacy `request_id`, so an
-  old SDK cannot pass simply because the mock repeated the old wire schema. Use `--contract legacy`
-  explicitly for old-schema regression tests; that mode does not prove current compatibility.
-- Current flags include `is_ai_bot`, `is_ai_browser`, `is_device_spoof`, `is_latency_test` and
-  `is_rate_limited`. Match the installed SDK's model; other language versions need their own preflight.
+- The default `--contract current` emits `identification_id` and the public History row fields.
+  Use `--contract legacy` when testing retained older payloads.
 
 `rows.json` maps request IDs to the History fields that differ from that default, or to `null`
 for "not found". `minutes_ago` moves the row into the past:
@@ -57,8 +54,7 @@ tested.
 ## History rows are not the `Identification` model
 
 The History API returns rows with their own field names; the SDKs map them to `Identification`.
-A hand-written mock must use the row names, or the SDK finds no score, time or flags. The ID and
-flag mapping below targets the JS/Node 1.1.0 candidates; see [SDK preflight](sdk-contract.md):
+A hand-written mock must use the row names, or the SDK finds no score, time or flags. See [identifiers and payloads](sdk-contract.md) for correlation. The mapping is:
 
 | `Identification` | History row |
 |---|---|
@@ -66,7 +62,7 @@ flag mapping below targets the JS/Node 1.1.0 candidates; see [SDK preflight](sdk
 | `observed_at` | `created_at`, as `YYYY-MM-DD HH:MM:SS.mmm` in UTC without a zone |
 | `public_ip.ip`, `public_ip.country` | `ip` (`"0.0.0.0"` when none), `country` (an English country name) |
 | `signals` | `score_details`: a JSON string of `[{"Value": 60, "Description": "..."}]`; entries with `Value` 0 are left out |
-| `identification_id` | Current `identification_id`; the Node candidate can also read legacy `request_id` |
+| `identification_id` | `identification_id` |
 | `detection_flags.vpn` | `is_vpn`, `is_browser_vpn_proxy` or `connection_type` equal to `browser_vpn_proxy` |
 | `proxy`, `private_relay`, `tor`, `incognito`, `search_bot` | `is_proxy`, `is_privacy_relay`, `is_tor`, `is_incognito`, `is_search_bot` |
 | `network_check_incomplete`, `check_incomplete` | `is_stun_not_checked`, `check_incomplete` |

@@ -23,13 +23,6 @@ A ShieldLabs integration always has three steps, and the skills teach an agent e
 3. **Decision.** Your backend acts on the Risk Score (trusted 0-29, suspicious 30-59, dangerous
    60-100), the detection flags and the identifiers, for example how many accounts one device has.
 
-## Release readiness
-
-The JS/Node examples target the compatible 1.1.0 candidates. npm 1.0.1 still has the older
-contract; use the [SDK preflight](skills/shieldlabs-server/references/sdk-contract.md) before
-application integration. Public release is gated on compatible SDK publication and a clean
-registry installation. See [publication checklist](PUBLICATION.md).
-
 ## Install
 
 ### Claude Code
@@ -45,7 +38,7 @@ From a shell: `claude plugin marketplace add ShieldLabs-ai/skills`, then
 ### Grok and Claude desktop
 
 The Grok plugin metadata is included. Verify remote HTTP/OAuth support in your Grok version
-before enabling MCP; its CLI flow is not verified for this release. Claude desktop can connect
+before enabling MCP. Claude desktop can connect
 through a custom connector where available. See [client setup](skills/shieldlabs-investigate/references/clients.md).
 
 ### Cursor
@@ -193,21 +186,17 @@ unverified. Empty detailed weights can be valid and do not mean a zero Risk Scor
 For webhooks, verification pings, sample deliveries and real scored events are separate checks.
 Use an authorized HTTPS receiver. [Step-by-step playbooks](skills/shieldlabs-investigate/references/playbooks.md).
 
-## Application credentials and SDK versions
+## Application credentials and identifiers
 
 OAuth authenticates the **MCP connection**. Your application's backend still needs its own SDK
 API key and, when receiving webhooks, its signing secret. Keep these in a private server environment;
 only the Public Key belongs in frontend code. Never paste private keys into chat or commit them.
 See [environment setup](skills/shieldlabs-setup/references/environment.md).
 
-As checked on 2026-10-27, npm publishes `@shieldlabs-ai/js` 1.0.1 and `@shieldlabs-ai/node` 1.0.1.
-Their identifier fields are `requestId` and `request_id`. Some GitHub main branches already use
-`identificationId` / `identification_id`; match the **installed package's types** when upgrading.
-The hosted MCP still accepts `request_id`. These names refer to the identification UUID, not a
-webhook delivery's event ID. Examples target the compatible 1.1.0 candidates and require the
-[SDK contract preflight](skills/shieldlabs-server/references/sdk-contract.md). Node 1.0.1 can
-leave the ID empty on current History/webhook input; a working MCP connection does not prove
-application SDK compatibility. Webhook handlers preserve the verified raw envelope and event ID.
+The browser returns `identificationId`; the server SDK uses `identification_id`.
+Pass the same UUID as MCP `request_id`. Use the webhook envelope's `event_id` for delivery
+deduplication and `data.identification_id` to correlate the identification.
+See [identifiers and payloads](skills/shieldlabs-server/references/sdk-contract.md).
 
 ## Compatibility
 

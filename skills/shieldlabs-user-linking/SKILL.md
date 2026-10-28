@@ -5,12 +5,6 @@ description: Links ShieldLabs identifications to your user accounts with a User 
 
 # Link identifications to your users
 
-Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
-Published SDKs can lag the current wire schema: an empty normalized identification ID is
-unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
-OAuth adapter; a successful MCP read does not validate an application SDK.
-
-
 A **User HID** is your own hashed or pseudonymous account ID, passed to the browser SDK as
 `userId`. With it:
 

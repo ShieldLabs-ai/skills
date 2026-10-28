@@ -648,5 +648,5 @@
       ]
     }
   ],
-  "verification": "Candidate source contract including optional History filters; inspect installed tools before using new inputs. This does not attest production rollout."
+  "verification": "Tool names and input fields for the hosted OAuth MCP endpoint."
 }

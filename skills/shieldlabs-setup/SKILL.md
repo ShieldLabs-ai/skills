@@ -7,12 +7,6 @@ description: Plans and implements a complete ShieldLabs integration in the curre
 
 Start by showing the [progress and resume map](references/progress.md). Keep it current after each verified stage.
 
-Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
-Published SDKs can lag the current wire schema: an empty normalized identification ID is
-unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
-OAuth adapter; a successful MCP read does not validate an application SDK.
-
-
 ShieldLabs identifies visitors and scores risk: "Detect risky users. Stop abuse of your product."
 This skill is the entry point. It plans the integration and hands each step to a focused skill:
 shieldlabs-browser, shieldlabs-server, shieldlabs-webhooks, shieldlabs-risk-decisions,
@@ -92,9 +86,8 @@ Guide the user to https://app.shieldlabs.ai to add or select the intended domain
 its keys locally. Never request private keys in chat. Continue with SDK installation without
 requiring MCP; verify through the backend and dashboard instead.
 
-These JS/Node examples target the compatible 1.1.0 candidates. npm 1.0.1 uses
-`requestId` / `request_id` and does not satisfy the current contract. Check registry availability
-before installing; validated candidate archives are for authorized QA only. MCP uses `request_id`.
+Pass the browser's `identificationId` to the backend and use `identification_id` in the server
+SDK. MCP accepts the same UUID as `request_id`.
 
 ## Setup workflow
 
