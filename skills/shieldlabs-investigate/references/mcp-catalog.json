@@ -438,5 +438,5 @@
       ]
     }
   ],
-  "verification": "Candidate source contract, checked with actual MCP Client in Node and Workers. Refresh the deployed schema after rollout."
+  "verification": "Tool names and input fields for the hosted OAuth MCP endpoint."
 }

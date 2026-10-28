@@ -16,7 +16,7 @@ Read the matching skill before writing code: [setup and audit](../skills/shieldl
 - The agent loads only from `https://cdn.shieldlabs.ai` through a ShieldLabs browser package. Never
   self-host, proxy or bundle it.
 - One identification per protected action: call `identify()` in the action's handler and send the
-  `requestId` in the same request. Never identify on render or on route changes.
+  `identificationId` in the same request. Never identify on render or on route changes.
 - Only the Public Key reaches the browser. `SHIELDLABS_API_KEY`, `SHIELDLABS_SECRET_KEY`,
   `SHIELDLABS_WEBHOOK_SECRET` and `USER_HID_SECRET` stay on the server, in environment variables.
 - The backend reads the verdict with `identifications.get`, claims each request ID once, refuses
@@ -39,5 +39,5 @@ history uses a hostname, management uses a UUID. Investigation requests stay rea
 webhook changes require user intent. Do not automatically retry mutations. Keep secrets masked;
 never call private dashboard APIs or extract OAuth credentials as a fallback.
 
-Published JS/Node 1.0.1 use requestId/request_id; follow installed types, not unreleased GitHub main.
-MCP uses request_id. Empty History weights are valid and do not imply zero risk.
+Use the browser identificationId and server identification_id for the same UUID; MCP takes request_id.
+Empty History weights are valid and do not imply zero risk.

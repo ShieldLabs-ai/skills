@@ -7,12 +7,6 @@ description: Turns a ShieldLabs identification into an allow, step-up, review or
 
 For crawlers and AI traffic, use [client identity and proof scope](references/client-identity.md). Missing attribution is unknown; claimed names do not authorize protected actions.
 
-Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
-Published SDKs can lag the current wire schema: an empty normalized identification ID is
-unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
-OAuth adapter; a successful MCP read does not validate an application SDK.
-
-
 The backend has an `Identification` for the request ID of a protected action (shieldlabs-server
 skill, [../shieldlabs-server/SKILL.md](../shieldlabs-server/SKILL.md)), or knows that it has none.
 This skill maps that verdict to one of four actions: **allow**, **step-up** (a check the user can
@@ -136,9 +130,8 @@ References with the same policy: [node.md](references/node.md), [python.md](refe
 
 ## Flags worth a rule of their own
 
-The table uses the compatible Node 1.1.0 model. Read the [current/legacy mapping](references/flags-and-signals.md)
-for all 20 flags; never interpret an unsupported old-SDK field as a confirmed negative. AI flags
-are booleans and do not provide bot identity or confidence metadata.
+Use the [20 detection flags](references/flags-and-signals.md) alongside the Risk Score.
+Missing values are unknown. AI flags are booleans; identity and proof are separate fields.
 
 | Flag | Meaning | Starting point |
 |---|---|---|

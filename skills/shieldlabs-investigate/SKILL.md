@@ -5,12 +5,6 @@ description: Connects to the hosted ShieldLabs MCP with OAuth, selects the accou
 
 # ShieldLabs MCP
 
-Before application integration, [check the installed SDK contract](../shieldlabs-server/references/sdk-contract.md).
-Published SDKs can lag the current wire schema: an empty normalized identification ID is
-unverified, never a valid key for replay protection or webhook deduplication. MCP uses its own
-OAuth adapter; a successful MCP read does not validate an application SDK.
-
-
 Connect to `https://mcp.shieldlabs.ai/mcp` with the client's OAuth sign-in. No API key, local npm
 server or pasted bearer token is needed. [Client setup](references/clients.md).
 The current server exposes **21 tools**. [Tool inputs and behavior](references/tools.md),
@@ -42,10 +36,8 @@ call private dashboard endpoints as a fallback.
   with a nonzero score: detailed weights may be absent. Do not invent weights or recompute the score.
 - Bands are trusted 0–29, suspicious 30–59 and dangerous 60–100. `999` is a rate-limit marker.
   An all-zero device UUID gives no usable device evidence.
-- The live MCP input/output is named `request_id`. Published JavaScript SDK 1.0.1 returns
-  `requestId`; published Node SDK 1.0.1 returns `request_id`. The JS/Node 1.1.0 candidates and these application examples use
-  `identificationId` / `identification_id` ahead of a package release. Check the installed package's
-  types and map the same UUID to MCP `request_id`; do not rename MCP arguments from an SDK README.
+- MCP takes `request_id`. Pass the browser's `identificationId` or server SDK's
+  `identification_id` as that argument; they refer to the same identification UUID.
 
 ## Investigate an entity
 

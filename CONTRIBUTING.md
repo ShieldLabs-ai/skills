@@ -33,6 +33,10 @@ security reports, write to contact@shieldlabs.ai.
 - Anything that depends on a version tells the reader to confirm it on the package registry and at
   https://docs.shieldlabs.ai.
 
+Keep installation instructions focused on the integration workflow and API contract. Track internal
+rollout status, package readiness and release blockers in private maintainer work records outside
+the installable skills. Use direct field names and examples in the user guide.
+
 ## Checks
 
 Run these before opening a pull request; CI runs them too:
@@ -56,5 +60,5 @@ python3 -m unittest discover -s tests
 
 Use the live OAuth endpoint and its current tools as the source for MCP instructions. The input
 snapshot in shieldlabs-investigate is a dated contract record, not account data. Keep the published
-SDK contract distinct from unreleased GitHub main and MCP argument names. See [PUBLICATION.md](PUBLICATION.md)
+SDK identifier fields and MCP argument names explicit. See [PUBLICATION.md](PUBLICATION.md)
 for release packaging, anonymous install verification and directory-listing boundaries.

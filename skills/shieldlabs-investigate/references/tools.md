@@ -1,8 +1,7 @@
 # Hosted MCP tools
 
-Baseline connected OAuth catalog checked on 2026-10-27; current contract additions checked in the 2026-10-28 release candidate with a real MCP Client in Node and Workers. Confirm deployed schema after rollout. Endpoint
-`https://mcp.shieldlabs.ai/mcp`; **21 tools**. The client may add a namespace before these names.
-Use the client's current tool schema if it changes; never guess an argument.
+Endpoint: `https://mcp.shieldlabs.ai/mcp`; **21 tools**. The client may add a namespace before
+these names. Use the client's tool schema for argument names and types.
 
 [Input snapshot](mcp-catalog.json) records names, required fields and types without account data.
 
@@ -113,7 +112,7 @@ server SDK for raw-body signature verification. Do not copy a webhook secret int
 
 ## Current public results
 
-The candidate exposes the 20 canonical flags, with `null` when the public response did not
+MCP exposes the 20 canonical flags, with `null` when the public response did not
 provide a value. Six legacy keys remain for compatibility; aliases are not additional signals
 and their counts/weights must not be added. MCP `request_id` still names the wire
 `identification_id`. HRE, client identity and owner labels are optional, allowlisted and bounded;
