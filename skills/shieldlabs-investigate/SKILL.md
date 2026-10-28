@@ -53,6 +53,13 @@ Use `shieldlabs_summarize_entity` for a bounded recent window, then `shieldlabs_
 when individual rows matter. Summary types are `user_hid`, `device_id`, `visitor_id`, `cookie_id`
 and `ip`; history additionally accepts `request_id` and `session_id`.
 
+When the installed schema exposes [History filters](references/tools.md#optional-history-filters),
+pass optional `from`/`to`, `score_from`/`score_to` and the 17 public boolean query fields.
+They are AND-only inside this identifier/domain. Preserve explicit `false`/`0` and keep the same
+filters on every page. For dangerous use 60-100 to exclude marker 999. Report the filtered scope;
+an empty filtered result does not mean no account activity. If the installed schema lacks a
+requested filter, report it as unsupported instead of dropping it or scanning another API.
+
 Report `window.complete`, analyzed count and total matching. Aggregates are computed from returned
 rows, not backend High-Risk Event verdicts. Do not present sample counts as the full account history.
 Skip placeholder accounts (`null`, `anonymous`, `fail`, `-1`, `unknown`) and all-zero device IDs.

@@ -64,6 +64,38 @@ ID lookups use UUIDs. IP searches support IPv4 and IPv4-mapped IPv6, not pure IP
 exact and case-sensitive; `/`, `.` and `..` are invalid lookup values. Do not double-encode values.
 Never reuse a value marked escaped or truncated as an exact lookup identifier.
 
+## Optional History filters
+
+Availability: these inputs belong to the updated MCP candidate. Inspect the installed tool schema
+before using them; merged API source does not establish that MCP has been deployed.
+If unavailable, report the limitation. Never drop filters or substitute private APIs.
+
+Both `search_history` and `summarize_entity` accept:
+
+- `from`, `to`: inclusive UTC bounds. `YYYY-MM-DD` covers the full day (start `00:00:00`,
+  end `23:59:59.999`). Exact time uses `YYYY-MM-DD HH:MM:SS` with up to nine fractional
+  digits. Do not send `T`, `Z` or timezone offsets; convert unambiguous input to UTC first.
+- `score_from`, `score_to`: integers 0-999, minimum not above maximum. `0` is an explicit bound.
+  `999` is a rate-limit marker, not dangerous risk. For dangerous use both 60 and 100.
+- Boolean flags: `is_vpn`, `is_tor`, `is_proxy`, `is_datacenter`, `is_abuser`,
+  `is_privacy_relay`, `is_stun_not_checked`, `check_incomplete`, `is_antidetect`,
+  `is_os_mismatch`, `is_os_not_detected`, `is_timezone_mismatch`, `is_js_disabled`,
+  `is_browser_automation`, `is_incognito`, `is_search_bot`, `is_suspicious_paid_click`.
+  Values are JSON `true` or `false`, never strings. For search bots `check_incomplete`,
+  `is_js_disabled` and `is_incognito` are false, matching the public row.
+
+All constraints are ANDed inside the selected **identifier and domain**. Omission means no
+constraint; preserve explicit `false` and `0`. Required `type` and `value` remain required.
+No domain-wide enumeration, OR predicates, HRE/identity, country, campaign or arbitrary row-field
+filters are added. The 20 normalized output flags differ from these 17 query names;
+do not infer filter support from an output field.
+
+Keep every filter unchanged on subsequent pages. JSON/Markdown report supplied filters;
+`total`, `window.total_matching` and aggregates cover only matching rows. Empty filtered results
+mean no matching rows, not no activity or a clean user. New rows can shift offset pages;
+deduplicate by identification ID. A server `400` is an input error, never retry it or fall back
+to an unfiltered query.
+
 ## Mutation contract
 
 All writes need user intent for that operation. A requested installation can include registering

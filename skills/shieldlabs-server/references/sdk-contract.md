@@ -57,3 +57,11 @@ Check the installed SDK and current public contract before reading HRE fields.
 A passing Markdown validator, a successful MCP sign-in or a package install does not demonstrate
 an app integration. Report separately source review, offline execution, framework compilation and
 live end-to-end tests. Do not claim unrun languages/frameworks were executed.
+
+## Optional History query filters
+
+The public API defines AND-only `from`/`to`, `score_from`/`score_to` and 17 boolean row filters.
+Check SDK support separately: Node 1.0.1 `history.search` forwards only limit/offset and drops
+extra options. Do not pass unknown options and claim a filtered query. Updated MCP forwards
+allowlisted filters through its own HTTP adapter; this does not add application SDK support.
+See the [MCP query contract](../../shieldlabs-investigate/references/tools.md#optional-history-filters).

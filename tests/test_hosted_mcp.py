@@ -42,6 +42,21 @@ class HostedMcpTest(unittest.TestCase):
         self.assertEqual({name for name, tool in tools.items() if any(p['name'] == 'response_format' for p in tool['parameters'])},
                          {'get_identification', 'search_history', 'summarize_entity', 'explain_risk_score'})
 
+    def test_history_filter_catalog_preserves_the_actual_public_scope(self):
+        catalog = json.loads((ROOT / 'skills/shieldlabs-investigate/references/mcp-catalog.json').read_text())
+        tools = {tool['name']: tool for tool in catalog['tools']}
+        flags = set('is_vpn is_tor is_proxy is_datacenter is_abuser is_privacy_relay is_stun_not_checked check_incomplete is_antidetect is_os_mismatch is_os_not_detected is_timezone_mismatch is_js_disabled is_browser_automation is_incognito is_search_bot is_suspicious_paid_click'.split())
+        for name in ('shieldlabs_search_history', 'shieldlabs_summarize_entity'):
+            params = {param['name']: param for param in tools[name]['parameters']}
+            self.assertEqual({key for key, value in params.items() if value['type'] == 'boolean'}, flags)
+            for key in flags | {'from', 'to', 'score_from', 'score_to'}:
+                self.assertFalse(params[key]['required'])
+            self.assertTrue(params['type']['required'])
+            self.assertTrue(params['value']['required'])
+            self.assertNotIn('country', params)
+            self.assertNotIn('is_ai_bot', params)
+        self.assertIn('does not attest production rollout', catalog['verification'])
+
     def test_active_skill_tool_names_exist_in_the_hosted_catalog(self):
         catalog = json.loads((ROOT / 'skills/shieldlabs-investigate/references/mcp-catalog.json').read_text())
         known = {tool['name'] for tool in catalog['tools']}
