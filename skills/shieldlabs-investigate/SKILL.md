@@ -46,7 +46,7 @@ when individual rows matter. Summary types are `user_hid`, `device_id`, `visitor
 and `ip`; history additionally accepts `request_id` and `session_id`.
 
 When the installed schema exposes [History filters](references/tools.md#optional-history-filters),
-pass optional `from`/`to`, `score_from`/`score_to` and the 17 public boolean query fields.
+pass optional `from`/`to`, `score_from`/`score_to` and the 20 public boolean query fields.
 They are AND-only inside this identifier/domain. Preserve explicit `false`/`0` and keep the same
 filters on every page. For dangerous use 60-100 to exclude marker 999. Report the filtered scope;
 an empty filtered result does not mean no account activity. If the installed schema lacks a
