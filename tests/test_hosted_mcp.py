@@ -30,29 +30,31 @@ class HostedMcpTest(unittest.TestCase):
             'check_connection', 'list_domains', 'get_domain', 'add_domain', 'patch_domain', 'delete_domain', 'rotate_server_key',
             'list_webhooks', 'get_webhook', 'create_webhook', 'patch_webhook', 'delete_webhook', 'disable_webhook',
             'enable_webhook', 'rotate_webhook_secret', 'verify_webhook', 'test_webhook',
-            'get_identification', 'search_history', 'summarize_entity', 'explain_risk_score'})
+            'get_identification', 'list_history', 'get_history', 'explain_risk_score'})
         self.assertEqual(tools['check_connection']['parameters'], [])
         self.assertEqual(tools['list_domains']['parameters'], [])
         for name in ('delete_domain', 'delete_webhook', 'disable_webhook', 'rotate_server_key', 'rotate_webhook_secret'):
             confirm = next(p for p in tools[name]['parameters'] if p['name'] == 'confirm')
             self.assertTrue(confirm['required'])
             self.assertEqual(confirm['type'], 'true')
-        for name in ('get_identification', 'search_history', 'summarize_entity', 'explain_risk_score'):
+        for name in ('get_identification', 'list_history', 'get_history', 'explain_risk_score'):
             self.assertIn('domain', [p['name'] for p in tools[name]['parameters']])
         self.assertEqual({name for name, tool in tools.items() if any(p['name'] == 'response_format' for p in tool['parameters'])},
-                         {'get_identification', 'search_history', 'summarize_entity', 'explain_risk_score'})
+                         {'get_identification', 'list_history', 'get_history', 'explain_risk_score'})
 
     def test_history_filter_catalog_preserves_the_actual_public_scope(self):
         catalog = json.loads((ROOT / 'skills/shieldlabs-investigate/references/mcp-catalog.json').read_text())
         tools = {tool['name']: tool for tool in catalog['tools']}
-        flags = set('is_vpn is_tor is_proxy is_privacy_relay network_check_incomplete check_incomplete is_antidetect is_os_mismatch is_os_not_detected is_timezone_mismatch is_js_disabled is_browser_automation is_incognito is_search_bot ip_mismatch latency_test device_spoofing banned_ip ai_bot ai_browser'.split())
-        for name in ('shieldlabs_search_history', 'shieldlabs_summarize_entity'):
+        flags = set('is_vpn is_tor is_proxy is_privacy_relay network_check_incomplete check_incomplete is_antidetect is_os_mismatch is_os_not_detected is_timezone_mismatch is_js_disabled is_browser_automation is_incognito is_search_bot ip_mismatch latency_test device_spoofing rate_limited ai_bot ai_browser'.split())
+        for name in ('shieldlabs_list_history', 'shieldlabs_get_history'):
             params = {param['name']: param for param in tools[name]['parameters']}
             self.assertEqual({key for key, value in params.items() if value['type'] == 'boolean'}, flags)
-            for key in flags | {'from', 'to', 'score_from', 'score_to'}:
+            for key in flags | {'from', 'to', 'risk_bands', 'hre_min_accounts', 'hre_min_devices', 'source', 'campaign', 'risk_signals'}:
                 self.assertFalse(params[key]['required'])
-            self.assertTrue(params['type']['required'])
-            self.assertTrue(params['value']['required'])
+            self.assertTrue(params['domain']['required'])
+            self.assertTrue(params['resource']['required'])
+            for retired in ('offset', 'include_total', 'filter', 'sort', 'score_from', 'score_to'):
+                self.assertNotIn(retired, params)
             self.assertNotIn('country', params)
             self.assertNotIn('is_ai_bot', params)
         self.assertNotIn('candidate', catalog['verification'].lower())

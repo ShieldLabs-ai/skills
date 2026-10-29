@@ -10,9 +10,10 @@ pip install shieldlabs
 ```
 
 ```python
+import os
 from shieldlabs import ShieldLabs
 
-client = ShieldLabs()  # reads SHIELDLABS_API_KEY (and SHIELDLABS_API_BASE_URL when set)
+client = ShieldLabs(domain_id=os.environ["SHIELDLABS_DOMAIN_ID"])  # reads SHIELDLABS_API_KEY (and SHIELDLABS_API_BASE_URL when set)
 ```
 
 Options: `api_key` (default `SHIELDLABS_API_KEY`), `base_url` (default
@@ -26,6 +27,7 @@ context manager.
 
 ```python
 import logging
+import os
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
@@ -35,7 +37,7 @@ from shieldlabs import AsyncShieldLabs, ShieldLabsError, evaluate_identification
 
 logger = logging.getLogger(__name__)
 app = FastAPI()
-shieldlabs = AsyncShieldLabs()  # one per process; await shieldlabs.aclose() on shutdown
+shieldlabs = AsyncShieldLabs(domain_id=os.environ["SHIELDLABS_DOMAIN_ID"])  # one per process; await shieldlabs.aclose() on shutdown
 redis = Redis()
 
 
@@ -76,6 +78,7 @@ async def signup(form: SignupForm) -> dict:
 
 ```python
 import logging
+import os
 
 from django.db import IntegrityError, models, transaction
 from django.http import JsonResponse

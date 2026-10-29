@@ -48,29 +48,29 @@ checks as not configured. Webhook checks apply only when a webhook is requested.
 
 Any of these, with the request ID from the log:
 
-- The MCP tool `shieldlabs_get_identification` with `{"domain": "example.com", "request_id": "<id>", "wait": true}` (shieldlabs-investigate
+- The MCP tool `shieldlabs_get_identification` with `{"domain": "<public-domain-uuid>", "identification_id": "<id>", "wait": true}` (shieldlabs-investigate
   skill).
 - Node.js:
 
   ```bash
-  node --input-type=module -e "import { ShieldLabs } from '@shieldlabs-ai/node'; const s = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY }); console.log(await s.identifications.get(process.argv[1]))" "$REQUEST_ID"
+  node --input-type=module -e "import { ShieldLabs } from '@shieldlabs-ai/node'; const s = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY, domainId: process.env.SHIELDLABS_DOMAIN_ID }); console.log(await s.identifications.get(process.argv[1]))" "$REQUEST_ID"
   ```
 
 - Python:
 
   ```bash
-  python3 -c "import sys; from shieldlabs import ShieldLabs; print(ShieldLabs().identifications.get(sys.argv[1]))" "$REQUEST_ID"
+  python3 -c "import os, sys; from shieldlabs import ShieldLabs; print(ShieldLabs(os.environ['SHIELDLABS_API_KEY'], domain_id=os.environ['SHIELDLABS_DOMAIN_ID']).identifications.get(sys.argv[1]))" "$REQUEST_ID"
   ```
 
 - HTTP:
 
   ```bash
-  curl -s "https://account.shieldlabs.ai/api/v1/history/request_id/$REQUEST_ID?limit=1" \
+  curl -s "https://account.shieldlabs.ai/api/v1/domains/$SHIELDLABS_DOMAIN_ID/history/identifications/$REQUEST_ID" \
     -H "Authorization: Bearer $SHIELDLABS_API_KEY"
   ```
 
-  A row in `data` means the identification was recorded. History rows use their own field names:
-  `score` is the Risk Score and `created_at` the time (the shieldlabs-server skill,
+  The `data` object is the identification card. Match its `id`, `risk.state`/`risk.score`
+  and `created_at` (the shieldlabs-server skill,
   `references/testing.md`, maps every field).
 
 ## 6. Negative paths

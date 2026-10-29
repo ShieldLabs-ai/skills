@@ -1,47 +1,72 @@
 {
   "endpoint": "https://mcp.shieldlabs.ai/mcp",
   "authentication": "OAuth",
-  "verified_at": "2026-10-28",
+  "verified_at": "2026-10-29",
+  "verification": "Generated from the registered current MCP tools/list schemas without API calls.",
   "tools": [
     {
       "name": "shieldlabs_add_domain",
       "description": "Add an existing domain to your ShieldLabs account for installation. Returns its UUID, public key and masked server key by default. Does not create a website or DNS records. Credentials are masked by default. include_secret=true returns one-time sensitive credentials for installation only. The MCP client can record that response; this server cannot prevent client transcripts. Store privately; never log or repeat secrets. No mutations are automatically retried.",
       "parameters": [
         {
-          "name": "allow_subdomains",
-          "required": false,
-          "type": "boolean"
-        },
-        {
           "name": "domain",
           "required": true,
           "type": "string"
+        },
+        {
+          "name": "allow_subdomains",
+          "required": false,
+          "type": "boolean"
         },
         {
           "name": "include_secret",
           "required": false,
           "type": "boolean"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 253,
+            "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?$",
+            "description": "Domain hostname, for example example.com, without scheme or path"
+          },
+          "allow_subdomains": {
+            "type": "boolean"
+          },
+          "include_secret": {
+            "default": false,
+            "description": "Only an installer should opt in to receive a one-time raw credential. Clients may record it; store privately and never log it",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "domain"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_check_connection",
-      "description": "Check that this connection to the hosted ShieldLabs server works: ShieldLabs checks the access token the user signed in with. Takes no input.",
-      "parameters": []
+      "description": "Check that this connection to the hosted ShieldLabs server works: ShieldLabs checks the access token the user signed in with. Takes no input.\n\nUse it to confirm the sign-in, or when another call fails with an authentication error.\n\nReturns (json): { \"connected\": boolean, \"checked_at\": string }\n\nErrors: an expired or revoked sign-in asks the user to reconnect ShieldLabs in the MCP client; a temporary outage asks to retry in a few seconds.\n\nUse shieldlabs_list_domains to select a domain, then read history or manage domain and webhook integrations.",
+      "parameters": [],
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
     },
     {
       "name": "shieldlabs_create_webhook",
-      "description": "Create a new multi-endpoint webhook with name and public HTTPS URL. Secret is masked by default. Credentials are masked by default. include_secret=true returns one-time sensitive credentials for installation only. The MCP client can record that response; this server cannot prevent client transcripts. Store privately; never log or repeat secrets. No mutations are automatically retried.",
+      "description": "Create a webhook with name and public HTTPS URL. Optional multiaccount enables opt-in group-change notifications when the backend release supports them; omitted defaults to false. Secret is masked by default. Credentials are masked by default. include_secret=true returns one-time sensitive credentials for installation only. The MCP client can record that response; this server cannot prevent client transcripts. Store privately; never log or repeat secrets. No mutations are automatically retried.",
       "parameters": [
         {
           "name": "domain_id",
           "required": true,
           "type": "string"
-        },
-        {
-          "name": "include_secret",
-          "required": false,
-          "type": "boolean"
         },
         {
           "name": "name",
@@ -57,35 +82,93 @@
           "name": "multiaccount",
           "required": false,
           "type": "boolean"
+        },
+        {
+          "name": "include_secret",
+          "required": false,
+          "type": "boolean"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Webhook name: 1 to 80 Unicode characters after trimming whitespace"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 512,
+            "format": "uri",
+            "description": "Public HTTPS URL without credentials: at most 512 UTF-8 bytes after trimming whitespace"
+          },
+          "multiaccount": {
+            "type": "boolean"
+          },
+          "include_secret": {
+            "default": false,
+            "description": "Only an installer should opt in to receive a one-time raw credential. Clients may record it; store privately and never log it",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "domain_id",
+          "name",
+          "url"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_delete_domain",
       "description": "Delete an owned domain and its integrations. Requires explicit confirm=true. No mutations are automatically retried.",
       "parameters": [
         {
-          "name": "confirm",
-          "required": true,
-          "type": "true"
-        },
-        {
           "name": "domain_id",
           "required": true,
           "type": "string"
+        },
+        {
+          "name": "confirm",
+          "required": true,
+          "type": "true"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "confirm": {
+            "type": "boolean",
+            "const": true,
+            "description": "Explicit user confirmation for this destructive operation"
+          }
+        },
+        "required": [
+          "domain_id",
+          "confirm"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_delete_webhook",
       "description": "Delete a webhook endpoint. Requires explicit confirm=true. No mutations are automatically retried.",
       "parameters": [
         {
-          "name": "confirm",
-          "required": true,
-          "type": "true"
-        },
-        {
           "name": "domain_id",
           "required": true,
           "type": "string"
@@ -94,19 +177,46 @@
           "name": "webhook_id",
           "required": true,
           "type": "string"
+        },
+        {
+          "name": "confirm",
+          "required": true,
+          "type": "true"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "webhook_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public webhook UUID from shieldlabs_list_webhooks"
+          },
+          "confirm": {
+            "type": "boolean",
+            "const": true,
+            "description": "Explicit user confirmation for this destructive operation"
+          }
+        },
+        "required": [
+          "domain_id",
+          "webhook_id",
+          "confirm"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_disable_webhook",
       "description": "Disable webhook delivery. Requires confirm=true. No mutations are automatically retried.",
       "parameters": [
         {
-          "name": "confirm",
-          "required": true,
-          "type": "true"
-        },
-        {
           "name": "domain_id",
           "required": true,
           "type": "string"
@@ -115,8 +225,40 @@
           "name": "webhook_id",
           "required": true,
           "type": "string"
+        },
+        {
+          "name": "confirm",
+          "required": true,
+          "type": "true"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "webhook_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public webhook UUID from shieldlabs_list_webhooks"
+          },
+          "confirm": {
+            "type": "boolean",
+            "const": true,
+            "description": "Explicit user confirmation for this destructive operation"
+          }
+        },
+        "required": [
+          "domain_id",
+          "webhook_id",
+          "confirm"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_enable_webhook",
@@ -132,11 +274,32 @@
           "required": true,
           "type": "string"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "webhook_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public webhook UUID from shieldlabs_list_webhooks"
+          }
+        },
+        "required": [
+          "domain_id",
+          "webhook_id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_explain_risk_score",
-      "description": "Explain weighted risk signals, flags and the Risk Score using the local catalog. Give exactly one of request_id or a pasted identification. Domain selects the history read.",
+      "description": "Read an identification card or explain a pasted identification. Missing signal weights are unavailable, never zero contribution. HRE confidence is separate from Risk Score.",
       "parameters": [
         {
           "name": "domain",
@@ -144,21 +307,60 @@
           "type": "string"
         },
         {
-          "name": "identification",
-          "required": false,
-          "type": "{ [key: string]: unknown; } | string"
-        },
-        {
-          "name": "request_id",
+          "name": "identification_id",
           "required": false,
           "type": "string"
         },
         {
+          "name": "identification",
+          "required": false,
+          "type": "union"
+        },
+        {
           "name": "response_format",
           "required": false,
-          "type": "\"markdown\" | \"json\""
+          "type": "string"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains, not the hostname."
+          },
+          "identification_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          },
+          "identification": {
+            "anyOf": [
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              {
+                "type": "string",
+                "maxLength": 500000
+              }
+            ]
+          },
+          "response_format": {
+            "default": "markdown",
+            "type": "string",
+            "enum": [
+              "markdown",
+              "json"
+            ]
+          }
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_get_domain",
@@ -169,33 +371,506 @@
           "required": true,
           "type": "string"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          }
+        },
+        "required": [
+          "domain_id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
-      "name": "shieldlabs_get_identification",
-      "description": "Read one request identification, optionally polling up to 10 seconds for asynchronous scoring. Missing means unverified. Select domain by hostname when needed.",
+      "name": "shieldlabs_get_history",
+      "description": "Read one identification, user, visitor, device or ip card. domain is the public UUID and resource_id is the record id. The same flat list filters apply, plus device_id_source (legacy or fp21_record), relation, relation_limit and relation_page_token. Nested filter, chips, offset and include_total are rejected.",
       "parameters": [
         {
           "name": "domain",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "name": "request_id",
           "required": true,
           "type": "string"
         },
         {
           "name": "response_format",
           "required": false,
-          "type": "\"markdown\" | \"json\""
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "resource",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "resource_id",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "device_id_source",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "relation",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "relation_limit",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "name": "relation_page_token",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "snapshot",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "risk_bands",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "hre_min_accounts",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "name": "hre_min_devices",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "name": "ids",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "risk_signals",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "source",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "campaign",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "is_vpn",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_tor",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_proxy",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_privacy_relay",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "network_check_incomplete",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "check_incomplete",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_antidetect",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_os_mismatch",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_os_not_detected",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_timezone_mismatch",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_js_disabled",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_browser_automation",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_incognito",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_search_bot",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "ip_mismatch",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "latency_test",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "device_spoofing",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "rate_limited",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "ai_bot",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "ai_browser",
+          "required": false,
+          "type": "boolean"
+        }
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains, not the hostname."
+          },
+          "response_format": {
+            "default": "markdown",
+            "type": "string",
+            "enum": [
+              "markdown",
+              "json"
+            ]
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "resource": {
+            "type": "string",
+            "enum": [
+              "identifications",
+              "user",
+              "visitor",
+              "device",
+              "ip"
+            ]
+          },
+          "resource_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "device_id_source": {
+            "type": "string",
+            "enum": [
+              "legacy",
+              "fp21_record"
+            ]
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "visitors",
+              "devices",
+              "users",
+              "public_ips",
+              "sessions",
+              "cookies",
+              "local_ips",
+              "countries",
+              "local_countries",
+              "browsers",
+              "os",
+              "device_types",
+              "connection_types",
+              "risk_signals",
+              "high_risk_events"
+            ]
+          },
+          "relation_limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "relation_page_token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "snapshot": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "risk_bands": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "trusted",
+                "suspicious",
+                "dangerous"
+              ]
+            }
+          },
+          "hre_min_accounts": {
+            "type": "integer",
+            "minimum": 3,
+            "maximum": 99
+          },
+          "hre_min_devices": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 99
+          },
+          "ids": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "risk_signals": {
+            "maxItems": 32,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "source": {
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "campaign": {
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "is_vpn": {
+            "type": "boolean"
+          },
+          "is_tor": {
+            "type": "boolean"
+          },
+          "is_proxy": {
+            "type": "boolean"
+          },
+          "is_privacy_relay": {
+            "type": "boolean"
+          },
+          "network_check_incomplete": {
+            "type": "boolean"
+          },
+          "check_incomplete": {
+            "type": "boolean"
+          },
+          "is_antidetect": {
+            "type": "boolean"
+          },
+          "is_os_mismatch": {
+            "type": "boolean"
+          },
+          "is_os_not_detected": {
+            "type": "boolean"
+          },
+          "is_timezone_mismatch": {
+            "type": "boolean"
+          },
+          "is_js_disabled": {
+            "type": "boolean"
+          },
+          "is_browser_automation": {
+            "type": "boolean"
+          },
+          "is_incognito": {
+            "type": "boolean"
+          },
+          "is_search_bot": {
+            "type": "boolean"
+          },
+          "ip_mismatch": {
+            "type": "boolean"
+          },
+          "latency_test": {
+            "type": "boolean"
+          },
+          "device_spoofing": {
+            "type": "boolean"
+          },
+          "rate_limited": {
+            "type": "boolean"
+          },
+          "ai_bot": {
+            "type": "boolean"
+          },
+          "ai_browser": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "domain",
+          "resource",
+          "resource_id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "shieldlabs_get_identification",
+      "description": "Read one identification card by identification_id in a public domain UUID. wait polls missing results for at most 10 seconds; unavailable risk remains unavailable.",
+      "parameters": [
+        {
+          "name": "domain",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "response_format",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "identification_id",
+          "required": true,
+          "type": "string"
         },
         {
           "name": "wait",
           "required": false,
           "type": "boolean"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains, not the hostname."
+          },
+          "response_format": {
+            "default": "markdown",
+            "type": "string",
+            "enum": [
+              "markdown",
+              "json"
+            ]
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "identification_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          },
+          "wait": {
+            "default": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "domain",
+          "identification_id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_get_webhook",
@@ -211,12 +886,395 @@
           "required": true,
           "type": "string"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "webhook_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public webhook UUID from shieldlabs_list_webhooks"
+          }
+        },
+        "required": [
+          "domain_id",
+          "webhook_id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_list_domains",
       "description": "List owned domains, including disabled domains. Returns public UUIDs, hostnames, enabled status and masked server keys. No mutations are automatically retried.",
-      "parameters": []
+      "parameters": [],
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "shieldlabs_list_history",
+      "description": "List identifications or users in one domain. domain is the public UUID from shieldlabs_list_domains. Repeat page_token with the same resource, window and flat filters. Filters are risk_bands, hre_min_accounts (3-99), hre_min_devices (4-99), ids (user list only), risk_signals, source, campaign and boolean flags. Dates are RFC3339 and the window is half-open. Nested filter, chips, offset, include_total and sort are rejected. visitor, device and ip have a card, not a list.",
+      "parameters": [
+        {
+          "name": "domain",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "response_format",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "resource",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "name": "page_token",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "snapshot",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "risk_bands",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "hre_min_accounts",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "name": "hre_min_devices",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "name": "ids",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "risk_signals",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "source",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "campaign",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "name": "is_vpn",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_tor",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_proxy",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_privacy_relay",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "network_check_incomplete",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "check_incomplete",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_antidetect",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_os_mismatch",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_os_not_detected",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_timezone_mismatch",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_js_disabled",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_browser_automation",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_incognito",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "is_search_bot",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "ip_mismatch",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "latency_test",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "device_spoofing",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "rate_limited",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "ai_bot",
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "name": "ai_browser",
+          "required": false,
+          "type": "boolean"
+        }
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains, not the hostname."
+          },
+          "response_format": {
+            "default": "markdown",
+            "type": "string",
+            "enum": [
+              "markdown",
+              "json"
+            ]
+          },
+          "from": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "resource": {
+            "type": "string",
+            "enum": [
+              "identifications",
+              "user"
+            ]
+          },
+          "limit": {
+            "default": 20,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "page_token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "snapshot": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "risk_bands": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "trusted",
+                "suspicious",
+                "dangerous"
+              ]
+            }
+          },
+          "hre_min_accounts": {
+            "type": "integer",
+            "minimum": 3,
+            "maximum": 99
+          },
+          "hre_min_devices": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 99
+          },
+          "ids": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "risk_signals": {
+            "maxItems": 32,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "source": {
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "campaign": {
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "is_vpn": {
+            "type": "boolean"
+          },
+          "is_tor": {
+            "type": "boolean"
+          },
+          "is_proxy": {
+            "type": "boolean"
+          },
+          "is_privacy_relay": {
+            "type": "boolean"
+          },
+          "network_check_incomplete": {
+            "type": "boolean"
+          },
+          "check_incomplete": {
+            "type": "boolean"
+          },
+          "is_antidetect": {
+            "type": "boolean"
+          },
+          "is_os_mismatch": {
+            "type": "boolean"
+          },
+          "is_os_not_detected": {
+            "type": "boolean"
+          },
+          "is_timezone_mismatch": {
+            "type": "boolean"
+          },
+          "is_js_disabled": {
+            "type": "boolean"
+          },
+          "is_browser_automation": {
+            "type": "boolean"
+          },
+          "is_incognito": {
+            "type": "boolean"
+          },
+          "is_search_bot": {
+            "type": "boolean"
+          },
+          "ip_mismatch": {
+            "type": "boolean"
+          },
+          "latency_test": {
+            "type": "boolean"
+          },
+          "device_spoofing": {
+            "type": "boolean"
+          },
+          "rate_limited": {
+            "type": "boolean"
+          },
+          "ai_bot": {
+            "type": "boolean"
+          },
+          "ai_browser": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "domain",
+          "resource"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_list_webhooks",
@@ -227,22 +1285,27 @@
           "required": true,
           "type": "string"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          }
+        },
+        "required": [
+          "domain_id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_patch_domain",
       "description": "Update enabled and/or allow_subdomains on an owned domain. Omitted fields are preserved. Disabling requires confirm=true. No mutations are automatically retried.",
       "parameters": [
-        {
-          "name": "allow_subdomains",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "confirm",
-          "required": false,
-          "type": "true"
-        },
         {
           "name": "domain_id",
           "required": true,
@@ -252,20 +1315,56 @@
           "name": "enabled",
           "required": false,
           "type": "boolean"
-        }
-      ]
-    },
-    {
-      "name": "shieldlabs_patch_webhook",
-      "description": "Update webhook name and/or URL; omitted fields are preserved. URL changes require confirm=true, reset verification and may disrupt delivery. No mutations are automatically retried.",
-      "parameters": [
+        },
+        {
+          "name": "allow_subdomains",
+          "required": false,
+          "type": "boolean"
+        },
         {
           "name": "confirm",
           "required": false,
           "type": "true"
+        }
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "allow_subdomains": {
+            "type": "boolean"
+          },
+          "confirm": {
+            "type": "boolean",
+            "const": true,
+            "description": "Explicit user confirmation for this destructive operation"
+          }
         },
+        "required": [
+          "domain_id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "shieldlabs_patch_webhook",
+      "description": "Update webhook name, URL and/or multiaccount subscription; omitted fields are preserved. A subscription-only patch preserves endpoint verification and does not replay history or cancel captured jobs. URL changes require confirm=true, reset verification and may disrupt delivery. No mutations are automatically retried.",
+      "parameters": [
         {
           "name": "domain_id",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "webhook_id",
           "required": true,
           "type": "string"
         },
@@ -280,370 +1379,162 @@
           "type": "string"
         },
         {
-          "name": "webhook_id",
-          "required": true,
-          "type": "string"
-        },
-        {
           "name": "multiaccount",
           "required": false,
           "type": "boolean"
+        },
+        {
+          "name": "confirm",
+          "required": false,
+          "type": "true"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "webhook_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public webhook UUID from shieldlabs_list_webhooks"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Webhook name: 1 to 80 Unicode characters after trimming whitespace"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 512,
+            "format": "uri",
+            "description": "Public HTTPS URL without credentials: at most 512 UTF-8 bytes after trimming whitespace"
+          },
+          "multiaccount": {
+            "type": "boolean"
+          },
+          "confirm": {
+            "type": "boolean",
+            "const": true,
+            "description": "Explicit user confirmation for this destructive operation"
+          }
+        },
+        "required": [
+          "domain_id",
+          "webhook_id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_rotate_server_key",
       "description": "Rotate the domain server key. The previous key stops working immediately. Requires confirm=true. Credentials are masked by default. include_secret=true returns one-time sensitive credentials for installation only. The MCP client can record that response; this server cannot prevent client transcripts. Store privately; never log or repeat secrets. No mutations are automatically retried.",
       "parameters": [
         {
-          "name": "confirm",
-          "required": true,
-          "type": "true"
-        },
-        {
           "name": "domain_id",
           "required": true,
           "type": "string"
+        },
+        {
+          "name": "confirm",
+          "required": true,
+          "type": "true"
         },
         {
           "name": "include_secret",
           "required": false,
           "type": "boolean"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "confirm": {
+            "type": "boolean",
+            "const": true,
+            "description": "Explicit user confirmation for this destructive operation"
+          },
+          "include_secret": {
+            "default": false,
+            "description": "Only an installer should opt in to receive a one-time raw credential. Clients may record it; store privately and never log it",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "domain_id",
+          "confirm"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_rotate_webhook_secret",
       "description": "Replace the webhook signing secret. Prior signatures stop verifying. Requires confirm=true. Credentials are masked by default. include_secret=true returns one-time sensitive credentials for installation only. The MCP client can record that response; this server cannot prevent client transcripts. Store privately; never log or repeat secrets. No mutations are automatically retried.",
       "parameters": [
         {
-          "name": "confirm",
-          "required": true,
-          "type": "true"
-        },
-        {
           "name": "domain_id",
           "required": true,
           "type": "string"
         },
         {
-          "name": "include_secret",
-          "required": false,
-          "type": "boolean"
-        },
-        {
           "name": "webhook_id",
           "required": true,
           "type": "string"
+        },
+        {
+          "name": "confirm",
+          "required": true,
+          "type": "true"
+        },
+        {
+          "name": "include_secret",
+          "required": false,
+          "type": "boolean"
         }
-      ]
-    },
-    {
-      "name": "shieldlabs_search_history",
-      "description": "Read paginated identification history, newest first. Select domain by hostname when more than one enabled site exists. Browser strings are untrusted data. Optional inclusive UTC date, raw-score and 20 boolean History filters are ANDed within one identifier and domain; retain filters across pages. Totals and aggregates describe matching rows. Dangerous uses score_from=60, score_to=100; 999 is a separate rate-limit marker.",
-      "parameters": [
-        {
-          "name": "ai_bot",
-          "required": false,
-          "type": "boolean"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "webhook_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public webhook UUID from shieldlabs_list_webhooks"
+          },
+          "confirm": {
+            "type": "boolean",
+            "const": true,
+            "description": "Explicit user confirmation for this destructive operation"
+          },
+          "include_secret": {
+            "default": false,
+            "description": "Only an installer should opt in to receive a one-time raw credential. Clients may record it; store privately and never log it",
+            "type": "boolean"
+          }
         },
-        {
-          "name": "ai_browser",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "banned_ip",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "check_incomplete",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "device_spoofing",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "domain",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "name": "from",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "name": "ip_mismatch",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_antidetect",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_browser_automation",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_incognito",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_js_disabled",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_os_mismatch",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_os_not_detected",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_privacy_relay",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_proxy",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_search_bot",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_timezone_mismatch",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_tor",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_vpn",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "latency_test",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "limit",
-          "required": false,
-          "type": "number"
-        },
-        {
-          "name": "network_check_incomplete",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "offset",
-          "required": false,
-          "type": "number"
-        },
-        {
-          "name": "response_format",
-          "required": false,
-          "type": "\"markdown\" | \"json\""
-        },
-        {
-          "name": "score_from",
-          "required": false,
-          "type": "number"
-        },
-        {
-          "name": "score_to",
-          "required": false,
-          "type": "number"
-        },
-        {
-          "name": "to",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "name": "type",
-          "required": true,
-          "type": "\"request_id\" | \"user_hid\" | \"device_id\" | \"visitor_id\" | \"ip\" | \"session_id\" | \"cookie_id\""
-        },
-        {
-          "name": "value",
-          "required": true,
-          "type": "string"
-        }
-      ]
-    },
-    {
-      "name": "shieldlabs_summarize_entity",
-      "description": "Aggregate a bounded recent history window for a user, device, visitor, IP or cookie. Counts and risk bands are computed from returned rows, not a backend event verdict. Optional inclusive UTC date, raw-score and 20 boolean History filters are ANDed within one identifier and domain; retain filters across pages. Totals and aggregates describe matching rows. Dangerous uses score_from=60, score_to=100; 999 is a separate rate-limit marker.",
-      "parameters": [
-        {
-          "name": "ai_bot",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "ai_browser",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "banned_ip",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "check_incomplete",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "device_spoofing",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "domain",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "name": "from",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "name": "ip_mismatch",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_antidetect",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_browser_automation",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_incognito",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_js_disabled",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_os_mismatch",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_os_not_detected",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_privacy_relay",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_proxy",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_search_bot",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_timezone_mismatch",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_tor",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "is_vpn",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "latency_test",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "max_items",
-          "required": false,
-          "type": "number"
-        },
-        {
-          "name": "network_check_incomplete",
-          "required": false,
-          "type": "boolean"
-        },
-        {
-          "name": "response_format",
-          "required": false,
-          "type": "\"markdown\" | \"json\""
-        },
-        {
-          "name": "score_from",
-          "required": false,
-          "type": "number"
-        },
-        {
-          "name": "score_to",
-          "required": false,
-          "type": "number"
-        },
-        {
-          "name": "to",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "name": "type",
-          "required": true,
-          "type": "\"user_hid\" | \"device_id\" | \"visitor_id\" | \"ip\" | \"cookie_id\""
-        },
-        {
-          "name": "value",
-          "required": true,
-          "type": "string"
-        }
-      ]
+        "required": [
+          "domain_id",
+          "webhook_id",
+          "confirm"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_test_webhook",
@@ -659,7 +1550,28 @@
           "required": true,
           "type": "string"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "webhook_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public webhook UUID from shieldlabs_list_webhooks"
+          }
+        },
+        "required": [
+          "domain_id",
+          "webhook_id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     },
     {
       "name": "shieldlabs_verify_webhook",
@@ -675,8 +1587,28 @@
           "required": true,
           "type": "string"
         }
-      ]
+      ],
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "domain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public domain UUID from shieldlabs_list_domains or shieldlabs_add_domain"
+          },
+          "webhook_id": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "description": "Public webhook UUID from shieldlabs_list_webhooks"
+          }
+        },
+        "required": [
+          "domain_id",
+          "webhook_id"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
     }
-  ],
-  "verification": "Tool names and input fields for the hosted OAuth MCP endpoint."
+  ]
 }

@@ -19,7 +19,7 @@ import (
 
 // newShieldLabsClient creates the History API client once, at startup.
 func newShieldLabsClient() *shieldlabs.Client {
-	var opts []shieldlabs.Option
+	opts := []shieldlabs.Option{shieldlabs.WithDomainID(os.Getenv("SHIELDLABS_DOMAIN_ID"))}
 	if base := os.Getenv("SHIELDLABS_API_BASE_URL"); base != "" {
 		opts = append(opts, shieldlabs.WithBaseURL(base)) // tests only; default https://account.shieldlabs.ai
 	}

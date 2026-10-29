@@ -12,7 +12,7 @@ composer require shieldlabs/shieldlabs-php
 ```php
 use ShieldLabs\ShieldLabs;
 
-$shieldlabs = new ShieldLabs(); // reads SHIELDLABS_API_KEY (and SHIELDLABS_API_BASE_URL when set)
+$shieldlabs = new ShieldLabs(['domain_id' => getenv('SHIELDLABS_DOMAIN_ID')]); // reads SHIELDLABS_API_KEY (and SHIELDLABS_API_BASE_URL when set)
 ```
 
 Options (array): `api_key`, `base_url` (default `https://account.shieldlabs.ai`), `timeout`
@@ -32,7 +32,7 @@ use ShieldLabs\Risk;
 use ShieldLabs\ShieldLabs;
 
 $pdo = new PDO(getenv('DATABASE_DSN') ?: 'sqlite:' . __DIR__ . '/app.db');
-$shieldlabs = new ShieldLabs();
+$shieldlabs = new ShieldLabs(['domain_id' => getenv('SHIELDLABS_DOMAIN_ID')]);
 
 // CREATE TABLE used_request_ids (request_id CHAR(36) PRIMARY KEY, used_at TIMESTAMP NOT NULL)
 function claimRequestId(PDO $pdo, string $requestId): bool

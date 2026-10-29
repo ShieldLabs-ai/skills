@@ -111,15 +111,15 @@ class HistoryMockTest(unittest.TestCase):
         thread.start()
         self.addCleanup(server.server_close)
         self.addCleanup(server.shutdown)
-        base = f"http://127.0.0.1:{server.server_address[1]}/api/v1/history"
-        request = urllib.request.Request(f"{base}/request_id/{BAD}?limit=1&offset=0",
+        base = f"http://127.0.0.1:{server.server_address[1]}/api/v1"
+        request = urllib.request.Request(f"{base}/domains/11111111-1111-4111-8111-111111111111/history/identifications/{BAD}",
                                          headers={"Authorization": "Bearer sec_test0000-test0000-test0000"})
         with urllib.request.urlopen(request, timeout=5) as response:
             self.assertEqual(response.headers["Content-Type"], "application/json")
             body = json.loads(response.read())
-        self.assertEqual(body["data"][0]["score"], 80)
+        self.assertEqual(body["data"]["risk"]["score"], 80)
         with self.assertRaises(urllib.error.HTTPError) as caught:
-            urllib.request.urlopen(f"{base}/request_id/{BAD}", timeout=5)
+            urllib.request.urlopen(f"{base}/domains/11111111-1111-4111-8111-111111111111/history/identifications/{BAD}", timeout=5)
         self.assertEqual(caught.exception.code, 401)
         caught.exception.close()
 

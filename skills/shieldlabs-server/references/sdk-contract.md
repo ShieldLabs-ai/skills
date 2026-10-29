@@ -4,7 +4,7 @@
 
 - Browser SDK: `identificationId`.
 - Server SDK and public payload: `identification_id`.
-- MCP argument: `request_id`.
+- MCP argument: `identification_id`; History `domain` is the public domain UUID.
 
 Pass the same UUID through the protected action, server read and MCP lookup. Verify that the
 returned identification ID equals the submitted ID. A missing or different ID is unverified.

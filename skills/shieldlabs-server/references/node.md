@@ -15,7 +15,8 @@ npm install @shieldlabs-ai/node
 import { ShieldLabs } from '@shieldlabs-ai/node';
 
 export const shieldlabs = new ShieldLabs({
-  apiKey: process.env.SHIELDLABS_API_KEY!, // Private API Key, sec_...
+  apiKey: process.env.SHIELDLABS_API_KEY!,
+  domainId: process.env.SHIELDLABS_DOMAIN_ID!, // Private API Key, sec_...
   baseUrl: process.env.SHIELDLABS_API_BASE_URL || undefined, // tests only: a local History API mock
 });
 ```

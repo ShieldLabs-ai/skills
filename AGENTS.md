@@ -53,14 +53,13 @@ npm process is required for MCP. See [client setup](skills/shieldlabs-investigat
 The current server exposes 21 tools; use the [investigate skill](skills/shieldlabs-investigate/SKILL.md)
 for their workflows and [catalog](skills/shieldlabs-investigate/references/tools.md) for inputs.
 
-Start with `shieldlabs_check_connection` and `shieldlabs_list_domains`. History takes a hostname;
-management takes public UUIDs. Pass the selected hostname explicitly when multiple domains are enabled.
+Start with `shieldlabs_check_connection` and `shieldlabs_list_domains`. History and management both take public domain UUIDs. Resolve the hostname with list_domains first.
 An investigation stays read-only. Mutations need user intent, are never automatically retried, and
 require `confirm: true` for destructive operations. Keep secrets masked unless an authorized installer
 needs a one-time credential. Never repeat secrets in chat or use private dashboard APIs as a fallback.
 
 Use the browser's `identificationId` and the server SDK's `identification_id` for the same UUID.
-MCP takes it as `request_id`. History can omit detailed weights (`signals: []`) even with a
+MCP takes it as `identification_id`. History can omit detailed weights (`signals: []`) even with a
 nonzero Risk Score. Deduplicate webhook deliveries by the verified envelope's `event_id`.
 
 ## Working on this repository

@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-10-29
+
+- Align all 21 MCP tool inputs with domain UUIDs, entity cards, list cursors and flat filters.
+- Update setup verification and investigation playbooks; preserve unavailable risk and signal states.
+- Generate the input catalog from registered MCP tools and validate installable archives.
+
 ## [1.1.0] - 2026-10-28
 
 - Add evidence-based setup progress/resume, hostname coverage, backend HRE consumption,

@@ -1,6 +1,6 @@
 {
   "name": "shieldlabs",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Integrate ShieldLabs device intelligence and fraud detection into your app: browser identification, server-side verdicts, signed webhooks, risk decisions, account-abuse checks and investigations with the ShieldLabs MCP server.",
   "author": {
     "name": "ShieldLabs",

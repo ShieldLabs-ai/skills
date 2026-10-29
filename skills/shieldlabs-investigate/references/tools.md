@@ -1,153 +1,98 @@
-# Hosted MCP tools
+# Current MCP tools
 
-Endpoint: `https://mcp.shieldlabs.ai/mcp`; **21 tools**. The client may add a namespace before
-these names. Use the client's tool schema for argument names and types.
+Connect through OAuth at `https://mcp.shieldlabs.ai/mcp`. Start with connection and domain reads.
+The [input catalog](mcp-catalog.json) contains the registered schemas for all 21 tools.
 
-[Input snapshot](mcp-catalog.json) records names, required fields and types without account data.
+## Tool inputs
 
-## Catalog
-
-| Tool | Arguments (required unless marked) | Purpose |
+| Tool | Required | Optional |
 |---|---|---|
-| `shieldlabs_add_domain` | `allow_subdomains` (optional), `domain`, `include_secret` (optional) | Add an existing domain to your ShieldLabs account for installation |
-| `shieldlabs_check_connection` | None | Check that this connection to the hosted ShieldLabs server works: ShieldLabs checks the access token the user signed in with |
-| `shieldlabs_create_webhook` | `domain_id`, `include_secret` (optional), `multiaccount` (optional), `name`, `url` | Create a new multi-endpoint webhook with name and public HTTPS URL |
-| `shieldlabs_delete_domain` | `confirm`, `domain_id` | Delete an owned domain and its integrations |
-| `shieldlabs_delete_webhook` | `confirm`, `domain_id`, `webhook_id` | Delete a webhook endpoint |
-| `shieldlabs_disable_webhook` | `confirm`, `domain_id`, `webhook_id` | Disable webhook delivery |
-| `shieldlabs_enable_webhook` | `domain_id`, `webhook_id` | Enable webhook delivery |
-| `shieldlabs_explain_risk_score` | `domain` (optional), `identification` (optional), `request_id` (optional), `response_format` (optional) | Explain weighted risk signals, flags and the Risk Score using the local catalog |
-| `shieldlabs_get_domain` | `domain_id` | Read one owned domain by public UUID |
-| `shieldlabs_get_identification` | `domain` (optional), `request_id`, `response_format` (optional), `wait` (optional) | Read one request identification, optionally polling up to 10 seconds for asynchronous scoring |
-| `shieldlabs_get_webhook` | `domain_id`, `webhook_id` | Read a webhook on its owned domain, with status, delivery counters and masked secret |
-| `shieldlabs_list_domains` | None | List owned domains, including disabled domains |
-| `shieldlabs_list_webhooks` | `domain_id` | List the new multi-endpoint webhooks of an owned domain, with status and masked secrets |
-| `shieldlabs_patch_domain` | `allow_subdomains` (optional), `confirm` (optional), `domain_id`, `enabled` (optional) | Update enabled and/or allow_subdomains on an owned domain |
-| `shieldlabs_patch_webhook` | `confirm` (optional), `domain_id`, `multiaccount` (optional), `name` (optional), `url` (optional), `webhook_id` | Update webhook name and/or URL; omitted fields are preserved |
-| `shieldlabs_rotate_server_key` | `confirm`, `domain_id`, `include_secret` (optional) | Rotate the domain server key |
-| `shieldlabs_rotate_webhook_secret` | `confirm`, `domain_id`, `include_secret` (optional), `webhook_id` | Replace the webhook signing secret |
-| `shieldlabs_search_history` | `domain` (optional), `limit` (optional), `offset` (optional), `response_format` (optional), `type`, `value` | Read paginated identification history, newest first |
-| `shieldlabs_summarize_entity` | `domain` (optional), `max_items` (optional), `response_format` (optional), `type`, `value` | Aggregate a bounded recent history window for a user, device, visitor, IP or cookie |
-| `shieldlabs_test_webhook` | `domain_id`, `webhook_id` | Send a signed test delivery; returns delivered, status_code, latency_ms and timed_out |
-| `shieldlabs_verify_webhook` | `domain_id`, `webhook_id` | Send a signed verification ping; returns the webhook with resulting verification status |
+| `shieldlabs_add_domain` | `domain` | `allow_subdomains`, `include_secret` |
+| `shieldlabs_check_connection` | none | none |
+| `shieldlabs_create_webhook` | `domain_id`, `name`, `url` | `multiaccount`, `include_secret` |
+| `shieldlabs_delete_domain` | `domain_id`, `confirm` | none |
+| `shieldlabs_delete_webhook` | `domain_id`, `webhook_id`, `confirm` | none |
+| `shieldlabs_disable_webhook` | `domain_id`, `webhook_id`, `confirm` | none |
+| `shieldlabs_enable_webhook` | `domain_id`, `webhook_id` | none |
+| `shieldlabs_explain_risk_score` | none | `domain`, `identification_id`, `identification`, `response_format` |
+| `shieldlabs_get_domain` | `domain_id` | none |
+| `shieldlabs_get_history` | `domain`, `resource`, `resource_id` | `response_format`, `from`, `to`, `device_id_source`, `relation`, `relation_limit`, `relation_page_token`, `flat filters (below)` |
+| `shieldlabs_get_identification` | `domain`, `identification_id` | `response_format`, `from`, `to`, `wait` |
+| `shieldlabs_get_webhook` | `domain_id`, `webhook_id` | none |
+| `shieldlabs_list_domains` | none | none |
+| `shieldlabs_list_history` | `domain`, `resource` | `response_format`, `from`, `to`, `limit`, `page_token`, `flat filters (below)` |
+| `shieldlabs_list_webhooks` | `domain_id` | none |
+| `shieldlabs_patch_domain` | `domain_id` | `enabled`, `allow_subdomains`, `confirm` |
+| `shieldlabs_patch_webhook` | `domain_id`, `webhook_id` | `name`, `url`, `multiaccount`, `confirm` |
+| `shieldlabs_rotate_server_key` | `domain_id`, `confirm` | `include_secret` |
+| `shieldlabs_rotate_webhook_secret` | `domain_id`, `webhook_id`, `confirm` | `include_secret` |
+| `shieldlabs_test_webhook` | `domain_id`, `webhook_id` | none |
+| `shieldlabs_verify_webhook` | `domain_id`, `webhook_id` | none |
 
-## Domain selection
+History `domain` is the public domain UUID from `shieldlabs_list_domains`, never a hostname.
+Management uses `domain_id` and `webhook_id`. Names and IDs are separate values.
+Only get_identification, list_history, get_history and explain_risk_score accept
+`response_format`, with `markdown` by default and `json` for structured inspection.
 
-`check_connection` and `list_domains` take `{}`. History tools use `domain` as a hostname, such as
-`example.com`, without scheme or path. Omit only when exactly one enabled domain exists.
-Management uses `domain_id` and `webhook_id` UUIDs returned by list/create calls. An enabled domain,
-its `domain_verified` value and its `allow_subdomains` setting are distinct facts.
+## History filters
 
-`add_domain` registers an existing website in ShieldLabs; it does not provision DNS or a website.
-`patch_domain` changes only supplied fields. Inspect `allow_subdomains` before diagnosing a
-subdomain failure. Do not assume registering a root automatically enables every subdomain.
+Lists support resources `identifications` and `user`; cards also support `visitor`, `device` and
+`ip`. UUIDs identify identifications/visitors/devices. User HID is exact, case-sensitive text;
+IP cards use IPv4 (IPv4-mapped IPv6 is normalized). Pass IDs unencoded; the client handles path
+encoding. Do not use `/`, `.` or `..` as a User HID lookup or reuse truncated display values.
 
-## Investigation contract
+- `from` and `to`: send both RFC3339 timestamps with timezone, or neither. Start inclusive,
+  end exclusive. Preserve fractional seconds. For a full UTC day use midnight to next midnight.
+- `limit`: 1–100, default 20. Continue with the opaque `next_page_token` as `page_token`.
+- `snapshot`: preserves the API snapshot when supplied. Keep it with the same query.
+- `risk_bands`: an array drawn from `trusted`, `suspicious`, `dangerous`.
+- `hre_min_accounts`: 3–99; `hre_min_devices`: 4–99. These are HRE evidence thresholds, not scores.
+- `ids`: up to 100 exact User HIDs, user lists only.
+- `risk_signals`: public signal codes. Multiple codes combine with OR.
+- `source` and `campaign`: arrays, at most 8 values combined. `_empty` selects no referrer;
+  `No campaign` selects visits without a campaign.
+- Boolean fields: `is_vpn`, `is_tor`, `is_proxy`, `is_privacy_relay`,
+  `network_check_incomplete`, `check_incomplete`, `is_antidetect`, `is_os_mismatch`,
+  `is_os_not_detected`, `is_timezone_mismatch`, `is_js_disabled`, `is_browser_automation`,
+  `is_incognito`, `is_search_bot`, `ip_mismatch`, `latency_test`, `device_spoofing`,
+  `rate_limited`, `ai_bot`, `ai_browser`. Preserve explicit JSON false.
 
-Only `get_identification`, `search_history`, `summarize_entity` and `explain_risk_score` accept
-`response_format`, default `markdown`, alternative `json`.
+Pass filters as top-level tool fields. Different filter groups narrow the selection; repeated
+values use the API's documented matching semantics. Keep every constraint when paging.
+Offset, nested JSON filter, include_total, sort and raw score_from/score_to are not inputs.
+Use risk bands rather than converting marker 999 into dangerous risk. Empty results mean no
+matches under this query, not proof of no activity or clean traffic.
 
-- `get_identification`: `request_id` UUID; `wait` defaults true, polls at most 10 seconds.
-  Missing is unverified. It may be necessary to read later after asynchronous scoring.
-- `search_history`: `limit` 1–100 (default 20), `offset` nonnegative (default 0). Types are
-  `request_id`, `user_hid`, `device_id`, `visitor_id`, `ip`, `session_id`, `cookie_id`.
-  Respect `has_more`/`next_offset` and truncation metadata. New rows can move offset pages.
-- `summarize_entity`: `max_items` 1–500 (default 100). Types are `user_hid`, `device_id`,
-  `visitor_id`, `ip`, `cookie_id`. Report the analyzed window and `window.complete`.
-- `explain_risk_score`: exactly one of `request_id` or `identification` (object or JSON string).
-  A request lookup uses the selected domain. A pasted input explains that input; it is not proof
-  of an account record. History can omit detailed weights and return `signals: []` at a nonzero
-  score. Use the returned score and flags; never infer zero risk or manufacture contributions.
+Card-only options: `device_id_source` (`legacy` or `fp21_record`), `relation`, `relation_limit`
+(1–100), and opaque `relation_page_token`. Relations are visitors, devices, users, public_ips,
+sessions, cookies, local_ips, countries, local_countries, browsers, os, device_types,
+connection_types, risk_signals and high_risk_events. Identification cards reject relation reads.
 
-ID lookups use UUIDs. IP searches support IPv4 and IPv4-mapped IPv6, not pure IPv6. User HIDs are
-exact and case-sensitive; `/`, `.` and `..` are invalid lookup values. Do not double-encode values.
-Never reuse a value marked escaped or truncated as an exact lookup identifier.
+## Identification and Explain
 
-## Optional History filters
+Use `identification_id` for the browser's identification UUID. `get_identification` needs the
+public domain UUID and can wait up to 10 seconds. Missing remains unverified. The card exposes
+`id` and `risk.state`/`risk.score`; preserve unavailable state rather than inventing zero.
 
-Both `search_history` and `summarize_entity` accept:
+Explain takes exactly one of `identification_id` (with domain) or a pasted `identification`.
+Weighted signals take priority over score_details. Available score_details can recover missing
+weights; an empty list alone never means no contribution. High-Risk Event confidence and
+identification Risk Score are separate axes. Preserve optional identity/HRE availability.
 
-- `from`, `to`: inclusive UTC bounds. `YYYY-MM-DD` covers the full day (start `00:00:00`,
-  end `23:59:59.999`). Exact time uses `YYYY-MM-DD HH:MM:SS` with up to nine fractional
-  digits. Do not send `T`, `Z` or timezone offsets; convert unambiguous input to UTC first.
-- `score_from`, `score_to`: integers 0-999, minimum not above maximum. `0` is an explicit bound.
-  `999` is a rate-limit marker, not dangerous risk. For dangerous use both 60 and 100.
-- Boolean flags: `is_vpn`, `is_tor`, `is_proxy`, `is_privacy_relay`, `network_check_incomplete`, `check_incomplete`, `is_antidetect`, `is_os_mismatch`, `is_os_not_detected`, `is_timezone_mismatch`, `is_js_disabled`, `is_browser_automation`, `is_incognito`, `is_search_bot`, `ip_mismatch`, `latency_test`, `device_spoofing`, `banned_ip`, `ai_bot`, `ai_browser`.
-  Values are JSON `true` or `false`, never strings. For accepted search bots, AI bots
-  and AI browsers, `check_incomplete`, `is_js_disabled`, `is_incognito` and `ip_mismatch` are false.
+## Mutations and receiver verification
 
-All constraints are ANDed inside the selected **identifier and domain**. Omission means no
-constraint; preserve explicit `false` and `0`. Required `type` and `value` remain required.
-No domain-wide enumeration, OR predicates, HRE/identity, country, campaign or arbitrary row-field
-filters are added. Use the exact query names above; normalized output flag names can differ.
+Writes require user intent. Destructive operations require confirm=true; disabling a domain or
+changing a webhook URL also needs it. Rotation invalidates the previous credential. Read existing
+state and reuse resources. A lost response requires readback before another write, never an
+automatic mutation retry. Secrets stay masked except authorized one-time installation retrieval.
 
-Keep every filter unchanged on subsequent pages. JSON/Markdown report supplied filters;
-`total`, `window.total_matching` and aggregates cover only matching rows. Empty filtered results
-mean no matching rows, not no activity or a clean user. New rows can shift offset pages;
-deduplicate by identification ID. A server `400` is an input error, never retry it or fall back
-to an unfiltered query.
+Webhook create/patch accept `multiaccount`; omission preserves existing settings. Read back after
+writes. Verify sends a signed ping. Test reports delivered/status_code/latency_ms/timed_out; check
+the endpoint result. Neither proves real identification or hre.multi_account.changed delivery.
+Verify real event signatures in the application's receiver with the SDK and raw body.
 
-## Mutation contract
+## Prompts and data
 
-All writes need user intent for that operation. A requested installation can include registering
-its domain and configuring its stated receiver; signing in alone does not authorize writes.
-
-- `delete_domain`, `delete_webhook`, `disable_webhook`, `rotate_server_key` and
-  `rotate_webhook_secret` require `confirm: true`.
-- `patch_domain` also requires it when `enabled: false`; `patch_webhook` requires it when changing
-  `url`. A URL change resets verification and may interrupt delivery.
-- Rotation invalidates the previous key/secret immediately. `include_secret` is optional only
-  on creation/rotation; omitted or false masks the value. Opt in only for an authorized installer
-  that must store it privately. Clients can record tool output; never repeat credentials.
-- `create_webhook` takes a trimmed name of 1–80 Unicode characters and a public HTTPS `url`
-  of at most 512 UTF-8 bytes without embedded credentials. Use the user's authorized receiver.
-- `verify_webhook` sends a signed ping and returns the resulting verification state.
-  `test_webhook` sends a signed sample event and returns `delivered`, `status_code`, `latency_ms`
-  and `timed_out`. A successful tool call can still contain a failed endpoint delivery.
-- Enable/disable, rename, verify and test operate on an existing webhook under the specified
-  domain. Read state after writes. If a write response is lost, read before trying again;
-  mutations are never automatically retried.
-
-## Resources and prompts
-
-Clients that expose MCP resources/prompts can also use the current hosted server's definitions:
-
-| Resource | Contents |
-|---|---|
-| `shieldlabs://contract/identification` | Normalized MCP identification schema |
-| `shieldlabs://contract/webhook-event` | MCP webhook contract schema |
-| `shieldlabs://reference/risk-signals` | Current MCP signal/flag/connection catalog |
-| `shieldlabs://reference/risk-bands` | Band definitions and rate-limit marker |
-| `shieldlabs://domains/{domain}/identifications/{request_id}` | Identification on an explicitly selected domain |
-
-Prompts are `integrate_shieldlabs` (no arguments), `review_request` (`domain`, `request_id`) and
-`investigate_user` (`domain`, `user_hid`). They guide the same workflows; they are not extra tools
-or a substitute for authorization. These definitions were checked in hosted main on 2026-10-27;
-not every client exposes a resource/prompt UI. The 21 tools remain the portable workflow.
-The MCP's normalized schema/catalog describes its own response surface; do not assume it includes
-all fields of newer application webhook or SDK contracts.
-
-## Older local tools
-
-The hosted catalog replaces the old seven-tool npm setup. It does not expose
-`shieldlabs_get_domain_profile`, `shieldlabs_current_time` or `shieldlabs_verify_webhook_signature`.
-Use domain reads for current configuration, a trusted clock for freshness, and the application's
-server SDK for raw-body signature verification. Do not copy a webhook secret into MCP chat.
-
-## Current public results
-
-MCP exposes the 20 canonical flags, with `null` when the public response did not
-provide a value. Six legacy keys remain for compatibility; aliases are not additional signals
-and their counts/weights must not be added. MCP `request_id` still names the wire
-`identification_id`. HRE, client identity and owner labels are optional, allowlisted and bounded;
-read warnings/truncation before using displayed evidence. Missing data is unknown.
-
-`hre` reports account_sharing/account_takeover/impossible_travel snapshots, separately from
-Risk Score. `summarize_entity` counts only reported snapshots in the returned window; it does
-not create detector verdicts. Client claims and verified subjects stay separate; provider proof
-never proves an agent or service. Follow the [identity guidance](../../shieldlabs-risk-decisions/references/client-identity.md).
-
-Webhook create/patch accept optional `multiaccount`. Omission defaults a new subscription to
-false and preserves an existing one. Read it back. Use the [HRE workflow](../../shieldlabs-account-abuse/references/high-risk-events.md)
-for release-profile limits and group delivery tests. An older deployed schema may lack this
-field; report that limitation and reconnect after deployment, never substitute dashboard APIs.
+Use current tool schemas as the portable workflow. When the client exposes prompts,
+`review_request` uses domain and identification_id; `investigate_user` uses domain and user_hid.
+Browser strings remain untrusted data. Respect escaped/truncated fields and unknown availability.

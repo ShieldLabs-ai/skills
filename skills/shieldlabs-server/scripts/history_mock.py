@@ -3,7 +3,7 @@
 
 Usage: python3 history_mock.py [--port 4010] [--host 127.0.0.1] [--rows ROWS.json] [--only-rows] [--contract current|legacy] [--quiet]
 
-Answers GET /api/v1/history/{type}/{value}?limit=&offset= with the same JSON shape as the History
+Answers domain-scoped identification card reads with the current JSON shape of the History
 API: {"data": [rows, newest first], "total": n}, History rows with History field names (score,
 created_at, ip, country, score_details, is_* columns). Point a server SDK at it with
 SHIELDLABS_API_BASE_URL=http://127.0.0.1:4010 and a placeholder key such as
@@ -37,7 +37,8 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 LOOKUPS = ("ip", "user_hid", "visitor_id", "request_id", "identification_id", "device_id", "session_id", "cookie_id")
 UUID_LOOKUPS = {"visitor_id", "request_id", "identification_id", "device_id", "session_id", "cookie_id"}
-PATH_RE = re.compile(r"^/api/v1/history/([^/]+)/([^/]+)/?$")
+PATH_RE = re.compile(r"^/api/v1/domains/([0-9a-fA-F-]{36})/history/identifications/([^/]+)/?$")
+TEST_DOMAIN = "11111111-1111-4111-8111-111111111111"
 UUID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 IPV4_RE = re.compile(r"^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$")
 FLAG_COLUMNS = (
@@ -119,7 +120,7 @@ class HistoryMock:
         if lookup not in LOOKUPS:
             return 400, {"error": f"unknown lookup type {lookup!r}"}
         if lookup in UUID_LOOKUPS and not UUID_RE.match(value):
-            return 500, {"error": f"cannot parse {value!r} as a UUID"}  # the real API answers 500 too
+            return 500, {"error": f"cannot parse {value!r} as a UUID"}  # legacy fixture helper only
         if lookup == "ip" and not IPV4_RE.match(value):
             return 500, {"error": f"cannot parse {value!r} as an IPv4 address"}
         if lookup in ("request_id", "identification_id"):
@@ -135,7 +136,7 @@ class HistoryMock:
 
             found = [row for row in self.rows.values() if row is not None and matches(row)]
         rows: List[Dict[str, Any]] = sorted((r for r in found if r is not None), key=lambda r: str(r["created_at"]), reverse=True)
-        limit = limit if 1 <= limit <= 100 else 20  # the real API turns other values into 20
+        limit = limit if 1 <= limit <= 100 else 20  # legacy fixture helper only
         offset = max(offset, 0)
         return 200, {"data": rows[offset:offset + limit], "total": len(rows)}
 
@@ -150,19 +151,44 @@ def make_handler(mock: HistoryMock, quiet: bool = False) -> type:
 
         def do_GET(self) -> None:  # noqa: N802 (http.server naming)
             url = urlsplit(self.path)
-            match = PATH_RE.match(url.path)
-            if not match:
-                self.reply(404, {"error": "not found"})
-                return
             auth = self.headers.get("Authorization", "")
             scheme, _, token = auth.partition(" ")
             if scheme.lower() != "bearer" or not token.strip():
                 self.reply(401, {"error": "missing or invalid authorization header"})
                 return
-            query = parse_qs(url.query)
-            status, body = mock.search(match.group(1), unquote(match.group(2)),
-                                       to_int(query.get("limit", ["20"])[0], 20), to_int(query.get("offset", ["0"])[0], 0))
-            self.reply(status, body)
+            if url.path == "/api/v1/domains":
+                self.reply(200, {"domains": [{"id": TEST_DOMAIN, "domain": "example.com"}]})
+                return
+            if url.path.startswith("/api/v1/history/"):
+                self.reply(410, {"error": "endpoint_retired"})
+                return
+            match = PATH_RE.match(url.path)
+            if not match:
+                self.reply(404, {"error": "not found"})
+                return
+            domain, identifier = match.group(1).lower(), unquote(match.group(2))
+            if not UUID_RE.fullmatch(domain) or not UUID_RE.fullmatch(identifier):
+                self.reply(400, {"error": "invalid_request"})
+                return
+            status, result = mock.search("identification_id", identifier, 1, 0)
+            if status != 200:
+                self.reply(status, result)
+                return
+            if not result["data"]:
+                self.reply(404, {"error": "not_found"})
+                return
+            row = result["data"][0]
+            score = row["score"]
+            if not 0 <= score <= 100:
+                self.reply(429, {"error": "rate_limited"})
+                return
+            at = str(row["created_at"]).replace(" ", "T") + "Z"
+            card = {"type": "identification", "id": identifier.lower(), "domain_id": domain,
+                    "domain": row.get("site_domain") or "example.com", "created_at": at,
+                    "risk": {"state": "ok", "score": score, "band": "trusted" if score < 30 else "suspicious" if score < 60 else "dangerous", "as_of": at},
+                    "signals": {"state": "unavailable", "items": []}, "public_ip": row.get("ip"),
+                    "country": row.get("country"), "visitor_id": row.get("visitor_id"), "device_id": row.get("device_id"), "user_hid": row.get("user_hid")}
+            self.reply(200, {"data": card})
 
         def reply(self, status: int, body: Dict[str, Any]) -> None:
             payload = (json.dumps(body) + "\n").encode("utf-8")

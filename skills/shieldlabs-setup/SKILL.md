@@ -75,7 +75,7 @@ Opt into `include_secret=true` only when installing a needed server credential; 
 ([environment.md](references/environment.md)). An existing server key is masked: ask for secure
 configuration or explicit rotation approval, never rotate automatically.
 
-Use returned UUIDs for domain management and hostnames for History. Inspect `allow_subdomains`
+Use the returned public domain UUID for both History and domain management. Inspect `allow_subdomains`
 before using a subdomain; registering a domain does not create DNS or deploy the application.
 OAuth authenticates MCP; the app's SDK still uses its domain keys. Never extract OAuth tokens or
 call private dashboard APIs. The MCP client may retain one-time credential responses.
@@ -87,7 +87,7 @@ its keys locally. Never request private keys in chat. Continue with SDK installa
 requiring MCP; verify through the backend and dashboard instead.
 
 Pass the browser's `identificationId` to the backend and use `identification_id` in the server
-SDK. MCP accepts the same UUID as `request_id`.
+SDK. MCP accepts the same UUID as `identification_id`.
 
 ## Setup workflow
 
