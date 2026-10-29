@@ -229,7 +229,7 @@ The server SDKs for Python (`shieldlabs`), Go, PHP, Java and .NET have the same 
   `SHIELDLABS_WEBHOOK_SECRET` and `USER_HID_SECRET` stay on the server, in environment variables.
 - The backend reads the verdict with `identifications.get`, claims each request ID once, refuses
   identifications older than 5 minutes and runs the SDK policy helper.
-- No identification means unverified, never clean. `999` is a rate-limit marker, not a score. The
+- No identification means unverified, never clean. `999` is a Banned IP marker, not a score. The
   all-zero device ID means no usable device signals.
 - Bands: trusted 0-29, suspicious 30-59, dangerous 60-100. Branch on bands and detection flags;
   never add up signal weights.

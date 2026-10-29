@@ -45,7 +45,7 @@ class HostedMcpTest(unittest.TestCase):
     def test_history_filter_catalog_preserves_the_actual_public_scope(self):
         catalog = json.loads((ROOT / 'skills/shieldlabs-investigate/references/mcp-catalog.json').read_text())
         tools = {tool['name']: tool for tool in catalog['tools']}
-        flags = set('is_vpn is_tor is_proxy is_privacy_relay network_check_incomplete check_incomplete is_antidetect is_os_mismatch is_os_not_detected is_timezone_mismatch is_js_disabled is_browser_automation is_incognito is_search_bot ip_mismatch latency_test device_spoofing rate_limited ai_bot ai_browser'.split())
+        flags = set('is_vpn is_tor is_proxy is_privacy_relay network_check_incomplete check_incomplete is_antidetect is_os_mismatch is_os_not_detected is_timezone_mismatch is_js_disabled is_browser_automation is_incognito is_search_bot ip_mismatch latency_test device_spoofing banned_ip ai_bot ai_browser'.split())
         for name in ('shieldlabs_list_history', 'shieldlabs_get_history'):
             params = {param['name']: param for param in tools[name]['parameters']}
             self.assertEqual({key for key, value in params.items() if value['type'] == 'boolean'}, flags)

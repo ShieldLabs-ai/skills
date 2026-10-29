@@ -50,7 +50,7 @@ Call it after `decide()` has passed the guards, and keep the stricter of the two
 
 ## Useful helpers
 
-- `riskBand(score)`: `'trusted' | 'suspicious' | 'dangerous' | 'rate_limited'`.
+- `riskBand(score)`: `'trusted' | 'suspicious' | 'dangerous' | 'banned_ip'`.
 - `isRateLimited(score)`: `true` for the `999` marker.
 - `NIL_UUID`: the all-zero device ID.
 - `SIGNALS`: known signal slugs, for example `SIGNALS.VPN === 'vpn'`. The set is open, so use it to

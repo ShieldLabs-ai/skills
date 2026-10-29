@@ -145,7 +145,7 @@ ID, while Test can send a UUID. Do not impose a UUID regex on the event key. The
 | `webhook.ping` | The **Verify** button | no `data` |
 | anything else | Event types added later | acknowledge with 2xx; the SDKs return an "unknown event" instead of throwing |
 
-- A `risk_score` of `999` with the single current signal `rate_limited` (legacy `banned_ip`) is the rate-limit marker: the
+- A `risk_score` of `999` with the single current signal `banned_ip` is the Banned IP marker: the
   visitor IP was blocked for sending too many identifications. It is not a score.
 - Current Test uses a fixed synthetic `data.identification_id` but a fresh `event_id` on every
   click. Process two Test clicks as two events; replaying the same signed event has one effect.

@@ -73,7 +73,7 @@ final class AccountAbuse
     /**
      * Impossible travel at an action: the current identification comes from another country than
      * an identification of the same account less than $withinMinutes before it. Identifications
-     * without a country, through a VPN, proxy, Tor or relay, or with the rate-limit marker are skipped.
+     * without a country, through a VPN, proxy, Tor or relay, or with the Banned IP marker are skipped.
      *
      * @return array{from: string, to: string, minutes: int, earlier_request_id: string}|null
      */

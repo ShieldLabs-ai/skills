@@ -40,7 +40,7 @@ def decide(
     if reason is not None:
         if reason in ("missing", "no_device_signals"):
             return UNVERIFIED[sensitivity], reason
-        if reason == "rate_limited":
+        if reason == "banned_ip":
             return ("review" if sensitivity == "high" else "step_up"), reason
         return "block", reason  # replayed, stale, blocked_flag
     assert identification is not None and verdict.band is not None

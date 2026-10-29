@@ -24,7 +24,7 @@ Use these **20 detection flags**. A missing value is unknown.
 | `latency_test` | Latency-test flag; preserve it without inventing thresholds |
 | `anti_detect_browser` | Anti-detect browser evidence |
 | `device_spoofing` | Device-spoofing evidence |
-| `banned_ip` | Rate-limited/banned IP; check the `999` marker separately |
+| `banned_ip` | Banned IP; check the `999` marker separately |
 | `incognito` | Private browsing |
 | `search_bot` | Search crawler |
 | `ai_bot` | AI-bot classification |

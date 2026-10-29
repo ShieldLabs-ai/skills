@@ -12,7 +12,7 @@ returned identification ID equals the submitted ID. A missing or different ID is
 ## Read the result
 
 Use the returned Risk Score, detection flags and observation time. Risk Score bands are
-trusted 0-29, suspicious 30-59 and dangerous 60-100. `999` is a rate-limit marker. Missing
+trusted 0-29, suspicious 30-59 and dangerous 60-100. `999` is a Banned IP marker. Missing
 fields remain unknown; empty detailed weights do not imply a zero score.
 
 ## Correlate webhook deliveries

@@ -49,7 +49,7 @@ those verdicts from a sample count or invent response fields.
   `"unknown"`.
 - Lookups by `user_hid` are exact and case-sensitive. The SDKs refuse a User HID that contains `/`
   or is `.` or `..` with a validation error before any request: the History API cannot match it.
-- Skip rate-limit markers (`risk_score` above 100) where they would distort a count.
+- Skip Banned IP markers (`risk_score` above 100) where they would distort a count.
 - History lookups by device or visitor only find the accounts whose signed-in pages passed a User
   HID. Signup and login identifications are anonymous, so record `device_id` and `visitor_id` with
   every account in your own table (workflow step 5) and count there too: that table works from

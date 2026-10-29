@@ -568,7 +568,7 @@
           "type": "boolean"
         },
         {
-          "name": "rate_limited",
+          "name": "banned_ip",
           "required": false,
           "type": "boolean"
         },
@@ -775,7 +775,7 @@
           "device_spoofing": {
             "type": "boolean"
           },
-          "rate_limited": {
+          "banned_ip": {
             "type": "boolean"
           },
           "ai_bot": {
@@ -1085,7 +1085,7 @@
           "type": "boolean"
         },
         {
-          "name": "rate_limited",
+          "name": "banned_ip",
           "required": false,
           "type": "boolean"
         },
@@ -1258,7 +1258,7 @@
           "device_spoofing": {
             "type": "boolean"
           },
-          "rate_limited": {
+          "banned_ip": {
             "type": "boolean"
           },
           "ai_bot": {

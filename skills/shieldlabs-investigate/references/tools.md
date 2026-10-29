@@ -55,7 +55,7 @@ encoding. Do not use `/`, `.` or `..` as a User HID lookup or reuse truncated di
   `network_check_incomplete`, `check_incomplete`, `is_antidetect`, `is_os_mismatch`,
   `is_os_not_detected`, `is_timezone_mismatch`, `is_js_disabled`, `is_browser_automation`,
   `is_incognito`, `is_search_bot`, `ip_mismatch`, `latency_test`, `device_spoofing`,
-  `rate_limited`, `ai_bot`, `ai_browser`. Preserve explicit JSON false.
+  `banned_ip`, `ai_bot`, `ai_browser`. Preserve explicit JSON false.
 
 Pass filters as top-level tool fields. Different filter groups narrow the selection; repeated
 values use the API's documented matching semantics. Keep every constraint when paging.

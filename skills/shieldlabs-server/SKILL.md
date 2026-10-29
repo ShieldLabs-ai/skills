@@ -121,13 +121,13 @@ Every SDK ships the same guard. The checks run in this order and the first failu
 | 1 | No identification | `missing` |
 | 2 | The replay callback says the request ID was used before | `replayed` |
 | 3 | Older than the freshness window (default 5 minutes, by `observed_at`) | `stale` |
-| 4 | Risk Score above 100: `999` is a rate-limit marker, never a score | `rate_limited` |
+| 4 | Risk Score above 100: `999` is a Banned IP marker, never a score | `banned_ip` |
 | 5 | The all-zero device ID `00000000-0000-0000-0000-000000000000`: no usable device signals | `no_device_signals` |
 | 6 | A flag in the blocked flags (default `browser_automation`, `javascript_disabled`) | `blocked_flag` |
 | 7 | A band in the blocked bands (default `dangerous`, 60-100) | `blocked_band` |
 
 The result has `ok`, `reason`, `band` (`trusted` 0-29, `suspicious` 30-59, `dangerous` 60-100, or
-`rate_limited`) and `flag` for `blocked_flag`. The defaults are a starting point per action: the
+`banned_ip`) and `flag` for `blocked_flag`. The defaults are a starting point per action: the
 shieldlabs-risk-decisions skill maps each reason and band to allow, step-up, review or block.
 The freshness window is milliseconds in Node.js (`maxAge: 300_000`), seconds or a `timedelta` in
 Python and seconds in PHP (`max_age`), a `Duration` in Go and Java, and a `TimeSpan` in .NET.

@@ -90,7 +90,7 @@ const verdict = evaluateIdentification(identification, {
 // { ok: false, reason: 'blocked_flag', band: 'dangerous', flag: 'browser_automation' }
 ```
 
-`riskBand(score)` returns `'trusted' | 'suspicious' | 'dangerous' | 'rate_limited'`,
+`riskBand(score)` returns `'trusted' | 'suspicious' | 'dangerous' | 'banned_ip'`,
 `isRateLimited(score)` checks the `999` marker, and `NIL_UUID` is the all-zero device ID.
 
 ## Errors

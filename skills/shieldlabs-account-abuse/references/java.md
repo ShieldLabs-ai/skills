@@ -64,7 +64,7 @@ public final class AccountAbuse {
     /**
      * Impossible travel at an action: the current identification comes from another country than an
      * identification of the same account less than {@code within} before it. Identifications without a
-     * country, through a VPN, proxy, Tor or relay, or with the rate-limit marker are skipped.
+     * country, through a VPN, proxy, Tor or relay, or with the Banned IP marker are skipped.
      */
     public Optional<TravelJump> impossibleTravel(String userHid, Identification current, Duration within, int maxItems) {
         Instant at = current.getObservedAt();
