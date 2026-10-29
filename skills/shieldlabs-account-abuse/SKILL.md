@@ -5,15 +5,15 @@ description: Integrates ShieldLabs backend High-Risk Events for multi-accounting
 
 # Account-abuse checks
 
+Read [current SDK and History contracts](../shieldlabs-server/references/current-history.md) for stack routing, public domain UUIDs, filters and availability before adding server reads.
+
 Use the [backend High-Risk Event workflow](references/high-risk-events.md) first. The History recipes below are optional application policies and must not be reported as detector verdicts.
 
 One identification describes one check by the browser agent. Abuse across accounts shows up in the
 identifiers over time: many accounts on one device, one account on many devices, an account that
 jumps between countries. ShieldLabs detects four **High-Risk Events** on your users
 (Multi-accounting, Account sharing, Impossible travel, Account takeover), each with Medium or High
-confidence, and shows them in the analytics dashboard. The recipes below read the same kind of
-evidence from the History API, so that the backend can act at the moment of the action: signup,
-login, reward claim, payout.
+confidence, and shows them in the analytics dashboard. Read backend cards and High-Risk Event results for signup, login, reward claims and payouts.
 
 Build these checks only on fields the installed SDK actually supports. These are bounded
 application-side History recipes, not backend High-Risk Event verdicts. Current webhook contracts
@@ -41,7 +41,7 @@ those verdicts from a sample count or invent response fields.
 | `visitor_id` | Sticky to the device per site: a new cookie on a known device usually keeps it | Counting accounts per visitor |
 | `user_hid` | Your account, when the page passes it | Devices and countries per account |
 | `cookie_id` | One browser profile until its storage is cleared | Weak on its own |
-| `public_ip.ip` | Changes with the network; shared by offices and mobile carriers | Weak evidence only (IPv4) |
+| `public_ip` | Changes with the network; shared by offices and mobile carriers | Weak evidence only (IPv4) |
 
 - Skip the all-zero device ID `00000000-0000-0000-0000-000000000000`: it groups identifications
   without usable device signals, not one device.
@@ -55,7 +55,7 @@ those verdicts from a sample count or invent response fields.
   every account in your own table (workflow step 5) and count there too: that table works from
   the first signup on, with or without User HIDs.
 
-## Recipes
+## Application policy examples
 
 | Abuse | Lookup | Evidence | Starting threshold | Typical action |
 |---|---|---|---|---|
@@ -66,7 +66,7 @@ those verdicts from a sample count or invent response fields.
 | Ban evasion | `device_id` against your banned accounts and banned devices | A banned person comes back | Any match | Block or review |
 | Promo, bonus, free-trial abuse | `device_id` against your redemptions, plus accounts on the device | One person claiming many times | One redemption per device | Refuse the reward, keep the account |
 
-The first two thresholds follow the defaults of the analytics dashboard: Multi-accounting from 3
+Backend High-Risk Event thresholds are: Multi-accounting from 3
 accounts on one visitor, Account sharing from 4 devices on one account. Both counts include the
 action itself: at signup the account being created is in neither the History API nor your table
 yet, so the check is "existing accounts + 1 >= 3" (two accounts already on the device); a reward
@@ -80,62 +80,30 @@ Impossible travel compares the action's own identification with the account's id
 in the window before it. The login form identifies anonymously, so that identification never
 appears in the account's history: pass it to the helper instead of scanning the history alone.
 
-## Helpers
+## Read backend evidence
 
-Node.js; the references have the same helpers for every SDK:
-
-```ts
-import { NIL_UUID, type ShieldLabs } from '@shieldlabs-ai/node';
-
-/** User HID values that do not name one of your accounts. */
-const NOT_AN_ACCOUNT = new Set(['anonymous', 'fail', '-1', 'unknown']);
-
-export function isAccount(userHid: string | null): userHid is string {
-  return userHid !== null && userHid !== '' && !NOT_AN_ACCOUNT.has(userHid);
-}
-
-/** Multi-accounting: the distinct accounts (User HIDs) seen on one device or one visitor. */
-export async function accountsOn(
-  shieldlabs: ShieldLabs,
-  lookup: 'device_id' | 'visitor_id',
-  id: string,
-  maxItems = 500,
-): Promise<Set<string>> {
-  const accounts = new Set<string>();
-  if (id === NIL_UUID) return accounts; // no usable device signals: nothing to count on
-  for await (const item of shieldlabs.history.iterate(lookup, id, { maxItems })) {
-    if (isAccount(item.user_hid)) accounts.add(item.user_hid);
-  }
-  return accounts;
-}
-```
-
-At signup, after the base policy passed (it already refused the all-zero device ID):
+Node.js 1.3.0 reads the account, visitor or device card directly:
 
 ```ts
-const seen = await accountsOn(shieldlabs, 'device_id', identification.device_id); // existing accounts with a User HID
-const recorded = await accountDevices.countAccounts(identification.device_id); // existing accounts in your own table
-// The account being created is in neither yet: count it, so 2 existing accounts + this one = 3.
-if (Math.max(seen.size, recorded) + 1 >= 3) {
-  await holdRewards(newAccount, { reason: 'many_accounts_on_device' });
-}
-await accountDevices.record(newAccount.id, identification.device_id, identification.visitor_id);
+const card = await shieldlabs.entities.get(domainId, "user", accountHid);
+// Preserve card.high_risk_events, card.related_counts, card.risk and card.signals.
+const devices = await shieldlabs.entities.get(domainId, "user", accountHid, {
+  relation: "devices", relation_limit: 20,
+});
 ```
 
-Full code for all six recipes: [node.md](references/node.md), [python.md](references/python.md),
-[go.md](references/go.md), [php.md](references/php.md), [java.md](references/java.md),
-[dotnet.md](references/dotnet.md).
+Use the backend's HRE status and confidence. For a separately requested reward or ban policy,
+join the application's own accounts/redemptions/bans using domain and identification UUIDs.
+A bounded card or relation page cannot establish that no other linked activity exists.
+Read [Node.js](references/node.md), [Python](references/python.md), [Go](references/go.md),
+[PHP](references/php.md), [Java](references/java.md) or [.NET](references/dotnet.md) for the matching
+server read and policy boundary. Do not implement detector rules by counting one History page.
 
 ## Cost and limits
 
-- Rows come newest first, 100 per request by default. `history.iterate` (`history.iter` in
-  Python, `History.All` in Go, `history().stream` in Java, `History.IterateAsync` in .NET) skips
-  rows repeated between pages and stops at the total, at an empty page or after `maxItems`. A
-  `maxItems` of 0 yields nothing, except in Go, where `MaxItems: 0` means no limit: always set it.
-- Every page is one History API request, and the History API allows about 15 requests per second
-  per domain, shared by every caller. Keep `maxItems` bounded (200 to 500) on request paths, stop
-  early when a window is covered, and cache results for a few minutes per device or account.
-- History reads do not use your included identifications.
+Each card/list/relation page is a History API request. Keep windows and page budgets explicit,
+follow opaque cursors with unchanged constraints, and cache investigative evidence when appropriate.
+History reads do not use included browser identifications. Do not poll with new identify() calls.
 
 ## Legitimate explanations
 

@@ -82,11 +82,18 @@ if (identification && identification.user_hid !== expected) {
 }
 ```
 
-## Read the account's history
+## Read the account's History card
+
+Read the `user` card with the exact generated HID, in the selected public domain UUID.
+Preserve risk, signals, High-Risk Events and nullable related counts. Use card relations for
+linked devices, visitors and countries; follow relation_page_token without changing scope.
+See [current History](../../shieldlabs-server/references/current-history.md) and the
+[account-abuse workflow](../../shieldlabs-account-abuse/references/high-risk-events.md).
 
 ```ts
-const page = await shieldlabs.history.search('user_hid', userHidFor(user), { limit: 50 });
-for await (const item of shieldlabs.history.iterate('user_hid', userHidFor(user), { maxItems: 200 })) {
-  // item.device_id, item.public_ip.country, item.risk_score, item.observed_at
-}
+const card = await shieldlabs.entities.get(process.env.SHIELDLABS_DOMAIN_ID!, "user", userHidFor(user));
+const devices = await shieldlabs.entities.get(process.env.SHIELDLABS_DOMAIN_ID!, "user", userHidFor(user), {
+  relation: "devices", relation_limit: 20,
+});
+// No numeric score is required for an aggregate card. Read its returned band only when available.
 ```

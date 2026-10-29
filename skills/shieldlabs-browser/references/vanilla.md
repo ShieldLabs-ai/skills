@@ -7,7 +7,7 @@ pages without a bundler.
 ## Install
 
 ```bash
-npm install @shieldlabs-ai/js
+npm install @shieldlabs-ai/js@1.1.0
 ```
 
 Without a bundler, load the IIFE build of the loader instead ([Without a bundler](#without-a-bundler)).

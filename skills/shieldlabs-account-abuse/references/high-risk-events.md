@@ -24,8 +24,7 @@ UUIDs. Read back the saved subscription. Omission preserves an existing subscrip
 `false` opts out of future jobs, without replaying history or cancelling already queued jobs.
 A subscription-only patch preserves endpoint verification; a URL change resets it.
 
-The account/Core release profile may disable this capability. Report an explicit unavailable
-response and verify saved state; never claim success or retry mutations automatically. Saved
+If the API returns an explicit unavailable response, preserve it and verify saved state; never claim success or retry mutations automatically. Saved
 `multiaccount: true`, a Verify ping and a scored Test are three different facts, none proves
 that Core emitted a real group transition. Follow the
 [webhook consumer](../../shieldlabs-webhooks/references/high-risk-events.md) and test actual

@@ -8,7 +8,7 @@
     {
       "name": "shieldlabs",
       "source": "./",
-      "description": "Integrate ShieldLabs device intelligence and fraud detection into your app: browser identification, server-side verdicts, signed webhooks, risk decisions, account-abuse checks and investigations with the ShieldLabs MCP server."
+      "description": "Integrate ShieldLabs identification, risk signals and Risk Score into your website or application: browser identification, server-side verdicts, signed webhooks, risk decisions, account-abuse checks and investigations with the ShieldLabs MCP server."
     }
   ]
 }

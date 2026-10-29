@@ -48,13 +48,10 @@ if ($identification !== null && $identification->user_hid !== $expected) {
 }
 ```
 
-## Read the account's history
+## Read the account's History card
 
-```php
-use ShieldLabs\LookupType;
-
-$page = $shieldlabs->history->search(LookupType::UserHid, $expected, ['limit' => 50]);
-foreach ($shieldlabs->history->iterate(LookupType::UserHid, $expected, ['max_items' => 200]) as $row) {
-    // $row->device_id, $row->public_ip->country, $row->risk_score, $row->observed_at
-}
-```
+Read the `user` card with the exact generated HID, in the selected public domain UUID.
+Preserve risk, signals, High-Risk Events and nullable related counts. Use card relations for
+linked devices, visitors and countries; follow relation_page_token without changing scope.
+See [current History](../../shieldlabs-server/references/current-history.md) and the
+[account-abuse workflow](../../shieldlabs-account-abuse/references/high-risk-events.md).

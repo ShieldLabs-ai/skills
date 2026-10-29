@@ -5,9 +5,11 @@ description: Plans and implements a complete ShieldLabs integration in the curre
 
 # Set up ShieldLabs
 
+Read [current SDK and History contracts](../shieldlabs-server/references/current-history.md) for stack routing, public domain UUIDs, filters and availability before adding server reads.
+
 Start by showing the [progress and resume map](references/progress.md). Keep it current after each verified stage.
 
-ShieldLabs identifies visitors and scores risk: "Detect risky users. Stop abuse of your product."
+ShieldLabs adds identification, risk signals and Risk Score to your website or application: "Detect risky users. Stop abuse of your product."
 This skill is the entry point. It plans the integration and hands each step to a focused skill:
 shieldlabs-browser, shieldlabs-server, shieldlabs-webhooks, shieldlabs-risk-decisions,
 shieldlabs-user-linking, shieldlabs-account-abuse and shieldlabs-investigate. If those skills are
@@ -37,9 +39,7 @@ Use questions between major stages, not before every file edit or package instal
 user's choices and approvals. If several stages are already requested, complete those without
 asking again. Audit mode reports findings first and follows the authorized fix scope.
 
-- If no authenticated connection exists and account status is unknown, ask once whether the
-  user has a ShieldLabs account or needs to create one. Then guide the fresh OAuth flow below;
-  do not start separate concurrent login flows.
+- If no authenticated connection exists, start one OAuth flow in the user’s normal browser. The ShieldLabs page handles login or signup, followed by consent; already signed-in users continue to consent. Do not ask a separate account-status question or start concurrent flows.
 - Show the detected stack, domain, existing action and proposed changes. Ask for confirmation
   only if the scope has not already been approved. An explicit installation request authorizes
   the necessary changes; an existing integration needs agreement on the proposed changes.
@@ -60,15 +60,15 @@ asking again. Audit mode reports findings first and follows the authorized fix s
 ## Choose one account setup path
 
 Use **OAuth MCP by default**. Use the **ShieldLabs dashboard** only when the user chooses it or
-MCP is unavailable. Do one path, then install the SDKs. While OAuth approval is pending, wait;
+the client does not support OAuth MCP. Do one path, then install the SDKs. While OAuth approval is pending, wait;
 do not start a second flow or switch to the dashboard path.
 
 ### OAuth MCP
 
 Use [shieldlabs-investigate](../shieldlabs-investigate/SKILL.md) and its [client setup](../shieldlabs-investigate/references/clients.md).
-Give the user the fresh authorization URL directly. They sign in or create a ShieldLabs account,
-then approve access in their browser. Wait for completion. If signup happens separately, return
+Open the fresh OAuth flow in the user’s normal browser. They sign in or create a ShieldLabs account, then approve access. Already signed-in users proceed to consent. Wait for completion. If signup happens separately, return
 to the same pending flow in that browser or create a fresh flow if it expired.
+If tools are absent after OAuth, save the setup checkpoint, ask the user to restart the detected client, return to this same chat and continue. Recheck tool discovery; reuse completed steps. Never invent a Restart button or a platform-specific shortcut.
 Run `shieldlabs_check_connection` and `shieldlabs_list_domains`; select the requested domain.
 Reuse configured keys. If absent, create only the authorized domain with `shieldlabs_add_domain`.
 Opt into `include_secret=true` only when installing a needed server credential; save it privately
@@ -77,7 +77,7 @@ configuration or explicit rotation approval, never rotate automatically.
 
 Use the returned public domain UUID for both History and domain management. Inspect `allow_subdomains`
 before using a subdomain; registering a domain does not create DNS or deploy the application.
-OAuth authenticates MCP; the app's SDK still uses its domain keys. Never extract OAuth tokens or
+Pause SDK installation and integration code edits until this connection step is complete. OAuth authenticates MCP; the app's SDK still uses its domain keys. Never extract OAuth tokens or
 call private dashboard APIs. The MCP client may retain one-time credential responses.
 
 ### ShieldLabs dashboard
@@ -103,8 +103,7 @@ SDK. MCP accepts the same UUID as `identification_id`.
    and obtain approval before destructive changes or credential rotation.
 4. **Keys and environment.** Configure through the chosen path. Add variable placeholders to
    `.env.example`, keep `.env` out of git and never hardcode keys ([environment.md](references/environment.md)).
-5. **Browser.** Install the browser package, set it up once at the app root, and call
-   `identify()` in the handler of each protected action, sending the `identificationId` with the action
+5. **Browser.** Install the matching browser package and set it up once. Use `check()` or `checkOnLoad` for background identification. For each existing protected action, call `identify()` in its handler and send `identificationId` with that action
    (shieldlabs-browser, [../shieldlabs-browser/SKILL.md](../shieldlabs-browser/SKILL.md)).
 6. **Server, when selected.** Create one client per process, read the verdict in each action's handler, claim the
    request ID once, run the policy helper and map the result to an action
@@ -130,12 +129,12 @@ integration enforces server-side decisions. Mark server verification as not conf
 
 | Manifest | Look for | Browser package | Server SDK |
 |---|---|---|---|
-| `package.json` | `next` | `@shieldlabs-ai/next` (with `@shieldlabs-ai/react`, `@shieldlabs-ai/js`, `@shieldlabs-ai/node`) | `@shieldlabs-ai/next/server` |
+| `package.json` | `next` | `@shieldlabs-ai/next` (with `@shieldlabs-ai/react`, `@shieldlabs-ai/js@1.1.0`, `@shieldlabs-ai/node`) | `@shieldlabs-ai/node@1.3.0` |
 | `package.json` | `nuxt` | `@shieldlabs-ai/vue` | `@shieldlabs-ai/node` in server routes |
 | `package.json` | `@sveltejs/kit` | `@shieldlabs-ai/svelte` | `@shieldlabs-ai/node` in actions and endpoints |
-| `package.json` | `@angular/core`, `svelte`, `vue`, `react` | `@shieldlabs-ai/angular`, `@shieldlabs-ai/svelte`, `@shieldlabs-ai/vue`, `@shieldlabs-ai/react` (each with `@shieldlabs-ai/js`) | the backend's SDK |
+| `package.json` | `@angular/core`, `svelte`, `vue`, `react` | `@shieldlabs-ai/angular`, `@shieldlabs-ai/svelte`, `@shieldlabs-ai/vue`, `@shieldlabs-ai/react` (each with `@shieldlabs-ai/js@1.1.0`) | the backend's SDK |
 | `package.json` | `express`, `fastify`, `koa`, `hono`, `@nestjs/core` | | `@shieldlabs-ai/node` |
-| no framework, or server-rendered pages | | `@shieldlabs-ai/js` (npm, or its IIFE build) | the backend's SDK |
+| no framework, or server-rendered pages | | `@shieldlabs-ai/js@1.1.0` (npm, or its IIFE build) | the backend's SDK |
 | `pyproject.toml`, `requirements*.txt`, `Pipfile` | `django`, `fastapi`, `flask` | | `shieldlabs` (PyPI) |
 | `go.mod` | the module | | `github.com/ShieldLabs-ai/shieldlabs-go` |
 | `composer.json` | `laravel/framework`, `symfony/*` | | `shieldlabs/shieldlabs-php` |
@@ -164,12 +163,12 @@ Test domain: <registered development or staging domain>
 |---|---|---|
 | `SHIELDLABS_PUBLIC_KEY` with the framework prefix (`VITE_`, `NEXT_PUBLIC_`, `NUXT_PUBLIC_`, `PUBLIC_`) | Browser build | Public Key, from the analytics dashboard (https://app.shieldlabs.ai), Integration > API keys |
 | `SHIELDLABS_API_KEY` | Server only | Private API Key, `sec_...` |
+| `SHIELDLABS_DOMAIN_ID` | Server only | Public domain UUID returned by MCP list_domains or SDK entities.domains() |
 | `SHIELDLABS_WEBHOOK_SECRET` | Server only | Endpoint signing secret, `whsec_...` (Integration > Webhooks) |
 | `USER_HID_SECRET` | Server only | Your own random secret: `openssl rand -hex 32` |
 | `SHIELDLABS_SECRET_KEY`, `SHIELDLABS_DOMAIN` | Server only, optional | Management API (domain profile) |
 
-Never hardcode keys or commit `.env`. Only the Public Key may carry a public prefix. Use a separate
-registered domain with its own keys for development and staging.
+Never hardcode keys or commit `.env`. Only the Public Key may carry a public prefix. Resolve `SHIELDLABS_DOMAIN_ID` from the authorized domain list. Inspect `allow_subdomains` before using staging; a separate registration is an isolation choice.
 
 ## The minimum integration
 
@@ -177,7 +176,7 @@ When the focused skills are not available, this is the core for a React frontend
 backend; other stacks follow the same shape with their SDK.
 
 ```tsx
-// Browser: npm install @shieldlabs-ai/react @shieldlabs-ai/js
+// Browser: npm install @shieldlabs-ai/react @shieldlabs-ai/js@1.1.0
 // Once at the root: <ShieldLabsProvider publicKey={import.meta.env.VITE_SHIELDLABS_PUBLIC_KEY}>
 import type { SyntheticEvent } from 'react';
 import { useIdentify } from '@shieldlabs-ai/react';
@@ -195,7 +194,7 @@ export function SignupForm() {
 ```
 
 ```ts
-// Server: npm install @shieldlabs-ai/node
+// Server: npm install @shieldlabs-ai/node@1.3.0
 import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identification } from '@shieldlabs-ai/node';
 
 const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY! });
@@ -204,7 +203,8 @@ export async function checkSignup(identificationId: string | null) {
   let identification: Identification | null = null;
   if (identificationId) {
     try {
-      identification = await shieldlabs.identifications.get(identificationId); // waits until scored
+      identification = await shieldlabs.identifications.get(identificationId, { domainId: process.env.SHIELDLABS_DOMAIN_ID! }); // waits until scored
+      if (identification && (!Number.isFinite(identification.risk_score) || identification.raw.domain_id !== process.env.SHIELDLABS_DOMAIN_ID || (identification.raw.signals as { state?: string } | undefined)?.state !== "ok")) identification = null;
       if (identification && identification.identification_id !== identificationId) identification = null; // schema mismatch
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error; // unverified, never clean
@@ -216,8 +216,7 @@ export async function checkSignup(identificationId: string | null) {
 }
 ```
 
-The server SDKs for Python (`shieldlabs`), Go, PHP, Java and .NET have the same client, the same
-`identifications.get` and the same policy helper.
+For Python, Go, PHP, Java and .NET, select that stack’s official SDK for its documented helpers and use the current public HTTP History contract when needed; see [current History](../shieldlabs-server/references/current-history.md). Do not transpose Node option names into another SDK.
 
 ## Rules
 
@@ -229,7 +228,7 @@ The server SDKs for Python (`shieldlabs`), Go, PHP, Java and .NET have the same 
   `SHIELDLABS_WEBHOOK_SECRET` and `USER_HID_SECRET` stay on the server, in environment variables.
 - The backend reads the verdict with `identifications.get`, claims each request ID once, refuses
   identifications older than 5 minutes and runs the SDK policy helper.
-- No identification means unverified, never clean. `999` is a Banned IP marker, not a score. The
+- No identification or unavailable risk means unverified, never clean. `999` is a Banned IP marker, not a score. The
   all-zero device ID means no usable device signals.
 - Bands: trusted 0-29, suspicious 30-59, dangerous 60-100. Branch on bands and detection flags;
   never add up signal weights.

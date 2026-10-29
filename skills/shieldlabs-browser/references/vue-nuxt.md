@@ -5,7 +5,7 @@ Vue 3.3 or later, Vue SSR and Nuxt 3.
 ## Install
 
 ```bash
-npm install @shieldlabs-ai/vue @shieldlabs-ai/js
+npm install @shieldlabs-ai/vue @shieldlabs-ai/js@1.1.0
 ```
 
 `vue` and `@shieldlabs-ai/js` are peer dependencies.
@@ -228,7 +228,8 @@ export default defineEventHandler(async (event) => {
   let identification: Identification | null = null;
   if (identificationId) {
     try {
-      identification = await shieldlabs.identifications.get(identificationId);
+      identification = await shieldlabs.identifications.get(identificationId, { domainId: process.env.SHIELDLABS_DOMAIN_ID! });
+      if (identification && (identification.identification_id !== identificationId || !Number.isFinite(identification.risk_score) || identification.raw.domain_id !== process.env.SHIELDLABS_DOMAIN_ID || (identification.raw.signals as { state?: string } | undefined)?.state !== "ok")) identification = null;
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error; // stays unverified
     }

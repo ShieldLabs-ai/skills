@@ -1,209 +1,69 @@
-# PHP with `shieldlabs/shieldlabs-php`
+# PHP server integration
 
-PHP 8.1 or later. Namespace `ShieldLabs\`. It uses any PSR-18 client your project has (Guzzle 7,
-Symfony HttpClient) and falls back to a built-in cURL client.
+Use the existing PHP backend and its HTTP client for the current public domain-scoped History
+API. Install the official ShieldLabs SDK for its User HID, signature and webhook helpers:
+`composer require shieldlabs/shieldlabs-php`. Keep the Private API Key and `SHIELDLABS_DOMAIN_ID` in the server environment.
+Resolve that public domain UUID through MCP list_domains or `GET /api/v1/domains`.
 
-## Install and create the client
-
-```bash
-composer require shieldlabs/shieldlabs-php
-```
-
-```php
-use ShieldLabs\ShieldLabs;
-
-$shieldlabs = new ShieldLabs(['domain_id' => getenv('SHIELDLABS_DOMAIN_ID')]); // reads SHIELDLABS_API_KEY (and SHIELDLABS_API_BASE_URL when set)
-```
-
-Options (array): `api_key`, `base_url` (default `https://account.shieldlabs.ai`), `timeout`
-(seconds per attempt, default `10`), `max_retries` (default `2`), `http_client` (any PSR-18 client,
-used as is, so give it a timeout), `request_factory`. A client keeps no mutable state after
-construction: share one instance (a container singleton), also in long-running workers.
-
-## Plain PHP
+## Read a current card
 
 ```php
 <?php
-
-require __DIR__ . '/vendor/autoload.php';
-
-use ShieldLabs\Exception\ShieldLabsException;
-use ShieldLabs\Risk;
-use ShieldLabs\ShieldLabs;
-
-$pdo = new PDO(getenv('DATABASE_DSN') ?: 'sqlite:' . __DIR__ . '/app.db');
-$shieldlabs = new ShieldLabs(['domain_id' => getenv('SHIELDLABS_DOMAIN_ID')]);
-
-// CREATE TABLE used_request_ids (request_id CHAR(36) PRIMARY KEY, used_at TIMESTAMP NOT NULL)
-function claimRequestId(PDO $pdo, string $requestId): bool
-{
-    try {
-        $pdo->prepare('INSERT INTO used_request_ids (request_id, used_at) VALUES (?, CURRENT_TIMESTAMP)')
-            ->execute([$requestId]);
-        return true;
-    } catch (PDOException $exception) {
-        if (str_starts_with((string) $exception->getCode(), '23')) {
-            return false; // integrity constraint violation: used before
-        }
-        throw $exception;
-    }
-}
-
-$requestId = $_POST['requestId'] ?? '';
-$identification = null;
-if (is_string($requestId) && $requestId !== '') {
-    try {
-        // Polls until the identification is scored, for up to 10 seconds by default.
-        $identification = $shieldlabs->identifications->get($requestId);
-    } catch (ShieldLabsException $exception) {
-        error_log('ShieldLabs lookup failed: ' . $exception::class); // unverified, never clean
-    }
-}
-
-$evaluation = Risk::evaluate($identification, [
-    'is_replay' => fn (string $id): bool => !claimRequestId($pdo, $id),
-]);
-
-if (!$evaluation->ok) {
-    error_log('signup refused: ' . $evaluation->reason?->value);
-    http_response_code(403);
-    exit;
-}
-// Create the account here.
-http_response_code(201);
-```
-
-PDO throws exceptions by default since PHP 8.0. With Redis,
-`SET shieldlabs:used:<request ID> 1 NX EX 86400` does the same in one command.
-
-## Laravel
-
-```php
-// config/services.php: add the shieldlabs entry next to the services the file already has
-return [
-    'shieldlabs' => [
-        'api_key' => env('SHIELDLABS_API_KEY'),
-        'webhook_secret' => env('SHIELDLABS_WEBHOOK_SECRET'),
-        'user_hid_secret' => env('USER_HID_SECRET'),
-    ],
-];
-```
-
-```php
-// app/Providers/AppServiceProvider.php
-namespace App\Providers;
-
-use Illuminate\Support\ServiceProvider;
-use ShieldLabs\ShieldLabs;
-
-class AppServiceProvider extends ServiceProvider
-{
-    public function register(): void
-    {
-        // One client for the whole process, shared by every request.
-        $this->app->singleton(ShieldLabs::class, fn () => new ShieldLabs([
-            'api_key' => config('services.shieldlabs.api_key'),
-        ]));
-    }
+// Reuse the application's HTTP client in a framework. This standalone example uses cURL.
+function readCard(string $resource, string $id): array {
+    // Validate domain UUID, resource and ID against current-history.md before calling.
+    $domainId = getenv('SHIELDLABS_DOMAIN_ID');
+    $url = 'https://account.shieldlabs.ai/api/v1/domains/' . $domainId
+        . '/history/' . $resource . '/' . rawurlencode($id);
+    $handle = curl_init($url);
+    curl_setopt_array($handle, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 5,
+        CURLOPT_HTTPHEADER => ['Accept: application/json', 'Authorization: Bearer ' . getenv('SHIELDLABS_API_KEY')],
+    ]);
+    $body = curl_exec($handle);
+    $status = curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
+    curl_close($handle);
+    if ($body === false || $status !== 200) throw new RuntimeException('History read failed: ' . $status);
+    $card = json_decode($body, true, 512, JSON_THROW_ON_ERROR)['data'];
+    $expectedType = $resource === 'identifications' ? 'identification' : $resource;
+    if ($card['domain_id'] !== $domainId || $card['id'] !== $id || ($card['type'] ?? null) !== $expectedType) throw new RuntimeException('History identity mismatch');
+    return $card;
 }
 ```
 
-```php
-// app/Http/Controllers/SignupController.php
-namespace App\Http\Controllers;
+The sample performs one HTTP read. For a new identification, wrap reads in the bounded wait below.
+Use `identifications` for the browser UUID; `user` for the exact server-generated HID; `visitor`,
+`device` or `ip` for other cards. Check resource type, ID and domain before trusting a result.
+See [current History](current-history.md) for the wire schema, filters and relations.
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use ShieldLabs\Exception\ShieldLabsException;
-use ShieldLabs\Risk;
-use ShieldLabs\ShieldLabs;
+## Wait and handle errors
 
-class SignupController extends Controller
-{
-    public function store(Request $request, ShieldLabs $shieldlabs)
-    {
-        $requestId = (string) $request->input('requestId', '');
-        $identification = null;
-        if ($requestId !== '') {
-            try {
-                $identification = $shieldlabs->identifications->get($requestId);
-            } catch (ShieldLabsException $exception) {
-                Log::warning('ShieldLabs lookup failed', ['error' => $exception::class]);
-            }
-        }
+Use one total ten-second budget and one HTTP attempt per poll. Start immediately, then wait
+250 ms, 500 ms, 1 s, 1.5 s and every 2 s, cutting the final wait to the remaining budget.
+A missing/not-yet-available card can be read again for that same UUID. Preserve persistent errors.
+After HTTP 429 wait the longest of the scheduled wait, 1 s and Retry-After capped at 10 s;
+when that capped delay exceeds the time left, stop with the error. Connection errors, timeouts
+and 5xx may retry within this budget. Stop on 400, 401, 402 or 403. A structured missing card is
+unverified; a wrong route or malformed response is a configuration error.
 
-        $evaluation = Risk::evaluate($identification, [
-            // insertOrIgnore returns 0 when the primary key already exists.
-            'is_replay' => fn (string $id): bool => DB::table('used_request_ids')
-                ->insertOrIgnore(['request_id' => $id, 'used_at' => now()]) === 0,
-        ]);
+Outside the wait, follow Retry-After as sent, capped at 10 s (0 retries at once); a 429 without
+it waits at least 1 s. Keep retries bounded. HTTP 429 `rate_limited` is separate from the public
+Banned IP `banned_ip` signal. Do not infer a billing cause from a missing result or status alone.
 
-        if (!$evaluation->ok) {
-            Log::info('signup refused', ['reason' => $evaluation->reason?->value, 'band' => $evaluation->band?->value]);
-            return response()->json(['error' => 'signup_refused'], 403);
-        }
-        // Create the account here.
-        return response()->json(['ok' => true], 201);
-    }
-}
-```
+## Apply action policy
 
-Symfony works the same way: register `ShieldLabs\ShieldLabs` as a service with the key from
-`%env(SHIELDLABS_API_KEY)%` and inject it into the controller.
+Treat a missing card, unavailable risk or unavailable signals as unverified. On an identification,
+require numeric risk.score in 0–100 and an available band; read signal codes from signals.items.
+Do not turn missing data into 0, an empty known flag set or a verified human.
 
-## `identifications->get()` options
+Before performing the action: enforce a five-minute freshness limit using created_at, atomically
+claim the identification UUID once, compare user_hid to the authenticated account's server HID
+when signed in, then apply the application's policy for bands and signal codes. Refuse/review/
+step-up on failures. Use a unique database key or Redis SET NX for replay protection; an unavailable
+store cannot authorize the action. Do not pass this entity card directly to an SDK policy helper
+that expects a normalized webhook Identification model.
 
-```php
-$shieldlabs->identifications->get($requestId);                            // wait up to 10 s in total
-$shieldlabs->identifications->get($requestId, ['timeout' => 3]);          // a 3-second budget (seconds)
-$shieldlabs->identifications->get($requestId, ['poll_interval' => 0.25]); // waits of p, 2p, 4p, 6p, then 8p, each at most max(2 s, p)
-$shieldlabs->identifications->get($requestId, ['wait' => false]);         // one lookup with the usual retries
-```
-
-It returns a `ShieldLabs\Model\Identification` or `null`. The last poll runs when the budget ends.
-Each poll is one HTTP request without retries; a 429, a 5xx, a connection error or a timeout keeps
-it polling, and at the deadline the exception of a failed last poll is thrown. A 400, 401, 403 or
-404 throws at once, and so does a 429 whose `Retry-After` (capped at 10 seconds) is longer than the
-time left; after any other 429 the next poll waits the longest of the scheduled wait, 1 second and
-the capped `Retry-After` (0 when missing), cut short at the deadline. A poll gets the time left in
-the budget (at least 1 second, never more than the client `timeout`) with the built-in
-`CurlClient` and the Guzzle or Symfony client the SDK creates; a PSR-18 client you pass as
-`http_client` keeps its own timeout, so the call can end up to one request timeout after the budget.
-
-## `Risk::evaluate()` options
-
-```php
-use ShieldLabs\RiskBand;
-
-$evaluation = Risk::evaluate($identification, [
-    'max_age' => 300,                                      // seconds, by observed_at
-    'block_bands' => [RiskBand::Dangerous],
-    'block_flags' => ['browser_automation', 'javascript_disabled'],
-    'is_replay' => $isReplay,
-]);
-// $evaluation->ok, $evaluation->reason (EvaluationReason enum or null), $evaluation->band (RiskBand), $evaluation->flag
-```
-
-Helpers: `Risk::band($score)`, `Risk::isRateLimited($score)`, `$identification->riskBand()`,
-`$identification->isRateLimited()`, `$identification->hasDeviceSignals()`,
-`$identification->detection_flags->active()`.
-
-## Errors
-
-Every exception extends `ShieldLabs\Exception\ShieldLabsException`: `ValidationException`
-(nothing sent), `BadRequestException` (400), `AuthenticationException` (401, 403),
-`QuotaExceededException` (402), `NotFoundException` (404), `RateLimitException` (429,
-`getRetryAfter()`), `ServerException` (5xx), `ApiException` (their parent, with
-`getStatusCode()`, `getBody()`, `getErrorMessage()`), `ApiConnectionException`,
-`ApiTimeoutException`. Warnings (for example a key in an unexpected format) go to `error_log()`.
-
-## Management API
-
-```php
-use ShieldLabs\ShieldLabsManagement;
-
-$management = new ShieldLabsManagement(); // reads SHIELDLABS_SECRET_KEY and SHIELDLABS_DOMAIN
-$profile = $management->getProfile();     // cache it: about 15 calls per minute per IP
-echo $profile->remaining_identifications; // negative when the account is over its included volume
-```
+History reads do not consume browser identifications. For signed webhooks, use the
+[PHP receiver](../../shieldlabs-webhooks/references/php.md); for account hashing, use
+[User HID in PHP](../../shieldlabs-user-linking/references/php.md).

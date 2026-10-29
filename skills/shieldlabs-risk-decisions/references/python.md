@@ -1,100 +1,33 @@
 # Risk decisions in Python
 
-The `decide()` function of the skill on `evaluate_identification` from the `shieldlabs` package.
+Start with the [Python public History reader](../../shieldlabs-server/references/python.md).
+Its dictionary returned by read_card is a current entity card, not the SDK's normalized webhook Identification model.
+Apply the [action decision table](../SKILL.md#decision-table) to these wire fields directly.
+Do not call an old normalized-model helper with this card or invent a conversion method.
 
-```python
-# risk_policy.py
-from datetime import datetime
-from typing import Dict, Literal, Optional, Tuple
+## Current card action path
 
-from shieldlabs import Identification, evaluate_identification
+1. Read the submitted UUID under the selected public domain UUID. Match `type=identification`,
+   `id` and `domain_id`. A network/API failure, wrong identity or missing card is unverified.
+2. Require `risk.state=ok`, numeric integer `risk.score` in 0–100, a valid `risk.band`, and
+   `signals.state=ok` with a list of codes in `signals.items`. Preserve unavailable/missing
+   states. Detailed weights are optional; their absence does not erase available signal codes.
+3. Atomically claim this exact tenant/domain/identification UUID (record the expected action as metadata, not a separate uniqueness scope) in your application's store.
+   An existing claim or unavailable store cannot authorize the action. Check `created_at` with
+   timezone against a five-minute freshness window. An invalid timestamp is unverified.
+4. For a signed-in action, compare `user_hid` to the HMAC User HID computed from the authenticated
+   account. Never trust the client to select the expected account. A mismatch can only make the
+   decision stricter. Missing or nil `device_id` means no usable device signals.
+5. Apply the table: replay/stale or `browser_automation`/`javascript_disabled` blocks; Banned IP
+   `banned_ip` means step-up or review. Otherwise use the returned trusted/suspicious/dangerous
+   band and action sensitivity. Unknown data follows the unverified path, never a clean allow.
+6. Log domain, identification UUID, decision and reason privately. Return a generic application
+   result. Keep HRE status/confidence separate; use backend HRE results for account-abuse decisions.
 
-Sensitivity = Literal["low", "medium", "high"]
-Decision = Literal["allow", "step_up", "review", "block"]
+The public card never has Risk Score 999. That Banned IP marker in a scored webhook is not a
+fourth band; an HTTP 429 `rate_limited` is a separate transport failure. Do not rename it or add
+it as an input filter. A successful HTTP response is insufficient when required states are unavailable.
 
-BY_BAND: Dict[str, Dict[Sensitivity, Decision]] = {
-    "trusted": {"low": "allow", "medium": "allow", "high": "allow"},
-    "suspicious": {"low": "allow", "medium": "step_up", "high": "review"},
-    "dangerous": {"low": "step_up", "medium": "block", "high": "block"},
-}
-UNVERIFIED: Dict[Sensitivity, Decision] = {"low": "allow", "medium": "step_up", "high": "review"}
-USER_MISMATCH: Dict[Sensitivity, Decision] = {"low": "step_up", "medium": "step_up", "high": "block"}
-STRICTNESS: Dict[Decision, int] = {"allow": 0, "step_up": 1, "review": 2, "block": 3}
-
-
-def decide(
-    identification: Optional[Identification],
-    sensitivity: Sensitivity,
-    *,
-    first_use: bool,
-    expected_user_hid: Optional[str] = None,
-    now: Optional[datetime] = None,
-) -> Tuple[Decision, str]:
-    verdict = evaluate_identification(
-        identification,
-        is_replay=lambda _rid: not first_use,
-        block_bands=(),  # bands are mapped per sensitivity below
-        now=now,
-    )
-    reason = verdict.reason
-    if reason is not None:
-        if reason in ("missing", "no_device_signals"):
-            return UNVERIFIED[sensitivity], reason
-        if reason == "banned_ip":
-            return ("review" if sensitivity == "high" else "step_up"), reason
-        return "block", reason  # replayed, stale, blocked_flag
-    assert identification is not None and verdict.band is not None
-    # Map the band first: a User HID mismatch can only make the decision stricter, never softer.
-    by_band = BY_BAND[verdict.band][sensitivity]
-    if expected_user_hid is not None and identification.user_hid != expected_user_hid:
-        mismatch = USER_MISMATCH[sensitivity]
-        if STRICTNESS[mismatch] > STRICTNESS[by_band]:
-            return mismatch, "user_mismatch"
-    return by_band, f"band_{verdict.band}"
-```
-
-## In a view
-
-```python
-from shieldlabs import user_hid
-
-from .risk_policy import decide
-
-
-def payout(request):
-    identification = read_identification(request.POST.get("requestId", ""))  # None on any failure
-    first_use = claim_request_id(identification.request_id) if identification else False
-    decision, reason = decide(
-        identification,
-        "high",
-        first_use=first_use,
-        expected_user_hid=user_hid(str(request.user.id), settings.USER_HID_SECRET),
-    )
-    logger.info("payout decision=%s reason=%s request_id=%s", decision, reason,
-                identification.request_id if identification else None)
-    if decision == "allow":
-        return create_payout(request)
-    if decision == "step_up":
-        return JsonResponse({"next": "verify_second_factor"}, status=202)
-    if decision == "review":
-        return hold_payout_for_review(request, reason)
-    return JsonResponse({"error": "request_refused"}, status=403)
-```
-
-## Extra flag rules and tests
-
-```python
-def stricter_for_high_value(identification: Identification, sensitivity: Sensitivity) -> Optional[Decision]:
-    flags = identification.detection_flags
-    if flags.anti_detect_browser or flags.tor:
-        return "block" if sensitivity == "high" else ("step_up" if sensitivity == "medium" else None)
-    return None
-```
-
-In tests, pass `now=` to `decide()` to exercise the freshness window, and build identifications
-from recorded webhook bodies with `webhooks.construct_event(body, signature, secret)` or from
-stored dicts with `Identification.from_dict()`.
-
-Helpers: `risk_band(score)`, `is_rate_limited(score)`, `NIL_UUID`, `identification.risk_band`,
-`identification.has_device_signals`, `identification.detection_flags.active()`, and `SignalName`
-for the known signal names (an open set).
+For an asynchronous signed webhook, the official SDK can verify and normalize its own webhook
+model, after signature verification and event_id deduplication. That path does not replace the
+current card guards above or identify which account is authenticated in the application.

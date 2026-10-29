@@ -11,7 +11,7 @@ python3 <skill-directory>/scripts/history_mock.py --port 4010
 Set SHIELDLABS_API_BASE_URL=http://127.0.0.1:4010 and
 SHIELDLABS_DOMAIN_ID=11111111-1111-4111-8111-111111111111 in the private test environment.
 Use a fake API key accepted by the mock. Do not connect this test configuration to production.
-The mock returns a scored identification card for a valid UUID. GET /api/v1/domains returns the
+The mock returns a synthetic scored identification card for a valid UUID. Signals are unavailable unless the fixture explicitly supplies their state and items; default rows verify the unverified path. GET /api/v1/domains returns the
 test registration. The supported card route is /api/v1/domains/{domain_id}/history/identifications/{id}.
 The retired unscoped route returns endpoint_retired.
 
@@ -19,6 +19,15 @@ For configured cases use --rows rows.json. Each key is an identification UUID an
 fixture override: score, minutes_ago and legacy fixture fields; null means missing. These are
 controlled test inputs, not evidence that the real detector emitted those values. A score above
 100 makes the HTTP mock return rate_limited rather than inventing a valid entity Risk Score.
+
+For an available controlled result, use --rows rows.json with explicit signal evidence:
+
+```json
+{"33333333-3333-4333-8333-333333333333":{"score":15,"entity_signals":{"state":"ok","items":[]}}}
+```
+
+For an automation refusal, set entity_signals to {"state":"ok","items":["browser_automation"]}.
+For a blocked band set score to 80 with available signals. Preserve unavailable as a separate case.
 
 ## Current response shape
 

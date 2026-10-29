@@ -27,11 +27,11 @@ checks as not configured. Webhook checks apply only when a webhook is requested.
   HTTPS, with that domain's keys. Identifications from `localhost` are not recorded, although the
   page receives a request ID.
 
-## 3. Trigger the protected action in a browser
+## 3. Run the selected browser check
 
 - [ ] The network panel shows `snippet.js` from `https://cdn.shieldlabs.ai` and successful posts to
   `https://rest.shieldlabs.ai`; the console shows no Content Security Policy errors.
-- [ ] The request of the protected action (for example `POST /api/signup`) carries an `identificationId`.
+- [ ] For background identification use `check()`; for a protected action (for example `POST /api/signup`), its request carries the actual `identificationId`.
 - [ ] Nothing identifies on page load or on route changes, unless you chose `checkOnLoad` or
   `runOnMount` for a specific page. The History API can still show one more identification for the
   same device and session, observed just before the action, with a request ID the page never
@@ -53,13 +53,7 @@ Any of these, with the request ID from the log:
 - Node.js:
 
   ```bash
-  node --input-type=module -e "import { ShieldLabs } from '@shieldlabs-ai/node'; const s = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY, domainId: process.env.SHIELDLABS_DOMAIN_ID }); console.log(await s.identifications.get(process.argv[1]))" "$REQUEST_ID"
-  ```
-
-- Python:
-
-  ```bash
-  python3 -c "import os, sys; from shieldlabs import ShieldLabs; print(ShieldLabs(os.environ['SHIELDLABS_API_KEY'], domain_id=os.environ['SHIELDLABS_DOMAIN_ID']).identifications.get(sys.argv[1]))" "$REQUEST_ID"
+  node --input-type=module -e "import { ShieldLabs } from '@shieldlabs-ai/node'; const s = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY }); console.log(await s.identifications.get(process.argv[1], { domainId: process.env.SHIELDLABS_DOMAIN_ID }))" "$REQUEST_ID"
   ```
 
 - HTTP:

@@ -138,21 +138,31 @@ class OrdinaryRetriesTest(unittest.TestCase):
                     self.assertRegex(statement, r"\bat least 1 (?:s|second)\b", "no minimum without Retry-After")
 
 
-class ZeroOptionsTest(unittest.TestCase):
-    """Go keeps its zero-value defaults; Java waitFor(Duration.ZERO) polls once without waiting."""
+class CurrentHistoryContractTest(unittest.TestCase):
+    """Only documented public entity routes may appear in executable History examples."""
 
-    def test_go_timeout_0_means_the_default_of_10_s(self) -> None:
-        statements = blocks_with(SERVER / "references" / "go.md", "`Timeout: 0`")
-        self.assertTrue(any("`Timeout: 0` means 10 s" in statement for statement in statements))
+    def test_no_executable_retired_history_calls_remain(self) -> None:
+        retired = re.compile(r"(?:\.history\.(?:search|iterate|iter)|\.History\.(?:Search|All|Iterate)|\.history\(\)\.(?:search|stream))\s*\(")
+        for path in SKILLS.rglob("*.md"):
+            for code in re.findall(r"```[^\n]*\n(.*?)```", path.read_text(), re.S):
+                with self.subTest(file=name_of(path)):
+                    self.assertIsNone(retired.search(code))
 
-    def test_max_items_0_yields_nothing_except_in_go_where_it_means_no_limit(self) -> None:
-        statements = blocks_with(SKILLS / "shieldlabs-account-abuse" / "SKILL.md", "`MaxItems: 0`")
-        self.assertTrue(statements, "the account-abuse skill does not state what a maxItems of 0 does")
-        self.assertTrue(any("of 0 yields nothing" in s and "`MaxItems: 0` means no limit" in s for s in statements))
+    def test_node_read_examples_supply_domain_id(self) -> None:
+        call = re.compile(r"\b(?:shieldlabs|s)\.identifications\.get\(([^\n]+)")
+        for path in SKILLS.rglob("*.md"):
+            for code in re.findall(r"```(?:ts|tsx|javascript|js|bash|sh)[^\n]*\n(.*?)```", path.read_text(), re.S):
+                for match in call.finditer(code):
+                    with self.subTest(file=name_of(path)):
+                        self.assertIn("domainId", match.group(1))
 
-    def test_java_wait_for_zero_makes_one_poll_without_waiting(self) -> None:
-        statements = blocks_with(SERVER / "references" / "java.md", "`waitFor(Duration.ZERO)`")
-        self.assertTrue(any("one poll without waiting" in statement for statement in statements))
+    def test_non_node_readers_use_public_domain_scoped_routes(self) -> None:
+        for name in ("python", "go", "php", "java", "dotnet"):
+            text = (SERVER / "references" / f"{name}.md").read_text()
+            with self.subTest(language=name):
+                self.assertIn("https://account.shieldlabs.ai/api/v1/domains/", text)
+                self.assertNotIn("/api/v1/history/", text)
+                self.assertIn("unverified", text)
 
 
 class HelperUserIdTest(unittest.TestCase):

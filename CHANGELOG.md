@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file. The format foll
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-10-29
+
+- Align all eight skills with hosted OAuth MCP, current domain-scoped History and availability.
+- Use Node.js 1.3.0 and browser JS 1.1.0 in verified examples, with stack-specific public HTTP reads for other backends.
+- Keep background checks, protected actions, User HID linking and backend High-Risk Events distinct.
+- Add clean npm installation, framework type checks and executable Node/JS customer-example tests.
+
 ## [1.2.0] - 2026-10-29
 
 - Align all 21 MCP tool inputs with domain UUIDs, entity cards, list cursors and flat filters.

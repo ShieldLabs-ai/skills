@@ -5,6 +5,8 @@ description: Turns a ShieldLabs identification into an allow, step-up, review or
 
 # Decide on a ShieldLabs verdict
 
+Read [current SDK and History contracts](../shieldlabs-server/references/current-history.md) for stack routing, public domain UUIDs, filters and availability before adding server reads.
+
 For crawlers and AI traffic, use [client identity and proof scope](references/client-identity.md). Missing attribution is unknown; claimed names do not authorize protected actions.
 
 The backend has an `Identification` for the request ID of a protected action (shieldlabs-server
@@ -12,6 +14,13 @@ skill, [../shieldlabs-server/SKILL.md](../shieldlabs-server/SKILL.md)), or knows
 This skill maps that verdict to one of four actions: **allow**, **step-up** (a check the user can
 pass: an email or SMS code, a second factor, re-authentication), **review** (hold the action, for
 example a payout, for a person or a later job) or **block** (refuse with a generic message).
+
+For a current entity card, use `risk.state`, `risk.score`/`risk.band` and `signals.state`/`items`.
+Require available risk and signals, check domain/ID/freshness/replay and account binding, then
+apply this action policy. The SDK helpers below accept their normalized Identification model,
+not a raw entity card. Node 1.3.0 normalizes `identifications.get` results; guard unavailable
+risk/signals before calling the helper. Other language helpers can evaluate a verified scored
+webhook model; use the current server reference for raw History cards.
 
 ## Workflow
 
@@ -73,7 +82,7 @@ step-up becomes allow with limits.
 
 ## The policy in code
 
-Node.js; every reference file has the same function for its SDK:
+Node.js uses the normalized model below. Other references apply the same decision table to current raw entity cards, without assuming an SDK adapter.
 
 ```ts
 import { evaluateIdentification, type Identification } from '@shieldlabs-ai/node';
@@ -95,6 +104,11 @@ export function decide(
   sensitivity: Sensitivity,
   context: { firstUse: boolean; expectedUserHid?: string; now?: number },
 ): { decision: Decision; reason: string } {
+  if (identification && (!Number.isFinite(identification.risk_score)
+      || (identification.source === 'history'
+        && (identification.raw.signals as { state?: string } | undefined)?.state !== 'ok'))) {
+    return { decision: UNVERIFIED[sensitivity], reason: 'unavailable' };
+  }
   const verdict = evaluateIdentification(identification, {
     isReplay: () => !context.firstUse, // from your atomic claim of the request ID
     blockBands: [], // bands are mapped per sensitivity below
@@ -123,7 +137,7 @@ export function decide(
 }
 ```
 
-References with the same policy: [node.md](references/node.md), [python.md](references/python.md),
+References with the matching action policy: [node.md](references/node.md), [python.md](references/python.md),
 [go.md](references/go.md), [php.md](references/php.md), [java.md](references/java.md),
 [dotnet.md](references/dotnet.md). The meaning of every flag, signal and connection type is in
 [flags-and-signals.md](references/flags-and-signals.md).
@@ -149,7 +163,7 @@ Missing values are unknown. AI flags are booleans; identity and proof are separa
 - `999` is not a dangerous score. The visitor IP sent too many identifications and was blocked for
   10 minutes; busy shared IPs (offices, mobile carriers) can hit it too. Treat it as unverified.
 - A missing identification is unverified, never clean.
-- Bands are computed on your side from `risk_score`; no band field exists on the wire.
+- Current entity cards return `risk.band`. Normalized scored webhook models derive the band from `risk_score`; do not assume one shape for both.
 - The Risk Score grades one identification. Patterns across an account (multi-accounting, account
   sharing, impossible travel, account takeover) are the High-Risk Events that ShieldLabs shows in
   the analytics dashboard; for checks in code, see the shieldlabs-account-abuse skill.

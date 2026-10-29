@@ -7,7 +7,7 @@ and hydration. The package exposes functions, not services: `provideShieldLabs()
 ## Install
 
 ```bash
-npm install @shieldlabs-ai/angular @shieldlabs-ai/js
+npm install @shieldlabs-ai/angular @shieldlabs-ai/js@1.1.0
 ```
 
 ## Provide once

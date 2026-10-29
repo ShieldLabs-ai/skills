@@ -5,13 +5,15 @@ description: Reads ShieldLabs verdicts on the backend with the official server S
 
 # ShieldLabs on the server
 
+Read [current SDK and History contracts](references/current-history.md) for stack routing, public domain UUIDs, filters and availability before adding server reads.
+
 When connecting results to orders, promos or other actions, follow the [business context join](references/business-context.md), including webhook-first arrival and tenant scope.
 
 For field names and delivery correlation, see [identifiers and payloads](references/sdk-contract.md).
 
-The backend half of a ShieldLabs integration. The page sends a request ID with the protected
+The backend half of a ShieldLabs integration. Node.js 1.3.0 supplies domain-scoped reads; other language examples use the same public HTTP entity contract with that stack’s client. The page sends a request ID with the protected
 action; the backend reads the verdict for it from the **History API**
-(`https://account.shieldlabs.ai`) with a server SDK, then acts on it. Scoring is asynchronous: the
+(`https://account.shieldlabs.ai`) with the matching SDK or public HTTPS client, then acts on it. Scoring is asynchronous: the
 History row appears about 1 to 3 seconds after the browser call and can be refined for up to
 about 10 seconds. `identifications.get` waits for it with backoff.
 
@@ -20,12 +22,10 @@ about 10 seconds. `identifications.get` waits for it with backoff.
 1. Detect the backend language, pick the SDK from the table below and read its reference file.
 2. Put the Private API Key (`sec_...`) in `SHIELDLABS_API_KEY` in the server environment. Create
    one client per process and reuse it: clients are safe for concurrent use.
-3. In the handler of each protected action, read `identificationId` from the same request and call
-   `identifications.get(identificationId)` when it is present.
+3. In the protected action handler, read the submitted `identificationId`. Node uses `identifications.get(identificationId, { domainId })`; other stacks read the domain-scoped identification card. Require available risk and signals before policy evaluation.
 4. Treat every failure as **unverified**: no `identificationId`, a malformed ID (`ValidationError`), no
    identification after the wait, an API or network error. Unverified is never clean.
-5. Claim the request ID atomically (first use only), then run the SDK policy helper with that
-   replay result and the 5-minute freshness window.
+5. Claim the request ID atomically (first use only), enforce the 5-minute freshness window and apply policy. Use the Node helper on its normalized model or the raw-card checks for other stacks.
 6. Act on the result with the policy of the shieldlabs-risk-decisions skill
    ([../shieldlabs-risk-decisions/SKILL.md](../shieldlabs-risk-decisions/SKILL.md)). Log
    `reason`, `band` and the request ID; answer the browser with a generic message.
@@ -34,17 +34,15 @@ about 10 seconds. `identifications.get` waits for it with backoff.
 
 | Language | Install | Client | Read one verdict | Policy helper | Reference |
 |---|---|---|---|---|---|
-| Node.js 18+, Bun, Deno, edge runtimes | `npm install @shieldlabs-ai/node` | `new ShieldLabs({ apiKey })` | `await shieldlabs.identifications.get(identificationId)` | `evaluateIdentification(identification, options)` | [node.md](references/node.md) |
-| Python 3.9+ | `pip install shieldlabs` | `ShieldLabs()` or `AsyncShieldLabs()` | `client.identifications.get(request_id)` | `evaluate_identification(identification, ...)` | [python.md](references/python.md) |
-| Go 1.23+ | `go get github.com/ShieldLabs-ai/shieldlabs-go` | `shieldlabs.NewClient(apiKey)` | `client.Identifications.Get(ctx, requestID, nil)` | `shieldlabs.EvaluateIdentification(ident, opts)` | [go.md](references/go.md) |
-| PHP 8.1+ | `composer require shieldlabs/shieldlabs-php` | `new ShieldLabs()` | `$shieldlabs->identifications->get($identificationId)` | `Risk::evaluate($identification, $options)` | [php.md](references/php.md) |
-| Java 11+ | Maven `ai.shieldlabs:shieldlabs-java` | `ShieldLabsClient.fromEnvironment()` | `client.identifications().get(identificationId)` | `Risk.evaluate(identification, options)` | [java.md](references/java.md) |
-| .NET 8, .NET Standard 2.0 | `dotnet add package ShieldLabs` | `new ShieldLabsClient(options)` | `await client.Identifications.GetAsync(identificationId)` | `Risk.Evaluate(identification, options)` | [dotnet.md](references/dotnet.md) |
+| Node.js 18+, Bun, Deno, edge runtimes | `npm install @shieldlabs-ai/node@1.3.0` | `new ShieldLabs({ apiKey })` | `await shieldlabs.identifications.get(identificationId, { domainId })` | `evaluateIdentification(identification, options)` | [node.md](references/node.md) |
+| Python 3.9+ | `pip install shieldlabs` | public HTTP client | domain-scoped identification card | card policy below | [python.md](references/python.md) |
+| Go 1.23+ | `go get github.com/ShieldLabs-ai/shieldlabs-go` | public HTTP client | domain-scoped identification card | card policy below | [go.md](references/go.md) |
+| PHP 8.1+ | `composer require shieldlabs/shieldlabs-php` | public HTTP client | domain-scoped identification card | card policy below | [php.md](references/php.md) |
+| Java 11+ | Maven `ai.shieldlabs:shieldlabs-java` | public HTTP client | domain-scoped identification card | card policy below | [java.md](references/java.md) |
+| .NET 8, .NET Standard 2.0 | `dotnet add package ShieldLabs` | public HTTP client | domain-scoped identification card | card policy below | [dotnet.md](references/dotnet.md) |
 
-The Node.js and Go SDKs never read environment variables: pass the key. The Python and PHP clients
-read `SHIELDLABS_API_KEY` when no key is passed, Java reads it in `fromEnvironment()`, and .NET
-takes it in `ShieldLabsClientOptions`. For other languages, see
-[other-languages.md](references/other-languages.md).
+Configure the chosen client explicitly from the application's private environment. Never expose
+the Private API Key to the browser. For other languages, see [other-languages.md](references/other-languages.md).
 
 ## The handler shape
 
@@ -62,7 +60,8 @@ app.post('/api/signup', express.json(), async (req, res) => {
   let identification: Identification | null = null;
   if (identificationId) {
     try {
-      identification = await shieldlabs.identifications.get(identificationId); // waits up to 10 s
+      identification = await shieldlabs.identifications.get(identificationId, { domainId: process.env.SHIELDLABS_DOMAIN_ID! }); // waits up to 10 s
+      if (identification && (!Number.isFinite(identification.risk_score) || identification.raw.domain_id !== process.env.SHIELDLABS_DOMAIN_ID || (identification.raw.signals as { state?: string } | undefined)?.state !== "ok")) identification = null;
       if (identification && identification.identification_id !== identificationId) identification = null; // schema mismatch: unverified
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error;
@@ -85,7 +84,7 @@ app.post('/api/signup', express.json(), async (req, res) => {
 
 ## How `identifications.get` waits
 
-The same rules in every server SDK:
+For Node.js 1.3.0, the polling rules are:
 
 - **Total budget.** `timeout` (10 seconds by default; `waitFor` in Java) is the time budget of the
   whole call, counted from the call and including the time the requests take.
@@ -104,9 +103,7 @@ The same rules in every server SDK:
   `Retry-After` is longer than the time left, that rate-limit error is thrown at once.
 - **At the deadline** the error of the last lookup is thrown when it failed; otherwise the result is
   `null` (`None`, `nil`, `Optional.empty()`): no identification in time, which means unverified.
-- **Errors that do not heal stop at once.** 400, 401, 403 and 404 throw right away. A 401 or 403
-  means the key must be the **Private API Key** of the domain the page runs on, not its Public Key
-  or Secret Key; a 404 usually means a wrong base URL.
+- **Errors that do not heal stop at once.** 400, 401, 402 and 403 throw right away. A 401 or 403 means the key must be the **Private API Key** for the domain, not a Public Key or Secret Key. A JSON-object 404 is treated as a missing card and remains eligible for the bounded wait. A non-object or non-JSON 404 throws; check the route/base URL. Preserve a 402 response without guessing its cause.
 - The request ID must be a UUID. Anything else fails with a validation error before any request.
 - With `wait` off (`NoWait: true` in Go, `noWait()` in Java) it reads once, with the client's
   usual retries. Use that for jobs that look at old identifications, or to read the refined row
@@ -114,7 +111,7 @@ The same rules in every server SDK:
 
 ## The policy helper
 
-Every SDK ships the same guard. The checks run in this order and the first failure wins:
+The Node SDK helper consumes a normalized Identification after availability checks. For raw entity cards in other stacks, apply equivalent guards using the current wire fields, preserving unknown states. The intended checks are:
 
 | Order | Check | `reason` |
 |---|---|---|

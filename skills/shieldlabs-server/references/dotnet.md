@@ -1,142 +1,79 @@
-# .NET with the `ShieldLabs` package
+# .NET server integration
 
-.NET 8 or later (`net8.0` build) and runtimes that implement .NET Standard 2.0. Namespace
-`ShieldLabs`.
+Use the existing .NET backend and its HTTP client for the current public domain-scoped History
+API. Install the official ShieldLabs SDK for its User HID, signature and webhook helpers:
+`dotnet add package ShieldLabs`. Keep the Private API Key and `SHIELDLABS_DOMAIN_ID` in the server environment.
+Resolve that public domain UUID through MCP list_domains or `GET /api/v1/domains`.
 
-## Install and register the client
-
-```sh
-dotnet add package ShieldLabs
-```
+## Read a current card
 
 ```csharp
-using ShieldLabs;
+using System;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
-// Program.cs: one client per domain, shared by every request (safe for concurrent use).
-builder.Services.AddSingleton(_ => new ShieldLabsClient(new ShieldLabsClientOptions
+sealed class ShieldHistory
 {
-    ApiKey = builder.Configuration["SHIELDLABS_API_KEY"], // Private API Key, sec_...
-    BaseUrl = builder.Configuration["SHIELDLABS_API_BASE_URL"], // optional, tests only
-}));
-```
+    private readonly HttpClient http;
+    public ShieldHistory(HttpClient http) { this.http = http; }
 
-Options: `ApiKey` (required), `BaseUrl` (default `https://account.shieldlabs.ai`), `Timeout` (per
-attempt, default 10 s), `MaxRetries` (default 2). Pass an `HttpClient` as the second constructor
-argument to use `IHttpClientFactory`; the SDK never disposes it.
-
-## Minimal API endpoint
-
-```csharp
-app.MapPost("/api/signup", async (SignupRequest body, ShieldLabsClient shieldlabs, UsedRequestIds used,
-    ILogger<Program> logger, CancellationToken cancellationToken) =>
-{
-    Identification? identification = null;
-    if (!string.IsNullOrWhiteSpace(body.RequestId))
+    // Validate domain UUID, resource and ID first. Reuse the injected HttpClient.
+    public async Task<JsonElement> ReadCard(string resource, string id, CancellationToken cancellationToken)
     {
-        try
-        {
-            // Waits at most 10 seconds for the verdict.
-            identification = await shieldlabs.Identifications.GetAsync(body.RequestId, cancellationToken: cancellationToken);
-        }
-        catch (ShieldLabsException error)
-        {
-            logger.LogWarning(error, "ShieldLabs lookup failed"); // unverified, never clean
-        }
-    }
-
-    // IsReplay is synchronous: claim first, then pass the result.
-    var firstUse = identification is not null && await used.ClaimAsync(identification.RequestId);
-    var evaluation = Risk.Evaluate(identification, new EvaluateOptions { IsReplay = _ => !firstUse });
-    if (!evaluation.Ok)
-    {
-        logger.LogInformation("Signup refused: {Reason} (band {Band}, flag {Flag})", evaluation.Reason, evaluation.Band, evaluation.Flag);
-        return Results.Json(new { error = "signup_refused" }, statusCode: StatusCodes.Status403Forbidden);
-    }
-    // Create the account here.
-    return Results.Created("/account", new { ok = true });
-});
-
-internal sealed record SignupRequest(string? RequestId, string? Email);
-```
-
-`UsedRequestIds.ClaimAsync` returns `true` the first time a request ID is claimed. Back it with a
-unique key, for example with StackExchange.Redis:
-
-```csharp
-internal sealed class UsedRequestIds(IConnectionMultiplexer redis)
-{
-    public async Task<bool> ClaimAsync(string requestId)
-    {
-        try
-        {
-            return await redis.GetDatabase().StringSetAsync(
-                "shieldlabs:used:" + requestId, "1", TimeSpan.FromDays(1), When.NotExists);
-        }
-        catch (RedisException)
-        {
-            return false; // store unreachable: refuse rather than allow
-        }
+        var domain = Environment.GetEnvironmentVariable("SHIELDLABS_DOMAIN_ID")!;
+        var url = "https://account.shieldlabs.ai/api/v1/domains/" + domain
+            + "/history/" + resource + "/" + Uri.EscapeDataString(id);
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+            Environment.GetEnvironmentVariable("SHIELDLABS_API_KEY"));
+        using var response = await http.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var card = body.RootElement.GetProperty("data");
+        var expectedType = resource == "identifications" ? "identification" : resource;
+        if (card.GetProperty("id").GetString() != id || card.GetProperty("domain_id").GetString() != domain
+            || card.GetProperty("type").GetString() != expectedType)
+            throw new InvalidOperationException("History identity mismatch");
+        return card.Clone();
     }
 }
 ```
 
-With EF Core, insert a row with the request ID as the primary key and treat a
-`DbUpdateException` for the duplicate key as "used before".
+The sample performs one HTTP read. For a new identification, wrap reads in the bounded wait below.
+Use `identifications` for the browser UUID; `user` for the exact server-generated HID; `visitor`,
+`device` or `ip` for other cards. Check resource type, ID and domain before trusting a result.
+See [current History](current-history.md) for the wire schema, filters and relations.
 
-## Options
+## Wait and handle errors
 
-```csharp
-var identification = await shieldlabs.Identifications.GetAsync(
-    requestId,
-    new GetIdentificationOptions { Timeout = TimeSpan.FromSeconds(5) }, // total budget; Wait (true), PollInterval (250 ms)
-    cancellationToken);
-var once = await shieldlabs.Identifications.GetAsync(requestId, new GetIdentificationOptions { Wait = false }); // one lookup, usual retries
+Use one total ten-second budget and one HTTP attempt per poll. Start immediately, then wait
+250 ms, 500 ms, 1 s, 1.5 s and every 2 s, cutting the final wait to the remaining budget.
+A missing/not-yet-available card can be read again for that same UUID. Preserve persistent errors.
+After HTTP 429 wait the longest of the scheduled wait, 1 s and Retry-After capped at 10 s;
+when that capped delay exceeds the time left, stop with the error. Connection errors, timeouts
+and 5xx may retry within this budget. Stop on 400, 401, 402 or 403. A structured missing card is
+unverified; a wrong route or malformed response is a configuration error.
 
-var evaluation = Risk.Evaluate(identification, new EvaluateOptions
-{
-    MaxAge = TimeSpan.FromMinutes(5),
-    BlockBands = new[] { RiskBand.Dangerous },
-    BlockFlags = new[] { DetectionFlagNames.BrowserAutomation, DetectionFlagNames.JavascriptDisabled },
-    IsReplay = _ => !firstUse,
-});
-// evaluation.Ok, evaluation.Reason (EvaluationReason?), evaluation.Band (RiskBand?), evaluation.Flag (string?)
-```
+Outside the wait, follow Retry-After as sent, capped at 10 s (0 retries at once); a 429 without
+it waits at least 1 s. Keep retries bounded. HTTP 429 `rate_limited` is separate from the public
+Banned IP `banned_ip` signal. Do not infer a billing cause from a missing result or status alone.
 
-The waits between lookups are 1, 2, 4, 6 and then 8 times `PollInterval`, each at most 2 s or
-`PollInterval`, whichever is longer, and the last lookup runs at the deadline. Each lookup is one
-HTTP attempt: a 429, a 5xx, a timeout or a connection error keeps it polling, and at the deadline
-the exception of a failed last lookup is thrown instead of returning `null`. A 400, 401, 403 or
-404 throws at once, and so does a 429 whose `Retry-After` (capped at 10 s) is longer than the time
-left; after any other 429 the next lookup waits the longest of the scheduled wait, 1 s and the
-capped `Retry-After` (0 when missing), cut short at the deadline.
+## Apply action policy
 
-Helpers: `Risk.Band(score)` (`Trusted`, `Suspicious`, `Dangerous`, `RateLimited`),
-`Risk.IsRateLimited(score)`. The all-zero device ID is `"00000000-0000-0000-0000-000000000000"`.
+Treat a missing card, unavailable risk or unavailable signals as unverified. On an identification,
+require numeric risk.score in 0–100 and an available band; read signal codes from signals.items.
+Do not turn missing data into 0, an empty known flag set or a verified human.
 
-## The `Identification` model
+Before performing the action: enforce a five-minute freshness limit using created_at, atomically
+claim the identification UUID once, compare user_hid to the authenticated account's server HID
+when signed in, then apply the application's policy for bands and signal codes. Refuse/review/
+step-up on failures. Use a unique database key or Redis SET NX for replay protection; an unavailable
+store cannot authorize the action. Do not pass this entity card directly to an SDK policy helper
+that expects a normalized webhook Identification model.
 
-Properties (JSON names follow the webhook contract): `RequestId`, `VisitorId`, `DeviceId`,
-`SessionId`, `CookieId`, `UserHid` (`string?`; `"anonymous"` for anonymous checks), `Domain`,
-`PublicIp` and `LocalIp` (`Ip`, `Country`), `ConnectionType`, `Os`, `Browser`, `DeviceType`,
-`TrafficSource`, `RiskScore`, `Signals`, `DetectionFlags` (19 booleans such as `Vpn`, `Proxy`,
-`Tor`, `AntiDetectBrowser`, `BrowserAutomation`), `ObservedAt` (UTC), `Source`, `Raw`.
-
-## Errors
-
-`ShieldLabsException` is the base: `ValidationException` (nothing sent), `ApiException` with
-`StatusCode`, `Body`, `Error`, `Headers`, and its subclasses `BadRequestException` (400),
-`AuthenticationException` (401, 403), `QuotaExceededException` (402), `NotFoundException` (404),
-`RateLimitException` (429, `RetryAfter`), `ServerException` (5xx); plus `ApiConnectionException`
-and `ApiTimeoutException`. Cancelling the token throws `OperationCanceledException`.
-
-## Management API
-
-```csharp
-var management = new ManagementClient(new ManagementClientOptions
-{
-    SecretKey = builder.Configuration["SHIELDLABS_SECRET_KEY"],
-    Domain = builder.Configuration["SHIELDLABS_DOMAIN"],
-});
-DomainProfile profile = await management.GetProfileAsync(); // cache it: about 15 calls per minute per IP
-// profile.RemainingIdentifications is negative when the account is over its included volume
-```
+History reads do not consume browser identifications. For signed webhooks, use the
+[.NET receiver](../../shieldlabs-webhooks/references/dotnet.md); for account hashing, use
+[User HID in .NET](../../shieldlabs-user-linking/references/dotnet.md).

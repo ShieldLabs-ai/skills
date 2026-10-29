@@ -55,12 +55,10 @@ if (identification != null && !expected.equals(identification.getUserHid())) {
 }
 ```
 
-## Read the account's history
+## Read the account's History card
 
-```java
-client.history()
-        .stream(LookupType.USER_HID, expected, HistoryIterateOptions.builder().maxItems(200).build())
-        .forEach(item -> {
-            // item.getDeviceId(), item.getPublicIp().getCountry(), item.getRiskScore(), item.getObservedAt()
-        });
-```
+Read the `user` card with the exact generated HID, in the selected public domain UUID.
+Preserve risk, signals, High-Risk Events and nullable related counts. Use card relations for
+linked devices, visitors and countries; follow relation_page_token without changing scope.
+See [current History](../../shieldlabs-server/references/current-history.md) and the
+[account-abuse workflow](../../shieldlabs-account-abuse/references/high-risk-events.md).

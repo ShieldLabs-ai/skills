@@ -1,5 +1,5 @@
 ---
-description: Install ShieldLabs using OAuth MCP or the dashboard, integrate the matching SDKs and verify the first result
+description: Add ShieldLabs identification, risk signals and Risk Score to a website or application using OAuth MCP and matching SDKs
 argument-hint: "[protected actions or notes, for example: signup and checkout]"
 ---
 
@@ -7,15 +7,24 @@ Use the [shieldlabs-setup skill](../skills/shieldlabs-setup/SKILL.md).
 
 User notes: $ARGUMENTS
 
-Inspect the project and existing integration. Configure through OAuth MCP by default, or the
-ShieldLabs dashboard if the user chooses it or MCP is unavailable. Follow one path; wait for
-pending OAuth approval. Install only the SDKs and code needed for the requested scope. Reuse keys
-and resources; do not rotate credentials automatically. For a frontend-only app, do not add a
-backend unless requested. Verify the same browser identification and Risk Score through the
-chosen path, matching the backend result when present. Report what passed and any blocker.
+Inspect the existing website or application and preserve its stack. Configure through OAuth MCP
+by default. Use the dashboard when the user chooses it or their client does not support OAuth.
+Follow one path. Open the OAuth flow in the user's normal browser: login or signup, then consent;
+already signed-in users proceed to consent. Keep one pending flow and wait for its completion.
+If tools are missing after login, save a setup checkpoint, ask the user to restart the detected
+client by name, return to this same chat and continue. Pause integration changes until tools are
+callable; do not switch setup paths while OAuth or discovery is pending.
 
-Use the setup skill's guided checkpoints. A general install starts with browser identification
-and a verified first result, then offers applicable unfinished stages: server verification,
-signed webhooks, user linking/account checks, or finish. Ask for account status only if unknown
-and no authenticated connection exists. Reuse stages and approvals already selected; do not
-ask before each file edit or package install.
+Install only the matching SDKs and code for the requested scope. Reuse keys and resources;
+never rotate credentials automatically. Use `check()` for background identification and `identify()`
+for an existing protected action. For an application with accounts, compute User HIDs on the server
+and pass them for signed-in checks. Add a backend only when requested.
+
+Verify the same browser UUID and Risk Score through the chosen path, matching the backend result
+when present. Use the public domain UUID for History. Read the same identification quietly for a
+total of 10–15 seconds, preserving risk/signal availability. Do not create another identification
+to poll or infer quota from a missing result. Report persistent failure with its actual evidence.
+
+Use major-stage checkpoints. After the first verified result offer only applicable unfinished
+stages: server verification, signed webhooks, user linking/account checks, or finish. Reuse stages
+and approvals already selected; do not ask before each file edit or package install.

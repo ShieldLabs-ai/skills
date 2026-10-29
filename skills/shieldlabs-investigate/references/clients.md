@@ -47,7 +47,6 @@ the login with a fresh authorization URL if that occurs. Do not weaken the brows
 The local native client receives the loopback callback; never ask the user to paste an OAuth code,
 callback URL containing a code, access token or refresh token into chat.
 
-
 ## Cursor
 
 Use the plugin's `.mcp.json` when supported, or add this to the client's user/project MCP config:
@@ -86,18 +85,17 @@ Custom connector availability depends on the app/account; consult its current co
 ## Grok and other clients
 
 The Grok plugin manifest retains its `.mcp.json` reference and the skills remain portable.
-Remote HTTP plus OAuth support must be checked in the installed client version; the local Grok
-client was not available for verification of this release. Do not fall back to passing API keys
+Remote HTTP plus OAuth support must be checked in the installed client version; use the installed client’s documented connection flow. Do not fall back to passing API keys
 or bearer tokens through a command line. In any Agent Skills client without HTTP/OAuth support,
 use the skills for application code and connect the MCP from a supported client above.
 
 ## Verify the connection
 
-1. Sign in, then run `shieldlabs_check_connection` with `{}`.
+1. In the user’s normal browser, sign in or sign up, then approve access. Already signed-in users continue to consent. Then run `shieldlabs_check_connection` with `{}`.
 2. Run `shieldlabs_list_domains` with `{}` and match the intended hostname.
 3. Read `shieldlabs_get_domain` using its UUID; keys should be masked.
 4. With an identification UUID from a real browser visit, run `shieldlabs_get_identification`
-   using the hostname and `wait: true`, then `shieldlabs_explain_risk_score`.
+   using the selected public domain UUID and `wait: true`, then `shieldlabs_explain_risk_score`.
 
 No result is created merely by connecting. The site must have the production snippet, receive a
 visit and complete scoring. Domain/webhook changes require an authorized configuration task.
@@ -107,4 +105,4 @@ visit and complete scoring. Domain/webhook changes require an authorized configu
 Remove the old `command: npx`, `args: ["-y", "@shieldlabs-ai/mcp"]` and MCP-only `env` or manually
 set authorization headers. Replace that entry with the remote config and sign in. Keep API keys
 needed by the application's backend in its private environment; OAuth replaces MCP authentication,
-not application SDK credentials. Restart/reload the client if it caches the old tool list.
+not application SDK credentials. If tools are missing, save a checkpoint, restart the detected client, return to the same chat and continue setup. Recheck the tool list and reuse completed work. Do not invent a Restart button or a keyboard shortcut.

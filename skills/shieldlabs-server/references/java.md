@@ -1,177 +1,80 @@
-# Java with `ai.shieldlabs:shieldlabs-java`
+# Java server integration
 
-Java 11 or later. Package `ai.shieldlabs`. The only runtime dependency is Jackson Databind. All
-exceptions are unchecked.
+Use the existing Java backend and its HTTP client for the current public domain-scoped History
+API. Install the official ShieldLabs SDK for its User HID, signature and webhook helpers:
+`Maven ai.shieldlabs:shieldlabs-java`. Keep the Private API Key and `SHIELDLABS_DOMAIN_ID` in the server environment.
+Resolve that public domain UUID through MCP list_domains or `GET /api/v1/domains`.
 
-## Install
-
-Maven:
-
-```xml
-<dependency>
-  <groupId>ai.shieldlabs</groupId>
-  <artifactId>shieldlabs-java</artifactId>
-  <version>1.0.0</version>
-</dependency>
-```
-
-Gradle: `implementation("ai.shieldlabs:shieldlabs-java:1.0.0")`.
-
-## Create the client
+## Read a current card
 
 ```java
-ShieldLabsClient shieldlabs = ShieldLabsClient.fromEnvironment(); // SHIELDLABS_API_KEY, SHIELDLABS_API_BASE_URL
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
-// or explicitly
-ShieldLabsClient shieldlabs = ShieldLabsClient.builder()
-        .apiKey(System.getenv("SHIELDLABS_API_KEY"))
-        .timeout(Duration.ofSeconds(10)) // per HTTP attempt
-        .maxRetries(2)
-        .build();
-```
+final class ShieldHistory {
+    private final HttpClient http = HttpClient.newHttpClient();
+    private final ObjectMapper json = new ObjectMapper();
 
-Clients are immutable and safe for concurrent use: create one per domain and share it (a Spring
-`@Bean`, a singleton).
-
-## Spring Boot controller
-
-```java
-import ai.shieldlabs.*;
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
-
-@Configuration
-class ShieldLabsConfig {
-    @Bean
-    ShieldLabsClient shieldLabsClient() {
-        return ShieldLabsClient.fromEnvironment();
-    }
-}
-
-@RestController
-class SignupController {
-    private static final Logger log = LoggerFactory.getLogger(SignupController.class);
-    private final ShieldLabsClient shieldlabs;
-    private final JdbcTemplate jdbc;
-
-    SignupController(ShieldLabsClient shieldlabs, JdbcTemplate jdbc) {
-        this.shieldlabs = shieldlabs;
-        this.jdbc = jdbc;
-    }
-
-    public static class SignupRequest {
-        public String email;
-        public String requestId;
-    }
-
-    @PostMapping("/api/signup")
-    ResponseEntity<Map<String, Object>> signup(@RequestBody SignupRequest body) {
-        Identification identification = null;
-        if (body.requestId != null && !body.requestId.isBlank()) {
-            try {
-                // Waits up to 10 seconds for the verdict.
-                identification = shieldlabs.identifications().get(body.requestId).orElse(null);
-            } catch (ShieldLabsException e) {
-                log.warn("ShieldLabs lookup failed: {}", e.getClass().getSimpleName()); // unverified
-            }
-        }
-
-        Evaluation evaluation = Risk.evaluate(identification, EvaluateOptions.builder()
-                .replayCheck(id -> !claimRequestId(id))
-                .build());
-        if (!evaluation.isOk()) {
-            log.info("signup refused: {}", evaluation.getReason().map(Evaluation.Reason::getValue).orElse(""));
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "signup_refused"));
-        }
-        // Create the account here.
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("ok", true));
-    }
-
-    // CREATE TABLE used_request_ids (request_id CHAR(36) PRIMARY KEY, used_at TIMESTAMP NOT NULL)
-    private boolean claimRequestId(String requestId) {
-        try {
-            jdbc.update("INSERT INTO used_request_ids (request_id, used_at) VALUES (?, CURRENT_TIMESTAMP)", requestId);
-            return true;
-        } catch (DuplicateKeyException e) {
-            return false; // used before
-        } catch (DataAccessException e) {
-            return false; // store unreachable: refuse rather than allow
-        }
+    // Validate domain UUID, resource and ID before calling; do not follow cross-origin redirects.
+    JsonNode readCard(String resource, String id) throws Exception {
+        String domain = System.getenv("SHIELDLABS_DOMAIN_ID");
+        String encoded = URLEncoder.encode(id, StandardCharsets.UTF_8).replace("+", "%20");
+        var request = HttpRequest.newBuilder(URI.create("https://account.shieldlabs.ai/api/v1/domains/"
+                + domain + "/history/" + resource + "/" + encoded))
+                .timeout(Duration.ofSeconds(5))
+                .header("Authorization", "Bearer " + System.getenv("SHIELDLABS_API_KEY"))
+                .header("Accept", "application/json").GET().build();
+        var response = http.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) throw new IllegalStateException("History status " + response.statusCode());
+        var card = json.readTree(response.body()).path("data");
+        String expectedType = resource.equals("identifications") ? "identification" : resource;
+        if (!domain.equals(card.path("domain_id").asText()) || !id.equals(card.path("id").asText())
+                || !expectedType.equals(card.path("type").asText()))
+            throw new IllegalStateException("History identity mismatch");
+        return card;
     }
 }
 ```
 
-`identifications().get()` blocks the request thread while it polls. In reactive or high-traffic
-code use `getAsync(requestId)`, which returns a `CompletableFuture<Optional<Identification>>` and
-waits with scheduled delays instead of a blocked thread. A plain `com.sun.net.httpserver` server
-works the same way: read `requestId` from the body, then the same `get` and `Risk.evaluate`.
+The sample performs one HTTP read. For a new identification, wrap reads in the bounded wait below.
+Use `identifications` for the browser UUID; `user` for the exact server-generated HID; `visitor`,
+`device` or `ip` for other cards. Check resource type, ID and domain before trusting a result.
+See [current History](current-history.md) for the wire schema, filters and relations.
 
-## Options
+## Wait and handle errors
 
-```java
-GetIdentificationOptions options = GetIdentificationOptions.builder()
-        .waitFor(Duration.ofSeconds(5))       // total budget; default 10 s
-        .pollInterval(Duration.ofMillis(250)) // first wait; then x2, x4, x6, x8, each at most max(2 s, interval)
-        .build();
-Optional<Identification> found = shieldlabs.identifications().get(requestId, options);
-shieldlabs.identifications().get(requestId, GetIdentificationOptions.builder().noWait().build()); // one lookup, usual retries
+Use one total ten-second budget and one HTTP attempt per poll. Start immediately, then wait
+250 ms, 500 ms, 1 s, 1.5 s and every 2 s, cutting the final wait to the remaining budget.
+A missing/not-yet-available card can be read again for that same UUID. Preserve persistent errors.
+After HTTP 429 wait the longest of the scheduled wait, 1 s and Retry-After capped at 10 s;
+when that capped delay exceeds the time left, stop with the error. Connection errors, timeouts
+and 5xx may retry within this budget. Stop on 400, 401, 402 or 403. A structured missing card is
+unverified; a wrong route or malformed response is a configuration error.
 
-EvaluateOptions policy = EvaluateOptions.builder()
-        .maxAge(Duration.ofMinutes(5))
-        .blockBands(RiskBand.DANGEROUS)
-        .blockFlags(DetectionFlag.BROWSER_AUTOMATION, DetectionFlag.JAVASCRIPT_DISABLED)
-        .replayCheck(id -> !claimRequestId(id))
-        .build();
-Evaluation evaluation = Risk.evaluate(found.orElse(null), policy);
-// isOk(), getReason() -> Optional<Evaluation.Reason>, getBand() -> Optional<RiskBand>, getFlag() -> Optional<DetectionFlag>
-```
+Outside the wait, follow Retry-After as sent, capped at 10 s (0 retries at once); a 429 without
+it waits at least 1 s. Keep retries bounded. HTTP 429 `rate_limited` is separate from the public
+Banned IP `banned_ip` signal. Do not infer a billing cause from a missing result or status alone.
 
-The options are named `waitFor(Duration)` and `noWait()`: they do what `timeout` and `wait` do in the
-other SDKs, so `waitFor(Duration.ZERO)` makes one poll without waiting, as `timeout: 0` does there,
-and `noWait()` makes one lookup with the usual retries. The last poll runs at the deadline, and
-each poll is one HTTP attempt: a 429, a 5xx, a connection error or a timeout keeps it polling, and
-at the deadline the exception of a failed last poll is thrown instead of returning
-`Optional.empty()`. A 400, 401, 403 or 404 throws at once, and so does a 429 whose `Retry-After`
-(capped at 10 s) is longer than the time left; after any other 429 the next poll waits the longest
-of the scheduled wait, 1 s and the capped `Retry-After` (0 when missing), cut short at the
-deadline.
+## Apply action policy
 
-Helpers: `Risk.band(score)` (`TRUSTED`, `SUSPICIOUS`, `DANGEROUS`, `RATE_LIMITED`),
-`Risk.isRateLimited(score)`, `Risk.NIL_DEVICE_ID`.
+Treat a missing card, unavailable risk or unavailable signals as unverified. On an identification,
+require numeric risk.score in 0–100 and an available band; read signal codes from signals.items.
+Do not turn missing data into 0, an empty known flag set or a verified human.
 
-## The `Identification` model
+Before performing the action: enforce a five-minute freshness limit using created_at, atomically
+claim the identification UUID once, compare user_hid to the authenticated account's server HID
+when signed in, then apply the application's policy for bands and signal codes. Refuse/review/
+step-up on failures. Use a unique database key or Redis SET NX for replay protection; an unavailable
+store cannot authorize the action. Do not pass this entity card directly to an SDK policy helper
+that expects a normalized webhook Identification model.
 
-Getters follow the webhook field names: `getRequestId()`, `getVisitorId()`, `getDeviceId()`,
-`getSessionId()`, `getCookieId()`, `getUserHid()` (null when empty, `"anonymous"` for anonymous
-checks), `getDomain()`, `getPublicIp()` and `getLocalIp()` (`getIp()`, `getCountry()`),
-`getConnectionType()`, `getOs()`, `getBrowser()`, `getDeviceType()`, `getTrafficSource()`,
-`getRiskScore()`, `getSignals()`, `getDetectionFlags()` (`isVpn()`, `isTor()`,
-`isBrowserAutomation()`, `get(DetectionFlag)`, `active()`), `getObservedAt()` (`Instant`, null
-when unknown), `getSource()`, `raw()`.
-
-## Errors
-
-`ShieldLabsException` is the base: `ValidationException` (nothing sent), `ApiException` with
-`getStatusCode()`, `getBody()`, `getErrorMessage()`, `getHeaders()`, and its subclasses
-`BadRequestException` (400), `AuthenticationException` (401, 403), `QuotaExceededException`
-(402), `NotFoundException` (404), `RateLimitException` (429, `getRetryAfter()`),
-`ServerException` (5xx); plus `ApiConnectionException` and `ApiTimeoutException`.
-
-## Management API
-
-```java
-ManagementClient management = ManagementClient.fromEnvironment(); // SHIELDLABS_SECRET_KEY, SHIELDLABS_DOMAIN
-DomainProfile profile = management.getProfile(); // cache it: about 15 calls per minute per IP
-System.out.println(profile.getRemainingIdentifications()); // negative when the account is over its included volume
-```
+History reads do not consume browser identifications. For signed webhooks, use the
+[Java receiver](../../shieldlabs-webhooks/references/java.md); for account hashing, use
+[User HID in Java](../../shieldlabs-user-linking/references/java.md).

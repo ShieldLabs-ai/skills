@@ -58,14 +58,10 @@ if ident != nil && (ident.UserHID == nil || *ident.UserHID != expected) {
 }
 ```
 
-## Read the account's history
+## Read the account's History card
 
-```go
-for h, err := range client.History.All(ctx, shieldlabs.LookupUserHID, hid,
-	&shieldlabs.HistoryIterateOptions{MaxItems: 200}) {
-	if err != nil {
-		return err
-	}
-	_ = h // h.DeviceID, h.PublicIP.Country, h.RiskScore, h.ObservedAt
-}
-```
+Read the `user` card with the exact generated HID, in the selected public domain UUID.
+Preserve risk, signals, High-Risk Events and nullable related counts. Use card relations for
+linked devices, visitors and countries; follow relation_page_token without changing scope.
+See [current History](../../shieldlabs-server/references/current-history.md) and the
+[account-abuse workflow](../../shieldlabs-account-abuse/references/high-risk-events.md).

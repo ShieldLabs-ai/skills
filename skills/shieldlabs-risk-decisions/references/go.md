@@ -1,114 +1,33 @@
 # Risk decisions in Go
 
-The `decide()` function of the skill on `shieldlabs.EvaluateIdentification`.
+Start with the [Go public History reader](../../shieldlabs-server/references/go.md).
+Its Card returned by ReadCard (complete card in Raw) is a current entity card, not the SDK's normalized webhook Identification model.
+Apply the [action decision table](../SKILL.md#decision-table) to these wire fields directly.
+Do not call an old normalized-model helper with this card or invent a conversion method.
 
-```go
-package risk
+## Current card action path
 
-import (
-	"time"
+1. Read the submitted UUID under the selected public domain UUID. Match `type=identification`,
+   `id` and `domain_id`. A network/API failure, wrong identity or missing card is unverified.
+2. Require `risk.state=ok`, numeric integer `risk.score` in 0–100, a valid `risk.band`, and
+   `signals.state=ok` with a list of codes in `signals.items`. Preserve unavailable/missing
+   states. Detailed weights are optional; their absence does not erase available signal codes.
+3. Atomically claim this exact tenant/domain/identification UUID (record the expected action as metadata, not a separate uniqueness scope) in your application's store.
+   An existing claim or unavailable store cannot authorize the action. Check `created_at` with
+   timezone against a five-minute freshness window. An invalid timestamp is unverified.
+4. For a signed-in action, compare `user_hid` to the HMAC User HID computed from the authenticated
+   account. Never trust the client to select the expected account. A mismatch can only make the
+   decision stricter. Missing or nil `device_id` means no usable device signals.
+5. Apply the table: replay/stale or `browser_automation`/`javascript_disabled` blocks; Banned IP
+   `banned_ip` means step-up or review. Otherwise use the returned trusted/suspicious/dangerous
+   band and action sensitivity. Unknown data follows the unverified path, never a clean allow.
+6. Log domain, identification UUID, decision and reason privately. Return a generic application
+   result. Keep HRE status/confidence separate; use backend HRE results for account-abuse decisions.
 
-	shieldlabs "github.com/ShieldLabs-ai/shieldlabs-go"
-)
+The public card never has Risk Score 999. That Banned IP marker in a scored webhook is not a
+fourth band; an HTTP 429 `rate_limited` is a separate transport failure. Do not rename it or add
+it as an input filter. A successful HTTP response is insufficient when required states are unavailable.
 
-type Sensitivity string
-type Decision string
-
-const (
-	Low    Sensitivity = "low"
-	Medium Sensitivity = "medium"
-	High   Sensitivity = "high"
-
-	Allow  Decision = "allow"
-	StepUp Decision = "step_up"
-	Review Decision = "review"
-	Block  Decision = "block"
-)
-
-var byBand = map[shieldlabs.Band]map[Sensitivity]Decision{
-	shieldlabs.BandTrusted:    {Low: Allow, Medium: Allow, High: Allow},
-	shieldlabs.BandSuspicious: {Low: Allow, Medium: StepUp, High: Review},
-	shieldlabs.BandDangerous:  {Low: StepUp, Medium: Block, High: Block},
-}
-
-var unverified = map[Sensitivity]Decision{Low: Allow, Medium: StepUp, High: Review}
-
-var userMismatch = map[Sensitivity]Decision{Low: StepUp, Medium: StepUp, High: Block}
-
-var strictness = map[Decision]int{Allow: 0, StepUp: 1, Review: 2, Block: 3}
-
-// Context carries what the policy needs besides the identification.
-type Context struct {
-	FirstUse        bool      // from your atomic claim of the request ID
-	ExpectedUserHID string    // the session user's User HID; "" for anonymous actions
-	Now             time.Time // zero value: time.Now()
-}
-
-func Decide(ident *shieldlabs.Identification, s Sensitivity, c Context) (Decision, string) {
-	verdict := shieldlabs.EvaluateIdentification(ident, shieldlabs.EvaluateOptions{
-		IsReplay:   func(string) bool { return !c.FirstUse },
-		BlockBands: []shieldlabs.Band{}, // empty, non-nil: bands are mapped per sensitivity below
-		Now:        c.Now,
-	})
-	switch verdict.Reason {
-	case shieldlabs.ReasonReplayed, shieldlabs.ReasonStale, shieldlabs.ReasonBlockedFlag:
-		return Block, string(verdict.Reason)
-	case shieldlabs.ReasonMissing, shieldlabs.ReasonNoDeviceSignals:
-		return unverified[s], string(verdict.Reason)
-	case shieldlabs.ReasonRateLimited:
-		if s == High {
-			return Review, string(verdict.Reason)
-		}
-		return StepUp, string(verdict.Reason)
-	}
-	// Map the band first: a User HID mismatch can only make the decision stricter, never softer.
-	decision := byBand[verdict.Band][s]
-	if c.ExpectedUserHID != "" && (ident.UserHID == nil || *ident.UserHID != c.ExpectedUserHID) {
-		if mismatch := userMismatch[s]; strictness[mismatch] > strictness[decision] {
-			return mismatch, "user_mismatch"
-		}
-	}
-	return decision, "band_" + string(verdict.Band)
-}
-```
-
-## In a handler
-
-```go
-ident := a.readIdentification(r) // nil on any failure (shieldlabs-server skill)
-firstUse := ident != nil && a.claimRequestID(r.Context(), ident.RequestID)
-hid, _ := shieldlabs.UserHID(strconv.FormatInt(user.ID, 10), a.userHIDSecret)
-decision, reason := risk.Decide(ident, risk.High, risk.Context{FirstUse: firstUse, ExpectedUserHID: hid})
-log.Printf("payout decision=%s reason=%s", decision, reason)
-switch decision {
-case risk.Allow:
-	a.createPayout(w, r)
-case risk.StepUp:
-	writeJSON(w, http.StatusAccepted, map[string]string{"next": "verify_second_factor"})
-case risk.Review:
-	a.holdPayoutForReview(w, r, reason)
-default:
-	http.Error(w, "request refused", http.StatusForbidden)
-}
-```
-
-## Extra flag rules
-
-```go
-func stricterForHighValue(ident *shieldlabs.Identification, s Sensitivity) (Decision, bool) {
-	f := ident.DetectionFlags
-	if f.AntiDetectBrowser || f.Tor {
-		switch s {
-		case High:
-			return Block, true
-		case Medium:
-			return StepUp, true
-		}
-	}
-	return "", false
-}
-```
-
-Helpers: `shieldlabs.RiskBand(score)`, `shieldlabs.IsRateLimited(score)`, `ident.Band()`,
-`ident.DetectionFlags.Get(name)`, `shieldlabs.NilUUID`, and the flag name constants such as
-`shieldlabs.FlagBrowserAutomation`.
+For an asynchronous signed webhook, the official SDK can verify and normalize its own webhook
+model, after signature verification and event_id deduplication. That path does not replace the
+current card guards above or identify which account is authenticated in the application.

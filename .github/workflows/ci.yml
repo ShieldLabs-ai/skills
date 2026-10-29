@@ -34,6 +34,20 @@ jobs:
       - name: Unit tests
         run: python -m unittest discover -s tests -v
 
+  sdk-examples:
+    name: Published SDK examples
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install public SDKs, compile framework types and execute examples
+        run: bash scripts/test_current_sdk_examples.sh
+
   links:
     name: External links
     runs-on: ubuntu-latest

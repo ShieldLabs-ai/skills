@@ -10,7 +10,6 @@ from shieldlabs import user_hid
 
 USER_HID_SECRET = os.environ["USER_HID_SECRET"]
 
-
 def user_hid_for(user) -> str:
     return user_hid(str(user.pk), USER_HID_SECRET)
 ```
@@ -41,7 +40,6 @@ Django renders the missing value as an empty attribute. The page script passes `
 ```python
 from flask_login import current_user
 
-
 @app.context_processor
 def shieldlabs_context():
     if current_user.is_authenticated:
@@ -67,10 +65,10 @@ if identification is not None and identification.user_hid != expected:
     ...  # treat as unverified: another account's identification, or an anonymous one
 ```
 
-## Read the account's history
+## Read the account's History card
 
-```python
-page = client.history.search("user_hid", user_hid_for(user), limit=50)
-for item in client.history.iter("user_hid", user_hid_for(user), max_items=200):
-    ...  # item.device_id, item.public_ip.country, item.risk_score, item.observed_at
-```
+Read the `user` card with the exact generated HID, in the selected public domain UUID.
+Preserve risk, signals, High-Risk Events and nullable related counts. Use card relations for
+linked devices, visitors and countries; follow relation_page_token without changing scope.
+See [current History](../../shieldlabs-server/references/current-history.md) and the
+[account-abuse workflow](../../shieldlabs-account-abuse/references/high-risk-events.md).
