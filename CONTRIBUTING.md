@@ -44,6 +44,7 @@ Run these before opening a pull request; CI runs them too:
 ```sh
 python3 scripts/validate_skills.py
 python3 -m unittest discover -s tests
+bash scripts/test_current_sdk_examples.sh
 ```
 
 `python3 scripts/check_links.py` checks the external links (it needs network access).

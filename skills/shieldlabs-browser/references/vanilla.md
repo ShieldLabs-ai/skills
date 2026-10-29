@@ -7,7 +7,7 @@ pages without a bundler.
 ## Install
 
 ```bash
-npm install @shieldlabs-ai/js
+npm install @shieldlabs-ai/js@1.1.0
 ```
 
 Without a bundler, load the IIFE build of the loader instead ([Without a bundler](#without-a-bundler)).
@@ -123,7 +123,7 @@ confirm the current one on npm first, or serve the file yourself (next section):
   <button>Sign up</button>
 </form>
 
-<script src="https://cdn.jsdelivr.net/npm/@shieldlabs-ai/js@1.0.0/dist/shieldlabs.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@shieldlabs-ai/js@1.1.0/dist/shieldlabs.iife.js"></script>
 <script>
   const options = { publicKey: '0123456789abcdef0123456789abcdef' };
 

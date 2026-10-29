@@ -6,7 +6,7 @@ React 18 and 19, with Vite, React Router or any other setup. For Next.js use `@s
 ## Install
 
 ```bash
-npm install @shieldlabs-ai/react @shieldlabs-ai/js
+npm install @shieldlabs-ai/react @shieldlabs-ai/js@1.1.0
 ```
 
 `@shieldlabs-ai/js` (1.x) and `react` are peer dependencies.

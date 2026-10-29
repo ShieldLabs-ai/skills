@@ -1,158 +1,101 @@
-# Go with `shieldlabs-go`
+# Go server integration
 
-Go 1.23 or later, standard library only. Module `github.com/ShieldLabs-ai/shieldlabs-go`,
-package `shieldlabs`; webhooks live in the `webhook` subpackage.
+Use the existing Go backend and its HTTP client for the current public domain-scoped History
+API. Install the official ShieldLabs SDK for its User HID, signature and webhook helpers:
+`go get github.com/ShieldLabs-ai/shieldlabs-go`. Keep the Private API Key and `SHIELDLABS_DOMAIN_ID` in the server environment.
+Resolve that public domain UUID through MCP list_domains or `GET /api/v1/domains`.
 
-## Install and create the client
-
-```sh
-go get github.com/ShieldLabs-ai/shieldlabs-go
-```
+## Read a current card
 
 ```go
-import (
-	"log"
-	"os"
+package shieldhistory
 
-	shieldlabs "github.com/ShieldLabs-ai/shieldlabs-go"
+import (
+    "context"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "net/url"
+    "os"
 )
 
-// newShieldLabsClient creates the History API client once, at startup.
-func newShieldLabsClient() *shieldlabs.Client {
-	opts := []shieldlabs.Option{shieldlabs.WithDomainID(os.Getenv("SHIELDLABS_DOMAIN_ID"))}
-	if base := os.Getenv("SHIELDLABS_API_BASE_URL"); base != "" {
-		opts = append(opts, shieldlabs.WithBaseURL(base)) // tests only; default https://account.shieldlabs.ai
-	}
-	client, err := shieldlabs.NewClient(os.Getenv("SHIELDLABS_API_KEY"), opts...)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return client
+type Card struct {
+    Type string `json:"type"`
+    Raw json.RawMessage `json:"-"`
+    ID string `json:"id"`
+    DomainID string `json:"domain_id"`
+    Risk struct {
+        State string `json:"state"`
+        Score *int `json:"score"`
+        Band *string `json:"band"`
+        AsOf *string `json:"as_of"`
+    } `json:"risk"`
+    Signals struct {
+        State string `json:"state"`
+        Items []string `json:"items"`
+    } `json:"signals"`
+    CreatedAt *string `json:"created_at"`
+    UserHID *string `json:"user_hid"`
+    DeviceID *string `json:"device_id"`
+}
+
+// Validate domain UUID, resource and ID before calling. Context supplies the deadline.
+func ReadCard(ctx context.Context, client *http.Client, resource, id string) (*Card, error) {
+    domainID := os.Getenv("SHIELDLABS_DOMAIN_ID")
+    endpoint := "https://account.shieldlabs.ai/api/v1/domains/" + domainID + "/history/" + resource + "/" + url.PathEscape(id)
+    req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+    if err != nil { return nil, err }
+    req.Header.Set("Authorization", "Bearer " + os.Getenv("SHIELDLABS_API_KEY"))
+    res, err := client.Do(req)
+    if err != nil { return nil, err }
+    defer res.Body.Close()
+    if res.StatusCode != http.StatusOK { return nil, fmt.Errorf("History status %d", res.StatusCode) }
+    var body struct { Data json.RawMessage `json:"data"` }
+    if err := json.NewDecoder(res.Body).Decode(&body); err != nil { return nil, err }
+    var card Card
+    if err := json.Unmarshal(body.Data, &card); err != nil { return nil, err }
+    expectedType := resource
+    if resource == "identifications" { expectedType = "identification" }
+    if card.ID != id || card.DomainID != domainID || card.Type != expectedType {
+        return nil, fmt.Errorf("History identity mismatch")
+    }
+    card.Raw = body.Data // preserve HRE, nullable counts, identities and unknown future fields
+    return &card, nil
 }
 ```
 
-Options: `WithBaseURL`, `WithHTTPClient`, `WithTimeout` (per attempt, default 10 s),
-`WithMaxRetries` (default 2), `WithLogger` (configuration warnings only). The SDK reads no
-environment variables. A client is safe for concurrent use: create one and share it.
+The sample performs one HTTP read. For a new identification, wrap reads in the bounded wait below.
+Use `identifications` for the browser UUID; `user` for the exact server-generated HID; `visitor`,
+`device` or `ip` for other cards. Check resource type, ID and domain before trusting a result.
+See [current History](current-history.md) for the wire schema, filters and relations.
 
-## `net/http` handler
+## Wait and handle errors
 
-```go
-type app struct {
-	shieldlabs *shieldlabs.Client
-	db         *sql.DB
-}
+Use one total ten-second budget and one HTTP attempt per poll. Start immediately, then wait
+250 ms, 500 ms, 1 s, 1.5 s and every 2 s, cutting the final wait to the remaining budget.
+A missing/not-yet-available card can be read again for that same UUID. Preserve persistent errors.
+After HTTP 429 wait the longest of the scheduled wait, 1 s and Retry-After capped at 10 s;
+when that capped delay exceeds the time left, stop with the error. Connection errors, timeouts
+and 5xx may retry within this budget. Stop on 400, 401, 402 or 403. A structured missing card is
+unverified; a wrong route or malformed response is a configuration error.
 
-func (a *app) signup(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Email     string `json:"email"`
-		RequestID string `json:"requestId"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&body); err != nil {
-		http.Error(w, "invalid body", http.StatusBadRequest)
-		return
-	}
+Outside the wait, follow Retry-After as sent, capped at 10 s (0 retries at once); a 429 without
+it waits at least 1 s. Keep retries bounded. HTTP 429 `rate_limited` is separate from the public
+Banned IP `banned_ip` signal. Do not infer a billing cause from a missing result or status alone.
 
-	var ident *shieldlabs.Identification
-	if body.RequestID != "" {
-		found, err := a.shieldlabs.Identifications.Get(r.Context(), body.RequestID, nil) // waits up to 10 s
-		if err != nil {
-			log.Printf("shieldlabs lookup failed: %v", err) // unverified, never clean
-		} else {
-			ident = found // nil when no identification appeared in time
-		}
-	}
+## Apply action policy
 
-	verdict := shieldlabs.EvaluateIdentification(ident, shieldlabs.EvaluateOptions{
-		// Claim atomically; a store error counts as a replay so that failures refuse.
-		IsReplay: func(requestID string) bool { return !a.claimRequestID(r.Context(), requestID) },
-	})
-	if !verdict.OK {
-		log.Printf("signup refused: reason=%s band=%s flag=%s", verdict.Reason, verdict.Band, verdict.Flag)
-		http.Error(w, "signup refused", http.StatusForbidden)
-		return
-	}
-	// Create the account here.
-	w.WriteHeader(http.StatusCreated)
-}
+Treat a missing card, unavailable risk or unavailable signals as unverified. On an identification,
+require numeric risk.score in 0–100 and an available band; read signal codes from signals.items.
+Do not turn missing data into 0, an empty known flag set or a verified human.
 
-// claimRequestID reports whether this is the first use of the request ID.
-// CREATE TABLE used_request_ids (request_id uuid PRIMARY KEY, used_at timestamptz NOT NULL DEFAULT now());
-func (a *app) claimRequestID(ctx context.Context, requestID string) bool {
-	res, err := a.db.ExecContext(ctx,
-		"INSERT INTO used_request_ids (request_id) VALUES ($1) ON CONFLICT DO NOTHING", requestID)
-	if err != nil {
-		return false
-	}
-	n, err := res.RowsAffected()
-	return err == nil && n == 1
-}
-```
+Before performing the action: enforce a five-minute freshness limit using created_at, atomically
+claim the identification UUID once, compare user_hid to the authenticated account's server HID
+when signed in, then apply the application's policy for bands and signal codes. Refuse/review/
+step-up on failures. Use a unique database key or Redis SET NX for replay protection; an unavailable
+store cannot authorize the action. Do not pass this entity card directly to an SDK policy helper
+that expects a normalized webhook Identification model.
 
-## `Identifications.Get` options
-
-```go
-ident, err := client.Identifications.Get(ctx, requestID, &shieldlabs.GetIdentificationOptions{
-	Timeout: 5 * time.Second, // total budget of the wait, default 10 s
-})
-
-latest, err := client.Identifications.Get(ctx, requestID, &shieldlabs.GetIdentificationOptions{NoWait: true}) // one lookup
-```
-
-`nil` options and the zero value both wait with the defaults, because a zero field takes its
-default: `Timeout: 0` means 10 s (never a zero budget) and `PollInterval: 0` means 250 ms (waits of
-p, 2p, 4p, 6p, then 8p, each at most max(2 s, p); a `PollInterval` below 100 ms counts as 100 ms;
-the last lookup runs at the deadline).
-`(nil, nil)` means no identification was found in time. Each lookup is one HTTP attempt, and a
-429, a 5xx, a network failure or an attempt timeout keeps it polling; at the deadline the error of
-a failed last lookup is returned. A 400, 401, 403 or 404 ends the wait at once with an error
-matching `shieldlabs.ErrBadRequest`, `ErrAuthentication` or `ErrNotFound`, and a 429 whose
-`Retry-After` (capped at 10 s) is longer than the time left ends it at once with an error matching
-`ErrRateLimited`; after any other 429 the next lookup waits the longest of the scheduled wait, 1 s
-and the capped `Retry-After` (0 when missing), cut short at the deadline. `NoWait: true` makes a
-single lookup, retried like any History request.
-
-## `EvaluateIdentification`
-
-```go
-verdict := shieldlabs.EvaluateIdentification(ident, shieldlabs.EvaluateOptions{
-	MaxAge:     5 * time.Minute,                             // zero means the default (5 minutes)
-	BlockBands: []shieldlabs.Band{shieldlabs.BandDangerous}, // nil means the default; empty blocks none
-	BlockFlags: []string{shieldlabs.FlagBrowserAutomation, shieldlabs.FlagJavaScriptDisabled},
-	IsReplay:   isReplay,
-})
-// verdict.OK, verdict.Reason (shieldlabs.ReasonStale, ...), verdict.Band, verdict.Flag
-```
-
-Helpers: `shieldlabs.RiskBand(score)` (returns `BandRateLimited` above 100),
-`shieldlabs.IsRateLimited(score)`, `ident.Band()`, `shieldlabs.NilUUID`.
-
-## The `Identification` model
-
-Fields: `RequestID`, `VisitorID`, `DeviceID`, `SessionID`, `CookieID`, `UserHID` (`*string`, nil
-when none; `"anonymous"` for anonymous checks), `Domain`, `PublicIP` and `LocalIP` (`IP`,
-`Country`), `ConnectionType`, `OS`, `Browser`, `DeviceType`, `TrafficSource`, `RiskScore`,
-`Signals`, `DetectionFlags` (19 booleans such as `VPN`, `Proxy`, `Tor`, `AntiDetectBrowser`,
-`BrowserAutomation`), `ObservedAt` (UTC `time.Time`), `Source`, `Raw`.
-
-## Errors
-
-Match with `errors.Is`: `ErrValidation` (nothing sent), `ErrBadRequest` (400),
-`ErrAuthentication` (401, 403), `ErrQuotaExceeded` (402), `ErrNotFound` (404),
-`ErrRateLimited` (429), `ErrServer` (5xx), `ErrConnection`, `ErrTimeout`. Every HTTP error is an
-`*shieldlabs.APIError` with `StatusCode`, `Message`, `Body`, `Header` and `RetryAfter`. A
-cancelled context stops at once.
-
-## Management API
-
-```go
-mgmt, err := shieldlabs.NewManagementClient(os.Getenv("SHIELDLABS_SECRET_KEY"), os.Getenv("SHIELDLABS_DOMAIN"))
-if err != nil {
-	return err
-}
-profile, err := mgmt.GetProfile(ctx) // cache it: about 15 calls per minute per IP
-if err != nil {
-	return err
-}
-log.Printf("remaining identifications: %d", profile.RemainingIdentifications) // negative when the account is over its included volume
-```
+History reads do not consume browser identifications. For signed webhooks, use the
+[Go receiver](../../shieldlabs-webhooks/references/go.md); for account hashing, use
+[User HID in Go](../../shieldlabs-user-linking/references/go.md).

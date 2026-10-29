@@ -31,29 +31,13 @@ Accept: application/json
   sent, capped at 10 seconds (`0` or a date in the past retries at once), and waits at least
   1 second after a 429 without it.
 
-## Validate before sending
+## Validate and read the card
 
-The History API does not validate its input, so check it yourself:
-
-- The search type must be one of `ip`, `user_hid`, `visitor_id`, `request_id`, `device_id`,
-  `session_id`, `cookie_id`. Any other value returns the latest rows of the whole domain.
-- UUID values must match `^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`
-  (send them lowercase); `ip` must be a dotted IPv4 address. Malformed values fail with a 500.
-- `user_hid` must be non-empty, must not contain `/` and must not be `.` or `..`: the History API
-  cannot match those values. Send it as one path segment in canonical form: letters, digits,
-  `- . _ ~` and `$ & + , : ; = @` stay as they are, and every other byte of the UTF-8 text is
-  percent-encoded (space, `%`, `?`, `#`, non-ASCII characters). The hex User HIDs of the SDK
-  helpers need no escaping.
-- `limit` must be 1 to 100 (other values silently become 20), `offset` 0 or more.
-
-## Read the row
-
-History rows use different names from the SDK model: `score` (0-100, or `999` as the rate-limit
-marker), `created_at` as `YYYY-MM-DD HH:MM:SS.mmm` in UTC without a zone designator, `ip` with
-`"0.0.0.0"` when unknown, `country` as an English country name, `is_*` booleans for the detection
-flags, and `score_details` as a JSON-encoded string ([testing.md](testing.md) maps every field). Apply the same guards as the SDK policy
-helper: missing, replayed, older than 5 minutes, score above 100, the all-zero `device_id`,
-automation flags, the dangerous band (60-100).
+Follow [current History](current-history.md) for domain UUIDs, entity resources, flat filters,
+cursor pagination and availability. Read `data.id`, `data.domain_id`, `risk.state`, `risk.score`,
+`signals.state`/`items` and `created_at`. A card is not the old flat row. Preserve optional fields
+and unknown states. Risk unavailable is not zero; aggregate cards need not expose a numeric score.
+Apply action freshness, replay and authenticated User HID checks before the policy decision.
 
 ## Verify a webhook
 

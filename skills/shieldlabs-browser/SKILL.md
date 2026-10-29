@@ -5,6 +5,8 @@ description: Adds the ShieldLabs browser SDK to a web frontend so that each prot
 
 # ShieldLabs in the browser
 
+Read [current SDK and History contracts](../shieldlabs-server/references/current-history.md) for stack routing, public domain UUIDs, filters and availability before adding server reads.
+
 The browser half of a ShieldLabs integration. The ShieldLabs agent runs an identification in the
 visitor's browser and hands the page a **request ID**. The page sends that request ID to the
 backend in the same request as the protected action. The browser never receives a Risk Score, a
@@ -29,12 +31,12 @@ visitor ID or a device ID: the backend reads the verdict (shieldlabs-server skil
 
 | Frontend | Install | Set up once | Identify at the action | Reference |
 |---|---|---|---|---|
-| Plain JavaScript, any bundler, or a page without a bundler | `@shieldlabs-ai/js` | `load({ publicKey })` | `agent.identify()`, rejects on failure | [vanilla.md](references/vanilla.md) |
-| React 18 or 19 (Vite, React Router) | `@shieldlabs-ai/react @shieldlabs-ai/js` | `<ShieldLabsProvider publicKey>` | `useIdentify()`, resolves `null` on failure | [react.md](references/react.md) |
-| Next.js 14 or later, App Router or Pages Router | `@shieldlabs-ai/next @shieldlabs-ai/react @shieldlabs-ai/js @shieldlabs-ai/node` | `<ShieldLabsProvider>` from `@shieldlabs-ai/next` in the root layout | `useIdentify()` in a client component, resolves `null` on failure | [nextjs.md](references/nextjs.md) |
-| Vue 3.3 or later, Nuxt 3 | `@shieldlabs-ai/vue @shieldlabs-ai/js` | `app.use(createShieldLabs({ publicKey }))` | `useIdentify()`, resolves `null` on failure | [vue-nuxt.md](references/vue-nuxt.md) |
-| Angular 17 or later | `@shieldlabs-ai/angular @shieldlabs-ai/js` | `provideShieldLabs({ publicKey })` | `injectIdentify()`, resolves `null` on failure | [angular.md](references/angular.md) |
-| Svelte 5, SvelteKit 2 | `@shieldlabs-ai/svelte @shieldlabs-ai/js` | `setShieldLabs({ publicKey })` in the root layout | `useIdentify()`, resolves `null` on failure | [svelte-sveltekit.md](references/svelte-sveltekit.md) |
+| Plain JavaScript, any bundler, or a page without a bundler | `@shieldlabs-ai/js@1.1.0` | `load({ publicKey })` | `agent.identify()`, rejects on failure | [vanilla.md](references/vanilla.md) |
+| React 18 or 19 (Vite, React Router) | `@shieldlabs-ai/react @shieldlabs-ai/js@1.1.0` | `<ShieldLabsProvider publicKey>` | `useIdentify()`, resolves `null` on failure | [react.md](references/react.md) |
+| Next.js 14 or later, App Router or Pages Router | `@shieldlabs-ai/next @shieldlabs-ai/react @shieldlabs-ai/js@1.1.0 @shieldlabs-ai/node` | `<ShieldLabsProvider>` from `@shieldlabs-ai/next` in the root layout | `useIdentify()` in a client component, resolves `null` on failure | [nextjs.md](references/nextjs.md) |
+| Vue 3.3 or later, Nuxt 3 | `@shieldlabs-ai/vue @shieldlabs-ai/js@1.1.0` | `app.use(createShieldLabs({ publicKey }))` | `useIdentify()`, resolves `null` on failure | [vue-nuxt.md](references/vue-nuxt.md) |
+| Angular 17 or later | `@shieldlabs-ai/angular @shieldlabs-ai/js@1.1.0` | `provideShieldLabs({ publicKey })` | `injectIdentify()`, resolves `null` on failure | [angular.md](references/angular.md) |
+| Svelte 5, SvelteKit 2 | `@shieldlabs-ai/svelte @shieldlabs-ai/js@1.1.0` | `setShieldLabs({ publicKey })` in the root layout | `useIdentify()`, resolves `null` on failure | [svelte-sveltekit.md](references/svelte-sveltekit.md) |
 
 `@shieldlabs-ai/js` is the shared loader: the framework packages list it as a peer dependency, so
 install it next to them. The Public Key is the only ShieldLabs credential that belongs in browser
@@ -147,10 +149,10 @@ await fetch('/api/signup', {
 | Situation | Call |
 |---|---|
 | A form or button the backend protects (signup, login, checkout, payout) | `identify()` in the submit handler |
-| A classic full-page form post, or an identification that should be ready when the user submits | `agent.identifyOnInteraction(form)`, then `take()` in the submit handler. The agent comes from `load()` in `@shieldlabs-ai/js` and from `getAgent()` in the framework packages |
+| A classic full-page form post, or an identification that should be ready when the user submits | `agent.identifyOnInteraction(form)`, then `take()` in the submit handler. The agent comes from `load()` in `@shieldlabs-ai/js@1.1.0` and from `getAgent()` in the framework packages |
 | Opening the page is the protected step (for example an account recovery page) | `runOnMount: true` on the identify helper, only in that page's component. It runs once: when the load fails or times out, it resolves `null` with the load error and does not run again when the agent arrives later. With `autoLoad: false` it identifies only when `load()` came first (see [Consent](#consent)) |
 | Passive monitoring of a visit, for example once after sign-in | `check()` or the `checkOnLoad` option, which runs once when the agent becomes ready unless an identification for the same User HID is already running. The agent runs at most one check per visit every 5 minutes, and `check()` resolves `null` when it skipped |
-| The agent may only run after consent | `autoLoad: false` on the provider, plugin or setup (`autoLoad={false}` in React and Next.js), then `load()` from the state access object once consent is given. With `@shieldlabs-ai/js`, call `load()` only after consent |
+| The agent may only run after consent | `autoLoad: false` on the provider, plugin or setup (`autoLoad={false}` in React and Next.js), then `load()` from the state access object once consent is given. With `@shieldlabs-ai/js@1.1.0`, call `load()` only after consent |
 
 ## Errors
 
@@ -171,12 +173,14 @@ Angular) never reject: they resolve `null` and put the error in their `error` st
 
 ## Content Security Policy
 
-If the site sends a `Content-Security-Policy` header, merge these origins into it:
+Inspect the effective CSP in response headers and meta tags. If one exists, merge these default-environment sources, preserving existing sources, nonces and hashes. Include the script source in `script-src-elem` when that directive exists:
 
 ```text
 script-src  'self' https://cdn.shieldlabs.ai;
 connect-src 'self' https://rest.shieldlabs.ai wss://rest.shieldlabs.ai https://webrtc.shieldlabs.ai stun:ice.shieldlabs.ai:3478;
 ```
+
+Add `https://rest.shieldlabs.ai` to `img-src` only for the optional noscript beacon. Use a module, external bootstrap or nonce/hash for inline initialization. Do not add wildcards or `unsafe-inline`. Verify actual SDK endpoints for an explicitly chosen environment or script URL. An application without CSP does not need a new policy for installation.
 
 The agent loads with a dynamic `import()`, so no `'unsafe-eval'` is needed. A blocked
 `https://webrtc.shieldlabs.ai` still lets identifications arrive, but they can carry the

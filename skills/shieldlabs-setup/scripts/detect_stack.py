@@ -169,12 +169,13 @@ def detect_node(manifest: Path, root: Path) -> Optional[dict]:
     if app["server"] and "@shieldlabs-ai/node" not in packages:
         packages.append("@shieldlabs-ai/node")
     if app["server"] and "next" in deps:
-        app["skills"].append("shieldlabs-server (@shieldlabs-ai/next/server: shieldlabs-browser references/nextjs.md)")
+        app["skills"].append("shieldlabs-server (@shieldlabs-ai/node: shieldlabs-browser references/nextjs.md)")
     elif app["server"]:
         app["skills"].append("shieldlabs-server (references/node.md)")
     missing = [p for p in packages if p not in deps]
     if missing:
-        app["install"].append(f"{node_install(folder, root)} {' '.join(missing)}")
+        pins = {"@shieldlabs-ai/js": "@shieldlabs-ai/js@1.1.0", "@shieldlabs-ai/node": "@shieldlabs-ai/node@1.3.0"}
+        app["install"].append(f"{node_install(folder, root)} {' '.join(pins.get(package, package) for package in missing)}")
     if app["frontend"] is None and app["server"] is None and not app["installed"]:
         return None
     return app

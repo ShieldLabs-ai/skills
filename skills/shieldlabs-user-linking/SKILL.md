@@ -5,6 +5,8 @@ description: Links ShieldLabs identifications to your user accounts with a User 
 
 # Link identifications to your users
 
+Read [current SDK and History contracts](../shieldlabs-server/references/current-history.md) for stack routing, public domain UUIDs, filters and availability before adding server reads.
+
 A **User HID** is your own hashed or pseudonymous account ID, passed to the browser SDK as
 `userId`. With it:
 
@@ -55,7 +57,7 @@ const hid = userHid(String(user.id), process.env.USER_HID_SECRET!);
 
 | Browser package | Pass the User HID |
 |---|---|
-| `@shieldlabs-ai/js` | `agent.identify({ userId: hid })`, `agent.check({ userId: hid })` |
+| `@shieldlabs-ai/js@1.1.0` | `agent.identify({ userId: hid })`, `agent.check({ userId: hid })` |
 | `@shieldlabs-ai/react`, `@shieldlabs-ai/next` | `useIdentify({ userId: hid })`, or `identify({ userId })` per call |
 | `@shieldlabs-ai/vue` | `useIdentify({ userId: () => props.userHid })` (a string, ref or getter) |
 | `@shieldlabs-ai/angular` | `injectIdentify({ userId: session.userHid })` (a string, a signal or a function) |

@@ -1,7 +1,6 @@
 # ShieldLabs skills for coding agents
 
-This repository holds Agent Skills that integrate ShieldLabs (device intelligence and fraud
-detection) into web applications. Each skill is a folder under `skills/` with a `SKILL.md` (the
+This repository holds Agent Skills that integrate ShieldLabs identification, risk signals and Risk Score into a website or application. Each skill is a folder under `skills/` with a `SKILL.md` (the
 workflow and rules) and `references/` (details per framework or language). Read the `SKILL.md`
 first, then only the reference files for the stack at hand.
 
@@ -20,8 +19,7 @@ first, then only the reference files for the stack at hand.
 
 ## Guided installation
 
-Show the setup skill's progress/resume map and follow its major-stage checkpoints. Ask about an account only when unknown and no
-connection exists. A general install starts with browser identification and a verified result,
+Show the setup skill's progress/resume map and follow its major-stage checkpoints. A general install starts with browser identification and a verified result,
 then offers only unfinished server verification, webhook or user-linking stages, or finish.
 Already requested stages need no repeated question; do not ask before every file or package.
 A failed verification is resolved before advancing. Report unconfigured stages at the end.
@@ -36,7 +34,7 @@ A failed verification is resolved before advancing. Report unconfigured stages a
   `SHIELDLABS_WEBHOOK_SECRET` and `USER_HID_SECRET` stay on the server, in environment variables.
 - The backend reads the verdict with `identifications.get`, claims each request ID once, refuses
   identifications older than 5 minutes and runs the SDK policy helper.
-- No identification means unverified, never clean. `999` is a rate-limit marker, not a score. The
+- No identification or unavailable risk means unverified, never clean. `999` is a Banned IP marker, not a score. The
   all-zero device ID means no usable device signals.
 - Bands: trusted 0-29, suspicious 30-59, dangerous 60-100. Branch on bands and detection flags;
   never add up signal weights.

@@ -89,7 +89,7 @@ class DetectStackTest(unittest.TestCase):
             self.assertEqual(app["frontend"], "React")
             self.assertEqual(app["server"], "Node.js (Express)")
             self.assertEqual(app["installed"], ["@shieldlabs-ai/js", "@shieldlabs-ai/react"])
-            self.assertEqual(app["install"], ["npm install @shieldlabs-ai/node"])
+            self.assertEqual(app["install"], ["npm install @shieldlabs-ai/node@1.3.0"])
             env = {entry["file"]: entry for entry in result["env_files"]}
             self.assertTrue(env[".env"]["ignored_by_gitignore"])
             self.assertTrue(env[".env.example"]["example"])
@@ -105,7 +105,7 @@ class DetectStackTest(unittest.TestCase):
             result = detect_stack.detect(root)
             apps = {app["path"]: app for app in result["apps"]}
             self.assertEqual(apps["site"]["frontend"], "Astro (framework-agnostic loader)")
-            self.assertEqual(apps["site"]["install"], ["npm install @shieldlabs-ai/js"])
+            self.assertEqual(apps["site"]["install"], ["npm install @shieldlabs-ai/js@1.1.0"])
             self.assertEqual(apps["backend"]["server"], "Python (Django)")
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -124,7 +124,7 @@ class DetectStackTest(unittest.TestCase):
             app = detect_stack.detect(root)["apps"][0]
             self.assertEqual(app["frontend"], "Static HTML pages (public/index.html)")
             self.assertEqual(app["server"], "Node.js (Fastify)")
-            self.assertEqual(app["install"], ["npm install @shieldlabs-ai/js @shieldlabs-ai/node"])
+            self.assertEqual(app["install"], ["npm install @shieldlabs-ai/js@1.1.0 @shieldlabs-ai/node@1.3.0"])
             self.assertIn("shieldlabs-browser (references/vanilla.md)", app["skills"])
 
     def test_empty_project(self) -> None:

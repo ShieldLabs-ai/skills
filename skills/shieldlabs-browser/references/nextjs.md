@@ -10,7 +10,7 @@ Next.js 14 or later. `@shieldlabs-ai/next` has two entries:
 ## Install and configure
 
 ```bash
-npm install @shieldlabs-ai/next @shieldlabs-ai/react @shieldlabs-ai/js @shieldlabs-ai/node
+npm install @shieldlabs-ai/next @shieldlabs-ai/react @shieldlabs-ai/js@1.1.0 @shieldlabs-ai/node
 ```
 
 The last three are peer dependencies. Environment variables (`.env.local` in development, the
@@ -90,9 +90,11 @@ Read the verdict in the route handler:
 import {
   ShieldLabsError,
   evaluateIdentification,
-  getIdentification,
+  ShieldLabs,
   type Identification,
-} from '@shieldlabs-ai/next/server';
+} from '@shieldlabs-ai/node';
+
+const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY! });
 
 export async function POST(request: Request) {
   const body = (await request.json()) as { email?: string; identificationId?: string | null };
@@ -100,7 +102,8 @@ export async function POST(request: Request) {
   if (body.identificationId) {
     try {
       // Reads SHIELDLABS_API_KEY and waits (with backoff) until the identification is scored.
-      identification = await getIdentification(body.identificationId);
+      identification = await shieldlabs.identifications.get(body.identificationId, { domainId: process.env.SHIELDLABS_DOMAIN_ID! });
+      if (identification && (identification.identification_id !== body.identificationId || !Number.isFinite(identification.risk_score) || identification.raw.domain_id !== process.env.SHIELDLABS_DOMAIN_ID || (identification.raw.signals as { state?: string } | undefined)?.state !== "ok")) identification = null;
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error; // the signup stays unverified
       console.warn('ShieldLabs lookup failed:', error.name);
@@ -118,20 +121,12 @@ export async function POST(request: Request) {
 }
 ```
 
-`getIdentification(identificationId, options?)` takes the options of `identifications.get` in
-`@shieldlabs-ai/node` (`wait`, `timeout`, `pollInterval`, `signal`) plus `client`, and waits the same
-way: `timeout` (default 10 000 ms) is the total budget, each poll is one HTTP attempt, a 429, a 5xx
-or a network error keeps polling, 400, 401, 403 and 404 stop at once (and so does a 429 whose
-`Retry-After`, capped at 10 s, is longer than the time left), and the last poll runs at the
-deadline (shieldlabs-server skill). Without `client` it creates one client per process from
-`SHIELDLABS_API_KEY` (and `SHIELDLABS_API_BASE_URL` when set), sends its requests with
-`cache: 'no-store'`, and rejects with a `ValidationError` when the key is missing. Never wrap it in
-a data cache: polling must see fresh answers.
+For History, install `@shieldlabs-ai/node@1.3.0` and use `ShieldLabs.identifications.get(id, { domainId })` directly, with the selected domain UUID. Reuse one client per process and read without a data cache. Its total wait budget is ten seconds; a 429 whose `Retry-After`, capped at 10 s, is longer than the time left ends the wait. See [Node server](../../shieldlabs-server/references/node.md) for the complete polling schedule and error behavior.
 
 ### Server Actions
 
 A Server Action (`'use server'`, for example `app/signup/actions.ts`) runs the same code as the
-`POST` handler above: `getIdentification(input.identificationId)` in a `try`, the claim, then
+`POST` handler above: `shieldlabs.identifications.get(input.identificationId, { domainId })` in a `try`, the claim, then
 `evaluateIdentification`, returning `{ ok }` instead of a `Response`. The client component calls
 it after `identify()`:
 `const { ok } = await signup({ email: String(email), identificationId: result?.identificationId ?? null });`.
@@ -196,12 +191,14 @@ export default function App({ Component, pageProps }: AppProps) {
 ```
 
 Pages call `useIdentify()` from `@shieldlabs-ai/next` exactly as in the App Router form above. API
-routes read the verdict with `getIdentification` from `@shieldlabs-ai/next/server`:
+routes read the verdict directly with `@shieldlabs-ai/node@1.3.0`:
 
 ```ts
 // pages/api/signup.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { ShieldLabsError, evaluateIdentification, getIdentification, type Identification } from '@shieldlabs-ai/next/server';
+import { ShieldLabsError, evaluateIdentification, ShieldLabs, type Identification } from '@shieldlabs-ai/node';
+
+const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY! });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
@@ -209,7 +206,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let identification: Identification | null = null;
   if (identificationId) {
     try {
-      identification = await getIdentification(identificationId);
+      identification = await shieldlabs.identifications.get(identificationId, { domainId: process.env.SHIELDLABS_DOMAIN_ID! });
+      if (identification && (identification.identification_id !== identificationId || !Number.isFinite(identification.risk_score) || identification.raw.domain_id !== process.env.SHIELDLABS_DOMAIN_ID || (identification.raw.signals as { state?: string } | undefined)?.state !== "ok")) identification = null;
     } catch (error) {
       if (!(error instanceof ShieldLabsError)) throw error;
     }

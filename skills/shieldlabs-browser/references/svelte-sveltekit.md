@@ -6,8 +6,8 @@ prerendering and server-side rendering.
 ## Install
 
 ```bash
-npm install @shieldlabs-ai/svelte @shieldlabs-ai/js
-npm install @shieldlabs-ai/node   # for the SvelteKit server code below
+npm install @shieldlabs-ai/svelte @shieldlabs-ai/js@1.1.0
+npm install @shieldlabs-ai/node@1.3.0   # for the SvelteKit server code below
 ```
 
 `.env`:
@@ -74,7 +74,7 @@ JavaScript, or when the agent cannot load, the form is still sent without a `ide
 ```ts
 // src/routes/signup/+page.server.ts
 import { fail } from '@sveltejs/kit';
-import { SHIELDLABS_API_KEY } from '$env/static/private';
+import { SHIELDLABS_API_KEY, SHIELDLABS_DOMAIN_ID } from '$env/static/private';
 import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identification } from '@shieldlabs-ai/node';
 import type { Actions } from './$types';
 
@@ -87,7 +87,8 @@ export const actions = {
     let identification: Identification | null = null;
     if (identificationId) {
       try {
-        identification = await shieldlabs.identifications.get(identificationId); // waits until scored
+        identification = await shieldlabs.identifications.get(identificationId, { domainId: SHIELDLABS_DOMAIN_ID }); // waits until scored
+        if (identification && (identification.identification_id !== identificationId || !Number.isFinite(identification.risk_score) || identification.raw.domain_id !== SHIELDLABS_DOMAIN_ID || (identification.raw.signals as { state?: string } | undefined)?.state !== "ok")) identification = null;
       } catch (error) {
         if (!(error instanceof ShieldLabsError)) throw error; // stays unverified
       }

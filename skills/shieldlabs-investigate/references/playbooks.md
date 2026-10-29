@@ -6,14 +6,13 @@ replace it with the returned value, not a made-up domain.
 
 ## Review one identification
 
-1. Capture the browser's actual identification UUID. During setup allow 10–15 seconds for
-   asynchronous processing, then call:
+1. Capture the browser’s actual identification UUID. During setup use one total 10–15 second quiet verification window, starting with:
 
    ```json
    {"domain":"11111111-1111-4111-8111-111111111111","identification_id":"33333333-3333-4333-8333-333333333333","wait":true,"response_format":"json"}
    ```
 
-   Use `shieldlabs_get_identification`. If still pending, wait and read the same UUID once more.
+   Use `shieldlabs_get_identification` (up to 10 seconds). If still pending, make one `wait: false` read of the same UUID within the remaining total 10–15 second budget.
    A missing result remains unverified. Do not create another identification just to poll.
 2. Call `shieldlabs_explain_risk_score` with the same domain and identification_id. Inspect score,
    band and signal availability. Missing weights never establish zero contribution.

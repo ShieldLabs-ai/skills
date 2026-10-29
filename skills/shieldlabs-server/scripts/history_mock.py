@@ -3,20 +3,15 @@
 
 Usage: python3 history_mock.py [--port 4010] [--host 127.0.0.1] [--rows ROWS.json] [--only-rows] [--contract current|legacy] [--quiet]
 
-Answers domain-scoped identification card reads with the current JSON shape of the History
-API: {"data": [rows, newest first], "total": n}, History rows with History field names (score,
-created_at, ip, country, score_details, is_* columns). Point a server SDK at it with
-SHIELDLABS_API_BASE_URL=http://127.0.0.1:4010 and a placeholder key such as
-sec_test0000-test0000-test0000.
+Answers GET /api/v1/domains and domain-scoped identification cards with current entity JSON.
+Point a server SDK at SHIELDLABS_API_BASE_URL=http://127.0.0.1:4010 and a placeholder private key.
+The unscoped History route returns 410. Legacy flat rows are internal fixture helpers only.
 
-- Current rows use identification_id by default; --contract legacy emits request_id instead.
-- Without --rows, every request_id lookup finds one trusted identification (Risk Score 0, no
-  flags) observed just now, so the freshness check passes.
-- ROWS.json maps request IDs to overrides of History row fields, for example
-  {"<request id>": {"score": 80, "is_antidetect": true, "minutes_ago": 10}}. "minutes_ago" moves
-  created_at into the past. null means "not found" (unverified) for that request ID.
-- Lookups by device_id, visitor_id, user_hid, ip, session_id and cookie_id search the rows of
-  ROWS.json. --only-rows makes request IDs that are not in ROWS.json "not found" too.
+ROWS.json maps identification UUIDs to overrides or null (missing). Supported fixture values
+include score, minutes_ago, device_id, user_hid and entity_signals. Without explicit entity_signals,
+signals are unavailable; for a controlled policy happy path set {"state":"ok","items":[]}.
+An explicit list of public signal codes can test flag decisions. These are synthetic inputs,
+not evidence about live detector output. --only-rows makes every unlisted UUID missing.
 
 Standard library only. It listens on 127.0.0.1 by default; never expose it to a network.
 """
@@ -182,11 +177,18 @@ def make_handler(mock: HistoryMock, quiet: bool = False) -> type:
             if not 0 <= score <= 100:
                 self.reply(429, {"error": "rate_limited"})
                 return
+            entity_signals = row.get("entity_signals", {"state": "unavailable", "items": []})
+            if (not isinstance(entity_signals, dict)
+                    or entity_signals.get("state") not in ("ok", "unavailable")
+                    or not isinstance(entity_signals.get("items"), list)
+                    or not all(isinstance(item, str) for item in entity_signals["items"])):
+                self.reply(500, {"error": "invalid_fixture_signals"})
+                return
             at = str(row["created_at"]).replace(" ", "T") + "Z"
             card = {"type": "identification", "id": identifier.lower(), "domain_id": domain,
                     "domain": row.get("site_domain") or "example.com", "created_at": at,
                     "risk": {"state": "ok", "score": score, "band": "trusted" if score < 30 else "suspicious" if score < 60 else "dangerous", "as_of": at},
-                    "signals": {"state": "unavailable", "items": []}, "public_ip": row.get("ip"),
+                    "signals": entity_signals, "public_ip": row.get("ip"),
                     "country": row.get("country"), "visitor_id": row.get("visitor_id"), "device_id": row.get("device_id"), "user_hid": row.get("user_hid")}
             self.reply(200, {"data": card})
 

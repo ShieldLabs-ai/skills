@@ -3,7 +3,9 @@
 ## Correlate one identification
 
 - Browser SDK: `identificationId`.
-- Server SDK and public payload: `identification_id`.
+- Node normalized model and scored webhook payload: `identification_id`.
+- Current History entity card: `id`; available Risk Score is `risk.score`, signal codes are `signals.items`.
+- Node read: `identifications.get(id, { domainId })`; `domainId` is required in read options.
 - MCP argument: `identification_id`; History `domain` is the public domain UUID.
 
 Pass the same UUID through the protected action, server read and MCP lookup. Verify that the

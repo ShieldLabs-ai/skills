@@ -5,6 +5,8 @@ description: Receives ShieldLabs webhooks safely. Verifies the X-Shield-Signatur
 
 # ShieldLabs webhooks
 
+Read [current SDK and History contracts](../shieldlabs-server/references/current-history.md) for stack routing, public domain UUIDs, filters and availability before adding server reads.
+
 ShieldLabs posts a signed `identification.scored` event to each enabled endpoint when it finishes
 scoring an identification: usually a few seconds after the browser call, and at most about 10
 seconds after the identification arrives when follow-up network checks run. Webhooks are optional. The History API read at the protected action

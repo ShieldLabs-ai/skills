@@ -9,7 +9,7 @@ before repeating an operation. Keep the user's existing choices and authorizatio
 |---|---|
 | Account and OAuth MCP | Authenticated `shieldlabs_check_connection`; selected account/domain |
 | Domain and environments | Parent domain UUID, `allow_subdomains`, authorized production/staging hostnames, key placement |
-| Browser SDK | A fresh identification UUID from the real protected action on a covered HTTPS hostname |
+| Browser SDK | A real background check or protected-action UUID on a covered HTTPS hostname |
 | Stored result | That exact UUID found for the selected domain, Risk Score and observation time |
 | Server verification (when selected) | Missing, replayed, stale, rate-limited and current IDs exercise the real action handler |
 | User linking (when selected) | Server-derived User HID on a fresh signed-in identification |

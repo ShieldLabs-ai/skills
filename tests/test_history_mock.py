@@ -118,6 +118,15 @@ class HistoryMockTest(unittest.TestCase):
             self.assertEqual(response.headers["Content-Type"], "application/json")
             body = json.loads(response.read())
         self.assertEqual(body["data"]["risk"]["score"], 80)
+        self.assertEqual(body["data"]["signals"], {"state": "unavailable", "items": []})
+        self.mock.rows[BAD]["entity_signals"] = {"state": "ok", "items": ["browser_automation"]}
+        with urllib.request.urlopen(request, timeout=5) as response:
+            available = json.loads(response.read())["data"]
+        self.assertEqual(available["signals"], {"state": "ok", "items": ["browser_automation"]})
+        self.mock.rows[BAD]["entity_signals"] = {"state": "ok", "items": []}
+        with urllib.request.urlopen(request, timeout=5) as response:
+            self.assertEqual(json.loads(response.read())["data"]["signals"], {"state": "ok", "items": []})
+
         with self.assertRaises(urllib.error.HTTPError) as caught:
             urllib.request.urlopen(f"{base}/domains/11111111-1111-4111-8111-111111111111/history/identifications/{BAD}", timeout=5)
         self.assertEqual(caught.exception.code, 401)

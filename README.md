@@ -1,7 +1,7 @@
 # ShieldLabs skills
 
 Agent Skills, slash commands and a hosted OAuth MCP connection that let AI coding agents integrate ShieldLabs
-device intelligence and fraud detection into your app.
+identification, risk signals and Risk Score into your website or application.
 
 [![CI](https://github.com/ShieldLabs-ai/skills/actions/workflows/ci.yml/badge.svg)](https://github.com/ShieldLabs-ai/skills/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -11,13 +11,13 @@ This repository is a plugin marketplace named `shieldlabs` with one plugin, `shi
 Claude Code, Cursor and Codex, with Grok metadata retained. The skills also work in OpenCode and any other client
 that reads Agent Skills. New to ShieldLabs? [Start free](https://app.shieldlabs.ai).
 
+Plugin content version: **1.3.0**.
+
 ## How it fits
 
-A ShieldLabs integration always has three steps, and the skills teach an agent each of them:
+The skills support background identification and protected actions:
 
-1. **Browser.** The ShieldLabs agent, loaded from `https://cdn.shieldlabs.ai` by a browser SDK,
-   runs an identification when a user performs a protected action (signup, login, checkout) and
-   hands the page a request ID.
+1. **Browser.** The ShieldLabs agent loads from `https://cdn.shieldlabs.ai` through the matching browser SDK. Use `check()` for background identification and `identify()` when a user performs a protected action (signup, login, checkout), passing its `identificationId` with that action.
 2. **Your backend.** It receives the request ID with the action and reads the verdict from the
    History API with a server SDK, or receives it in a signed `identification.scored` webhook.
 3. **Decision.** Your backend acts on the Risk Score (trusted 0-29, suspicious 30-59, dangerous
@@ -55,7 +55,7 @@ codex plugin marketplace add ShieldLabs-ai/skills
 codex plugin add shieldlabs@shieldlabs
 ```
 
-Start a new Codex session after installing. Codex reads `.codex-plugin/`, the skills and
+Restart the detected Codex client after installing if the skills or MCP tools are not visible, then return to the same chat and continue. Codex reads `.codex-plugin/`, the skills and
 [AGENTS.md](AGENTS.md). The plugin includes the hosted MCP configuration. Sign in when prompted, or connect it explicitly
 with `codex mcp add` and `codex mcp login` ([MCP setup for Codex](skills/shieldlabs-investigate/references/clients.md#codex)).
 
@@ -142,14 +142,13 @@ The plugin includes this remote entry in [`.mcp.json`](.mcp.json):
 }
 ```
 
-Enable the connection in your client. Sign in or create a ShieldLabs account in the fresh
-authorization flow, then approve access. You do not need
+Enable the connection in your client. Open the fresh OAuth authorization flow in the user’s browser: sign in or create a ShieldLabs account, then approve access. If already signed in, continue to consent. You do not need
 Node.js, a domain API key or a pasted bearer token for this connection. For skills-only installs:
 
 ```sh
 # Codex
 codex mcp add shieldlabs --url https://mcp.shieldlabs.ai/mcp
-codex mcp login shieldlabs --no-browser
+codex mcp login shieldlabs
 
 # Claude Code: then authenticate through /mcp
 claude mcp add --transport http shieldlabs https://mcp.shieldlabs.ai/mcp
@@ -198,6 +197,9 @@ Pass the same UUID as MCP `identification_id`. Use the webhook envelope's `event
 deduplication and `data.identification_id` to correlate the identification.
 See [identifiers and payloads](skills/shieldlabs-server/references/sdk-contract.md).
 
+Use [current History and SDK routing](skills/shieldlabs-server/references/current-history.md) for domain UUIDs, flat filters, availability and stack-specific reads. Tested Node examples use `@shieldlabs-ai/node@1.3.0`; the plain browser example uses `@shieldlabs-ai/js@1.1.0`.
+
+
 ## Compatibility
 
 - ShieldLabs SDKs 1.x: `@shieldlabs-ai/js`, `@shieldlabs-ai/react`, `@shieldlabs-ai/next`,
@@ -214,6 +216,7 @@ See [identifiers and payloads](skills/shieldlabs-server/references/sdk-contract.
 ```sh
 python3 scripts/validate_skills.py         # frontmatter, lengths, links, anchors, manifests
 python3 -m unittest discover -s tests      # validator, helper script and documented SDK rule tests
+bash scripts/test_current_sdk_examples.sh  # clean public npm install, framework types, Node/JS runtime
 python3 scripts/check_links.py             # external links (network)
 ```
 

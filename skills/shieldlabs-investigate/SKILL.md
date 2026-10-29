@@ -5,6 +5,8 @@ description: Connect ShieldLabs OAuth MCP, select a domain and investigate ident
 
 # ShieldLabs MCP
 
+Read [current SDK and History contracts](../shieldlabs-server/references/current-history.md) for stack routing, public domain UUIDs, filters and availability before adding server reads.
+
 Connect to `https://mcp.shieldlabs.ai/mcp` using the coding client's OAuth flow.
 Use [client setup](references/clients.md), the [tool reference](references/tools.md),
 [input catalog](references/mcp-catalog.json) and [playbooks](references/playbooks.md).
@@ -29,8 +31,7 @@ user reviews access. Approval completes only the connection stage, not the SDK i
 Call `shieldlabs_get_identification` with `domain`, `identification_id`, `wait: true` and
 `response_format: "json"`. Use the actual browser `identificationId` or server SDK
 `identification_id`: they name the same UUID. Inspect `found` and the returned identification.
-For a fresh UUID, allow 10–15 seconds before the first setup verification; the tool can also poll
-for up to 10 seconds. Repeat the same UUID once after a bounded wait if still pending.
+For a fresh UUID, use one total 10–15 second quiet read window: call with `wait: true` (up to 10 seconds), then, if still pending, use one nonwaiting read of the same UUID within the remaining budget. Do not start another identification or another full wait.
 
 Call `shieldlabs_explain_risk_score` with the same domain and `identification_id`, or pass a
 pasted `identification` instead. A pasted input explains that input and does not prove a stored
@@ -39,7 +40,7 @@ record exists. Nonempty weighted signals take priority; missing weights can be r
 
 A UUID alone does not prove scoring succeeded. Pending reads and a rejected browser submission
 are different outcomes. Handle routine waits quietly during installation and record diagnostic
-status/UUID/time privately. Never infer billing or quota exhaustion from a missing result.
+status/UUID/time privately. Never infer billing or quota exhaustion from a missing result. Preserve an explicit HTTP 402 and its response details, but verify its cause before calling it quota exhaustion. Preserve an explicit HTTP 402 and its response details, but verify its cause before calling it quota exhaustion.
 
 ## Read cards and lists
 
