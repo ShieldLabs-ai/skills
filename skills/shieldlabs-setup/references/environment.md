@@ -15,6 +15,7 @@ secret under Integration > Webhooks.
 | Variable | Holds | Where it lives |
 |---|---|---|
 | `SHIELDLABS_PUBLIC_KEY`, with the framework's public prefix (`VITE_`, `NEXT_PUBLIC_`, `NUXT_PUBLIC_`, `PUBLIC_`) | Public Key, 32 hex characters | Browser code (public by design) |
+| `SHIELDLABS_DOMAIN_ID` | Public domain UUID from MCP list_domains or SDK domains() | Server configuration; public identifier |
 | `SHIELDLABS_API_KEY` | Private API Key, `sec_xxxxxxxx-xxxxxxxx-xxxxxxxx` | Server only |
 | `SHIELDLABS_WEBHOOK_SECRET` | Endpoint signing secret, `whsec_...`; several comma-separated while rotating | Server only |
 | `USER_HID_SECRET` | Your own random secret for User HIDs (`openssl rand -hex 32`) | Server only |
@@ -31,6 +32,7 @@ after a value):
 # Browser: use your framework's public prefix (VITE_, NEXT_PUBLIC_, NUXT_PUBLIC_ or PUBLIC_)
 VITE_SHIELDLABS_PUBLIC_KEY=0123456789abcdef0123456789abcdef
 # Server only: never give these a public prefix
+SHIELDLABS_DOMAIN_ID=replace_with_the_public_domain_uuid
 SHIELDLABS_API_KEY=sec_your_private_key
 SHIELDLABS_WEBHOOK_SECRET=whsec_your_signing_secret
 USER_HID_SECRET=replace_with_the_output_of_openssl_rand_hex_32

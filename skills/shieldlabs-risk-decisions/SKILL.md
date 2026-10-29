@@ -1,6 +1,6 @@
 ---
 name: shieldlabs-risk-decisions
-description: Turns a ShieldLabs identification into an allow, step-up, review or block decision for each protected action. Explains the Risk Score and its three bands (trusted 0-29, suspicious 30-59, dangerous 60-100), detection flags versus risk signals, the 999 rate-limit marker, the all-zero device ID, missing identifications, replay and freshness guards and account binding, and builds a per-action policy on the SDK policy helpers for Node.js, Python, Go, PHP, Java and .NET. Use when the user asks what Risk Score to block at, how to treat VPN, proxy, Tor, anti-detect browsers or browser automation, how to block risky signups, add step-up or 2FA for suspicious logins or payouts, tune evaluateIdentification, or explain a ShieldLabs verdict in code.
+description: Turns a ShieldLabs identification into an allow, step-up, review or block decision for each protected action. Explains the Risk Score and its three bands (trusted 0-29, suspicious 30-59, dangerous 60-100), detection flags versus risk signals, the 999 Banned IP marker, the all-zero device ID, missing identifications, replay and freshness guards and account binding, and builds a per-action policy on the SDK policy helpers for Node.js, Python, Go, PHP, Java and .NET. Use when the user asks what Risk Score to block at, how to treat VPN, proxy, Tor, anti-detect browsers or browser automation, how to block risky signups, add step-up or 2FA for suspicious logins or payouts, tune evaluateIdentification, or explain a ShieldLabs verdict in code.
 ---
 
 # Decide on a ShieldLabs verdict
@@ -29,7 +29,7 @@ example a payout, for a person or a later job) or **block** (refuse with a gener
 
 | Field | Use it for | Notes |
 |---|---|---|
-| `risk_score` | The band, through `riskBand(score)` | 0-100. `999` is the rate-limit marker, never a score. Never recompute it from signals |
+| `risk_score` | The band, through `riskBand(score)` | 0-100. `999` is the Banned IP marker, never a score. Never recompute it from signals |
 | `detection_flags` | Specific conditions in the installed SDK model | Stable names: `browser_automation`, `anti_detect_browser`, `tor`, `vpn`, `proxy`, ... |
 | `signals` | Display and logging | The weighted risk signals behind the score. An open set: weights can be negative and names can repeat |
 | `device_id`, `visitor_id`, `user_hid`, `public_ip` | Account binding and account-level checks | The all-zero device ID means no usable device signals |
@@ -53,7 +53,7 @@ A starting point to tune per action with your own traffic:
 | suspicious (30-59) | allow | step-up | review |
 | dangerous (60-100) | step-up | block | block |
 | `missing`: no request ID, not found in time, or an API error | allow with limits, log as unverified | step-up | review |
-| `rate_limited`: the `999` marker | step-up | step-up | review |
+| `banned_ip`: the `999` marker | step-up | step-up | review |
 | `no_device_signals`: the all-zero device ID | allow with limits, log | step-up | review |
 | `replayed` or `stale` | block; the page runs a fresh identification on retry | block | block |
 | `blocked_flag`: `browser_automation` or `javascript_disabled` | block | block | block |
@@ -109,7 +109,7 @@ export function decide(
     case 'missing':
     case 'no_device_signals':
       return { decision: UNVERIFIED[sensitivity], reason: verdict.reason };
-    case 'rate_limited':
+    case 'banned_ip':
       return { decision: sensitivity === 'high' ? 'review' : 'step_up', reason: verdict.reason };
   }
   // Map the band first: a User HID mismatch can only make the decision stricter, never softer.

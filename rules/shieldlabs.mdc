@@ -35,9 +35,9 @@ Read the matching skill before writing code: [setup and audit](../skills/shieldl
 
 Connect to `https://mcp.shieldlabs.ai/mcp` with client OAuth; no MCP API-key environment is needed.
 Use the shieldlabs-investigate skill for all 21 tools. Begin with check_connection/list_domains;
-history uses a hostname, management uses a UUID. Investigation requests stay read-only; domain and
+history and management use the public domain UUID from list_domains. Investigation requests stay read-only; domain and
 webhook changes require user intent. Do not automatically retry mutations. Keep secrets masked;
 never call private dashboard APIs or extract OAuth credentials as a fallback.
 
-Use the browser identificationId and server identification_id for the same UUID; MCP takes request_id.
+Use the browser identificationId and server identification_id for the same UUID; MCP takes identification_id.
 Empty History weights are valid and do not imply zero risk.

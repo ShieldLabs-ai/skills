@@ -7,12 +7,12 @@ reference is at https://docs.shieldlabs.ai/api/server-api.
 ## Read one identification
 
 ```text
-GET https://account.shieldlabs.ai/api/v1/history/request_id/{requestId}?limit=1
+GET https://account.shieldlabs.ai/api/v1/domains/{domainId}/history/identifications/{identificationId}
 Authorization: Bearer sec_your_private_key
 Accept: application/json
 ```
 
-- The answer is `{"data": [row, ...], "total": N}`. An empty `data` means "not scored yet".
+- The answer is `{"data": {"type": "identification", "id": "...", "risk": {"state": "ok", "score": 30}, ...}}`. Match the ID and public domain UUID. Missing or unavailable remains unverified.
 - Wait the way the SDKs do: a total budget (10 seconds by default), the first request at once,
   then waits of p, 2p, 4p, 6p and then 8p for a poll interval p, each capped at max(2 s, p) (with
   the default 250 ms: 250 ms, 500 ms, 1 s, 1.5 s, then every 2 s), a wait cut short so that the

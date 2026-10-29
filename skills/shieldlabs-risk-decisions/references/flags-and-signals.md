@@ -12,7 +12,7 @@ Use these **20 detection flags**. A missing value is unknown.
 |---|---|
 | `vpn` | VPN evidence, including browser VPN/proxy evidence in History |
 | `proxy` | Proxy evidence |
-| `private_relay` | Privacy relay evidence; connection type remains `privacy_relay` |
+| `private_relay` | Privacy relay evidence; connection type is `private_relay` |
 | `tor` | Tor evidence |
 | `check_incomplete` | Browser check incomplete |
 | `network_check_incomplete` | Network check incomplete; History column `is_stun_not_checked` |
@@ -24,7 +24,7 @@ Use these **20 detection flags**. A missing value is unknown.
 | `latency_test` | Latency-test flag; preserve it without inventing thresholds |
 | `anti_detect_browser` | Anti-detect browser evidence |
 | `device_spoofing` | Device-spoofing evidence |
-| `banned_ip` | Rate-limited/banned IP; check the `999` marker separately |
+| `banned_ip` | Banned IP; check the `999` marker separately |
 | `incognito` | Private browsing |
 | `search_bot` | Search crawler |
 | `ai_bot` | AI-bot classification |
@@ -50,7 +50,7 @@ Rules:
 
 ## Connection types
 
-`connection_type` is one of `direct`, `mobile`, `vpn`, `proxy`, `tor`, `privacy_relay`,
+`connection_type` is one of `direct`, `mobile`, `vpn`, `proxy`, `tor`, `private_relay`,
 `browser_vpn_proxy` or `unknown`; keep unknown values. It describes the network for display. For
 decisions use the flags: `connection_type` can say `vpn` while `detection_flags.vpn` is `false`,
 when IP intelligence suggests a VPN that the scored check did not confirm.

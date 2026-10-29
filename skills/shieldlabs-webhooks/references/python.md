@@ -25,6 +25,7 @@ It returns `IdentificationScoredEvent`, `WebhookPingEvent` or `UnknownWebhookEve
 ```python
 import logging
 import os
+import os
 
 # Several secrets, comma-separated, while you rotate one. Read them once at startup.
 WEBHOOK_SECRETS = [s.strip() for s in os.environ.get("SHIELDLABS_WEBHOOK_SECRET", "").split(",") if s.strip()]

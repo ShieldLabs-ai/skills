@@ -15,7 +15,8 @@ npm install @shieldlabs-ai/node
 import { ShieldLabs } from '@shieldlabs-ai/node';
 
 export const shieldlabs = new ShieldLabs({
-  apiKey: process.env.SHIELDLABS_API_KEY!, // Private API Key, sec_...
+  apiKey: process.env.SHIELDLABS_API_KEY!,
+  domainId: process.env.SHIELDLABS_DOMAIN_ID!, // Private API Key, sec_...
   baseUrl: process.env.SHIELDLABS_API_BASE_URL || undefined, // tests only: a local History API mock
 });
 ```
@@ -89,7 +90,7 @@ const verdict = evaluateIdentification(identification, {
 // { ok: false, reason: 'blocked_flag', band: 'dangerous', flag: 'browser_automation' }
 ```
 
-`riskBand(score)` returns `'trusted' | 'suspicious' | 'dangerous' | 'rate_limited'`,
+`riskBand(score)` returns `'trusted' | 'suspicious' | 'dangerous' | 'banned_ip'`,
 `isRateLimited(score)` checks the `999` marker, and `NIL_UUID` is the all-zero device ID.
 
 ## Errors

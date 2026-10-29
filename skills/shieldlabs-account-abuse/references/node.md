@@ -35,7 +35,7 @@ export interface TravelJump {
 /**
  * Impossible travel at an action: the current identification comes from another country than an
  * identification of the same account less than `withinMinutes` before it. Identifications without
- * a country, through a VPN, proxy, Tor or relay, or with the rate-limit marker are skipped.
+ * a country, through a VPN, proxy, Tor or relay, or with the Banned IP marker are skipped.
  */
 export async function impossibleTravel(
   shieldlabs: ShieldLabs,

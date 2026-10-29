@@ -159,8 +159,8 @@ Choose one setup path to avoid duplicate server entries. Other clients:
 [clients.md](skills/shieldlabs-investigate/references/clients.md).
 
 After signing in, ask: "Check the ShieldLabs connection and list my domains."
-The agent calls `shieldlabs_check_connection`, then `shieldlabs_list_domains`. Select the hostname
-before reading identifications; management uses the returned domain UUID.
+The agent calls `shieldlabs_check_connection`, then `shieldlabs_list_domains`. Resolve the hostname
+to its returned public UUID before History or management calls.
 
 ### 21 tools
 
@@ -169,7 +169,7 @@ before reading identifications; management uses the returned domain UUID.
 | Connection (1) | `check_connection` |
 | Domains (6) | `list_domains`, `get_domain`, `add_domain`, `patch_domain`, `delete_domain`, `rotate_server_key` |
 | Webhooks (10) | `list_webhooks`, `get_webhook`, `create_webhook`, `patch_webhook`, `delete_webhook`, `disable_webhook`, `enable_webhook`, `rotate_webhook_secret`, `verify_webhook`, `test_webhook` |
-| Investigation (4) | `get_identification`, `search_history`, `summarize_entity`, `explain_risk_score` |
+| Investigation (4) | `get_identification`, `list_history`, `get_history`, `explain_risk_score` |
 
 [All arguments and behavior](skills/shieldlabs-investigate/references/tools.md).
 Domain/webhook writes are supported and require the user's intent. Deletes, disable, rotations
@@ -194,7 +194,7 @@ only the Public Key belongs in frontend code. Never paste private keys into chat
 See [environment setup](skills/shieldlabs-setup/references/environment.md).
 
 The browser returns `identificationId`; the server SDK uses `identification_id`.
-Pass the same UUID as MCP `request_id`. Use the webhook envelope's `event_id` for delivery
+Pass the same UUID as MCP `identification_id`. Use the webhook envelope's `event_id` for delivery
 deduplication and `data.identification_id` to correlate the identification.
 See [identifiers and payloads](skills/shieldlabs-server/references/sdk-contract.md).
 

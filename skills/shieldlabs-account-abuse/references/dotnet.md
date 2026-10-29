@@ -50,7 +50,7 @@ public sealed class AccountAbuse(ShieldLabsClient client)
     /// <summary>
     /// Impossible travel at an action: the current identification comes from another country than an
     /// identification of the same account less than <paramref name="within"/> before it. Identifications
-    /// without a country, through a VPN, proxy, Tor or relay, or with the rate-limit marker are skipped.
+    /// without a country, through a VPN, proxy, Tor or relay, or with the Banned IP marker are skipped.
     /// </summary>
     public async Task<TravelJump?> ImpossibleTravelAsync(string userHid, Identification current, TimeSpan within, int maxItems = 100, CancellationToken ct = default)
     {

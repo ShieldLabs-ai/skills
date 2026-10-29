@@ -63,7 +63,7 @@ def impossible_travel(
 ) -> Optional[TravelJump]:
     """Impossible travel at an action: the current identification comes from another country than
     an identification of the same account less than `within_minutes` before it. Identifications
-    without a country, through a VPN, proxy, Tor or relay, or with the rate-limit marker are skipped."""
+    without a country, through a VPN, proxy, Tor or relay, or with the Banned IP marker are skipped."""
     at = current.observed_at
     country = current.public_ip.country
     if not country or at is None or _masked(current) or current.is_rate_limited:

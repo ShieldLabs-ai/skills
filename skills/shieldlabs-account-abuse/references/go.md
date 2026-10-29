@@ -78,7 +78,7 @@ func masked(i *shieldlabs.Identification) bool {
 
 // ImpossibleTravel reports when the current identification comes from another country than an
 // identification of the same account less than `within` before it. Identifications without a
-// country, through a VPN, proxy, Tor or relay, or with the rate-limit marker are skipped. It
+// country, through a VPN, proxy, Tor or relay, or with the Banned IP marker are skipped. It
 // returns nil when there is no such jump.
 func ImpossibleTravel(ctx context.Context, c *shieldlabs.Client, userHID string, current *shieldlabs.Identification, within time.Duration, maxItems int) (*TravelJump, error) {
 	at, country := current.ObservedAt, current.PublicIP.Country
