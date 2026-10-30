@@ -121,7 +121,7 @@ export async function POST(request: Request) {
 }
 ```
 
-For History, install `@shieldlabs-ai/node@1.3.0` and use `ShieldLabs.identifications.get(id, { domainId })` directly, with the selected domain UUID. Reuse one client per process and read without a data cache. Its total wait budget is ten seconds; a 429 whose `Retry-After`, capped at 10 s, is longer than the time left ends the wait. See [Node server](../../shieldlabs-server/references/node.md) for the complete polling schedule and error behavior.
+For History, install `@shieldlabs-ai/node@1.3.2` and use `ShieldLabs.identifications.get(id, { domainId })` directly, with the selected domain UUID. Reuse one client per process and read without a data cache. Its total wait budget is ten seconds; a 429 whose `Retry-After`, capped at 10 s, is longer than the time left ends the wait. See [Node server](../../shieldlabs-server/references/node.md) for the complete polling schedule and error behavior.
 
 ### Server Actions
 
@@ -191,7 +191,7 @@ export default function App({ Component, pageProps }: AppProps) {
 ```
 
 Pages call `useIdentify()` from `@shieldlabs-ai/next` exactly as in the App Router form above. API
-routes read the verdict directly with `@shieldlabs-ai/node@1.3.0`:
+routes read the verdict directly with `@shieldlabs-ai/node@1.3.2`:
 
 ```ts
 // pages/api/signup.ts

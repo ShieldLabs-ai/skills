@@ -1,12 +1,13 @@
 {
   "endpoint": "https://mcp.shieldlabs.ai/mcp",
   "authentication": "OAuth",
-  "verified_at": "2026-10-29",
-  "verification": "Generated from the registered current MCP tools/list schemas without API calls.",
+  "verified_at": "2026-10-30",
+  "source_commit": "3c58ebf906095a40a327e49561fd4db2ceacc3a2",
+  "verification": "Registered hosted input schemas from the source commit using in-memory tools/list, without account API calls.",
   "tools": [
     {
       "name": "shieldlabs_add_domain",
-      "description": "Add an existing domain to your ShieldLabs account for installation. Returns its UUID, public key and masked server key by default. Does not create a website or DNS records. Credentials are masked by default. include_secret=true returns one-time sensitive credentials for installation only. The MCP client can record that response; this server cannot prevent client transcripts. Store privately; never log or repeat secrets. No mutations are automatically retried.",
+      "description": "add domain",
       "parameters": [
         {
           "name": "domain",
@@ -52,7 +53,7 @@
     },
     {
       "name": "shieldlabs_check_connection",
-      "description": "Check that this connection to the hosted ShieldLabs server works: ShieldLabs checks the access token the user signed in with. Takes no input.\n\nUse it to confirm the sign-in, or when another call fails with an authentication error.\n\nReturns (json): { \"connected\": boolean, \"checked_at\": string }\n\nErrors: an expired or revoked sign-in asks the user to reconnect ShieldLabs in the MCP client; a temporary outage asks to retry in a few seconds.\n\nUse shieldlabs_list_domains to select a domain, then read history or manage domain and webhook integrations.",
+      "description": "Check the ShieldLabs connection",
       "parameters": [],
       "inputSchema": {
         "type": "object",
@@ -61,7 +62,7 @@
     },
     {
       "name": "shieldlabs_create_webhook",
-      "description": "Create a webhook with name and public HTTPS URL. Optional multiaccount enables opt-in group-change notifications when the backend release supports them; omitted defaults to false. Secret is masked by default. Credentials are masked by default. include_secret=true returns one-time sensitive credentials for installation only. The MCP client can record that response; this server cannot prevent client transcripts. Store privately; never log or repeat secrets. No mutations are automatically retried.",
+      "description": "create webhook",
       "parameters": [
         {
           "name": "domain_id",
@@ -129,7 +130,7 @@
     },
     {
       "name": "shieldlabs_delete_domain",
-      "description": "Delete an owned domain and its integrations. Requires explicit confirm=true. No mutations are automatically retried.",
+      "description": "delete domain",
       "parameters": [
         {
           "name": "domain_id",
@@ -166,7 +167,7 @@
     },
     {
       "name": "shieldlabs_delete_webhook",
-      "description": "Delete a webhook endpoint. Requires explicit confirm=true. No mutations are automatically retried.",
+      "description": "delete webhook",
       "parameters": [
         {
           "name": "domain_id",
@@ -214,7 +215,7 @@
     },
     {
       "name": "shieldlabs_disable_webhook",
-      "description": "Disable webhook delivery. Requires confirm=true. No mutations are automatically retried.",
+      "description": "disable webhook",
       "parameters": [
         {
           "name": "domain_id",
@@ -262,7 +263,7 @@
     },
     {
       "name": "shieldlabs_enable_webhook",
-      "description": "Enable webhook delivery. No mutations are automatically retried.",
+      "description": "enable webhook",
       "parameters": [
         {
           "name": "domain_id",
@@ -299,7 +300,7 @@
     },
     {
       "name": "shieldlabs_explain_risk_score",
-      "description": "Read an identification card or explain a pasted identification. Missing signal weights are unavailable, never zero contribution. HRE confidence is separate from Risk Score.",
+      "description": "Explain Risk Score",
       "parameters": [
         {
           "name": "domain",
@@ -314,7 +315,7 @@
         {
           "name": "identification",
           "required": false,
-          "type": "union"
+          "type": "unknown"
         },
         {
           "name": "response_format",
@@ -364,7 +365,7 @@
     },
     {
       "name": "shieldlabs_get_domain",
-      "description": "Read one owned domain by public UUID. Server key is masked. No mutations are automatically retried.",
+      "description": "get domain",
       "parameters": [
         {
           "name": "domain_id",
@@ -390,7 +391,7 @@
     },
     {
       "name": "shieldlabs_get_history",
-      "description": "Read one identification, user, visitor, device or ip card. domain is the public UUID and resource_id is the record id. The same flat list filters apply, plus device_id_source (legacy or fp21_record), relation, relation_limit and relation_page_token. Nested filter, chips, offset and include_total are rejected.",
+      "description": "Get History record",
       "parameters": [
         {
           "name": "domain",
@@ -428,21 +429,6 @@
           "type": "string"
         },
         {
-          "name": "relation",
-          "required": false,
-          "type": "string"
-        },
-        {
-          "name": "relation_limit",
-          "required": false,
-          "type": "integer"
-        },
-        {
-          "name": "relation_page_token",
-          "required": false,
-          "type": "string"
-        },
-        {
           "name": "snapshot",
           "required": false,
           "type": "string"
@@ -465,7 +451,7 @@
         {
           "name": "ids",
           "required": false,
-          "type": "array"
+          "type": "string"
         },
         {
           "name": "risk_signals",
@@ -631,36 +617,6 @@
               "fp21_record"
             ]
           },
-          "relation": {
-            "type": "string",
-            "enum": [
-              "visitors",
-              "devices",
-              "users",
-              "public_ips",
-              "sessions",
-              "cookies",
-              "local_ips",
-              "countries",
-              "local_countries",
-              "browsers",
-              "os",
-              "device_types",
-              "connection_types",
-              "risk_signals",
-              "high_risk_events"
-            ]
-          },
-          "relation_limit": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100
-          },
-          "relation_page_token": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 4096
-          },
           "snapshot": {
             "type": "string",
             "minLength": 1,
@@ -689,13 +645,9 @@
             "maximum": 99
           },
           "ids": {
-            "maxItems": 100,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 512
-            }
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
           },
           "risk_signals": {
             "maxItems": 32,
@@ -796,7 +748,7 @@
     },
     {
       "name": "shieldlabs_get_identification",
-      "description": "Read one identification card by identification_id in a public domain UUID. wait polls missing results for at most 10 seconds; unavailable risk remains unavailable.",
+      "description": "Get identification",
       "parameters": [
         {
           "name": "domain",
@@ -874,7 +826,7 @@
     },
     {
       "name": "shieldlabs_get_webhook",
-      "description": "Read a webhook on its owned domain, with status, delivery counters and masked secret. No mutations are automatically retried.",
+      "description": "get webhook",
       "parameters": [
         {
           "name": "domain_id",
@@ -911,7 +863,7 @@
     },
     {
       "name": "shieldlabs_list_domains",
-      "description": "List owned domains, including disabled domains. Returns public UUIDs, hostnames, enabled status and masked server keys. No mutations are automatically retried.",
+      "description": "list domains",
       "parameters": [],
       "inputSchema": {
         "type": "object",
@@ -922,7 +874,7 @@
     },
     {
       "name": "shieldlabs_list_history",
-      "description": "List identifications or users in one domain. domain is the public UUID from shieldlabs_list_domains. Repeat page_token with the same resource, window and flat filters. Filters are risk_bands, hre_min_accounts (3-99), hre_min_devices (4-99), ids (user list only), risk_signals, source, campaign and boolean flags. Dates are RFC3339 and the window is half-open. Nested filter, chips, offset, include_total and sort are rejected. visitor, device and ip have a card, not a list.",
+      "description": "List History",
       "parameters": [
         {
           "name": "domain",
@@ -982,7 +934,7 @@
         {
           "name": "ids",
           "required": false,
-          "type": "array"
+          "type": "string"
         },
         {
           "name": "risk_signals",
@@ -1172,13 +1124,9 @@
             "maximum": 99
           },
           "ids": {
-            "maxItems": 100,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 512
-            }
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
           },
           "risk_signals": {
             "maxItems": 32,
@@ -1278,7 +1226,7 @@
     },
     {
       "name": "shieldlabs_list_webhooks",
-      "description": "List the new multi-endpoint webhooks of an owned domain, with status and masked secrets. No mutations are automatically retried.",
+      "description": "list webhooks",
       "parameters": [
         {
           "name": "domain_id",
@@ -1304,7 +1252,7 @@
     },
     {
       "name": "shieldlabs_patch_domain",
-      "description": "Update enabled and/or allow_subdomains on an owned domain. Omitted fields are preserved. Disabling requires confirm=true. No mutations are automatically retried.",
+      "description": "patch domain",
       "parameters": [
         {
           "name": "domain_id",
@@ -1356,7 +1304,7 @@
     },
     {
       "name": "shieldlabs_patch_webhook",
-      "description": "Update webhook name, URL and/or multiaccount subscription; omitted fields are preserved. A subscription-only patch preserves endpoint verification and does not replay history or cancel captured jobs. URL changes require confirm=true, reset verification and may disrupt delivery. No mutations are automatically retried.",
+      "description": "patch webhook",
       "parameters": [
         {
           "name": "domain_id",
@@ -1433,7 +1381,7 @@
     },
     {
       "name": "shieldlabs_rotate_server_key",
-      "description": "Rotate the domain server key. The previous key stops working immediately. Requires confirm=true. Credentials are masked by default. include_secret=true returns one-time sensitive credentials for installation only. The MCP client can record that response; this server cannot prevent client transcripts. Store privately; never log or repeat secrets. No mutations are automatically retried.",
+      "description": "rotate server key",
       "parameters": [
         {
           "name": "domain_id",
@@ -1480,7 +1428,7 @@
     },
     {
       "name": "shieldlabs_rotate_webhook_secret",
-      "description": "Replace the webhook signing secret. Prior signatures stop verifying. Requires confirm=true. Credentials are masked by default. include_secret=true returns one-time sensitive credentials for installation only. The MCP client can record that response; this server cannot prevent client transcripts. Store privately; never log or repeat secrets. No mutations are automatically retried.",
+      "description": "rotate webhook secret",
       "parameters": [
         {
           "name": "domain_id",
@@ -1538,7 +1486,7 @@
     },
     {
       "name": "shieldlabs_test_webhook",
-      "description": "Send a signed test delivery; returns delivered, status_code, latency_ms and timed_out. Endpoint failures are represented in that result. No mutations are automatically retried.",
+      "description": "test webhook",
       "parameters": [
         {
           "name": "domain_id",
@@ -1575,7 +1523,7 @@
     },
     {
       "name": "shieldlabs_verify_webhook",
-      "description": "Send a signed verification ping; returns the webhook with resulting verification status. No mutations are automatically retried.",
+      "description": "verify webhook",
       "parameters": [
         {
           "name": "domain_id",

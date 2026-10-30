@@ -1546,7 +1546,7 @@
     },
     "MultiaccountChangedEvent": {
       "type": "object",
-      "description": "An immutable opt-in notification of a complete multi-account group transition.",
+      "description": "An immutable notification of a complete multi-account group transition.",
       "additionalProperties": false,
       "required": [
         "event_id",

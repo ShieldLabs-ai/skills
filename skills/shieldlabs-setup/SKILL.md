@@ -129,7 +129,7 @@ integration enforces server-side decisions. Mark server verification as not conf
 
 | Manifest | Look for | Browser package | Server SDK |
 |---|---|---|---|
-| `package.json` | `next` | `@shieldlabs-ai/next` (with `@shieldlabs-ai/react`, `@shieldlabs-ai/js@1.1.0`, `@shieldlabs-ai/node`) | `@shieldlabs-ai/node@1.3.0` |
+| `package.json` | `next` | `@shieldlabs-ai/next` (with `@shieldlabs-ai/react`, `@shieldlabs-ai/js@1.1.0`, `@shieldlabs-ai/node`) | `@shieldlabs-ai/node@1.3.2` |
 | `package.json` | `nuxt` | `@shieldlabs-ai/vue` | `@shieldlabs-ai/node` in server routes |
 | `package.json` | `@sveltejs/kit` | `@shieldlabs-ai/svelte` | `@shieldlabs-ai/node` in actions and endpoints |
 | `package.json` | `@angular/core`, `svelte`, `vue`, `react` | `@shieldlabs-ai/angular`, `@shieldlabs-ai/svelte`, `@shieldlabs-ai/vue`, `@shieldlabs-ai/react` (each with `@shieldlabs-ai/js@1.1.0`) | the backend's SDK |
@@ -194,7 +194,7 @@ export function SignupForm() {
 ```
 
 ```ts
-// Server: npm install @shieldlabs-ai/node@1.3.0
+// Server: npm install @shieldlabs-ai/node@1.3.2
 import { ShieldLabs, ShieldLabsError, evaluateIdentification, type Identification } from '@shieldlabs-ai/node';
 
 const shieldlabs = new ShieldLabs({ apiKey: process.env.SHIELDLABS_API_KEY! });

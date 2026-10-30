@@ -57,6 +57,11 @@ class HostedMcpTest(unittest.TestCase):
                 self.assertNotIn(retired, params)
             self.assertNotIn('country', params)
             self.assertNotIn('is_ai_bot', params)
+        for name in ('shieldlabs_list_history', 'shieldlabs_get_history'):
+            properties = tools[name]['inputSchema']['properties']
+            self.assertEqual(properties['ids']['type'], 'string')
+            for removed in ('relation', 'relation_limit', 'relation_page_token'):
+                self.assertNotIn(removed, properties)
         self.assertNotIn('candidate', catalog['verification'].lower())
         self.assertNotIn('production rollout', catalog['verification'].lower())
 

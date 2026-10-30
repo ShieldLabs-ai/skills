@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1] - 2026-10-30
+
+- Use published Node SDK 1.3.2 and current hosted MCP input schemas, including one User HID string.
+- Read entity cards and related counts without unsupported relation requests.
+- Describe delivery to enabled public HTTPS webhooks and preserve group events through the verified raw envelope.
+- Start public setup directly from the installed setup skill.
+
 All notable changes to this project are documented in this file. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).

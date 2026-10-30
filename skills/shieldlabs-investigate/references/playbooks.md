@@ -29,10 +29,9 @@ User HID; visitor/device cards use their UUID; IP cards use IPv4.
 {"domain":"11111111-1111-4111-8111-111111111111","resource":"user","resource_id":"<exact-user-hid>","response_format":"json"}
 ```
 
-Inspect risk, signals, high_risk_events, related_counts and availability. Read linked records
-with `relation` and `relation_limit`; continue only with that relation's returned cursor as
-`relation_page_token`, keeping the card, window and filters unchanged. Do not invent totals or
-turn unavailable counts into zero. Cookie and session IDs may be relations, not standalone cards.
+Inspect risk, signals, high_risk_events, related_counts and availability. Fetch further cards
+when their IDs are known. Use the application database for its account/device associations.
+Do not invent totals or turn unavailable counts into zero.
 
 ## Filter and page a list
 
@@ -42,7 +41,7 @@ Use `shieldlabs_list_history`. Lists exist for identifications and user only.
 {"domain":"11111111-1111-4111-8111-111111111111","resource":"identifications","from":"2026-10-28T00:00:00Z","to":"2026-10-29T00:00:00Z","risk_bands":["dangerous"],"is_vpn":true,"is_proxy":false,"limit":20,"response_format":"json"}
 ```
 
-For exact accounts use resource user and `ids: ["<User HID>"]`. HRE thresholds are separate from
+For exact accounts use resource user and `ids: "<User HID>"`. HRE thresholds are separate from
 Risk Score: hre_min_accounts 3–99 and hre_min_devices 4–99. Multiple risk_signals codes use OR;
 other filter groups narrow the result. See [all filters](tools.md#history-filters).
 
@@ -57,9 +56,9 @@ never treat a bounded page as the full history. Do not drop filters after an inp
 2. Read configuration through get_domain. Patch only requested settings. Inspect parent coverage
    before diagnosing a subdomain or creating another registration.
 3. List webhooks under domain_id. Implement the authorized HTTPS receiver with the webhooks skill
-   and deploy it before creating or testing the subscription. Reuse an existing endpoint.
-4. Create with domain_id/name/url and optional multiaccount. Store an authorized one-time secret
-   privately; never repeat it. A subscription-only patch preserves endpoint verification.
+   and deploy it before creating or testing the endpoint. Reuse an existing endpoint.
+4. Create with domain_id/name/url. Store an authorized one-time secret privately; never repeat it.
+   Every enabled public HTTPS endpoint receives group events independently of stored multiaccount.
 5. Verify sends a signed ping; test sends a sample. Inspect delivery result, receiver logs and
    readback. For URL changes use confirm=true and repeat verification. Mutations are not retried.
 6. Cleanup only test resources created for this run and authorized for deletion. Never rotate or
@@ -69,11 +68,11 @@ never treat a bounded page as the full history. Do not drop filters after an inp
 
 Record hostname, time and installed public key. Open the real page and capture the actual SDK UUID.
 Read that same UUID through get_identification with the public domain UUID, then Explain. Match ID,
-created_at and score. Use entity cards/relations for linked activity.
+created_at and score. Read entity cards and their related counts for linked-activity evidence.
 
 For a real scored webhook, match the verified event's identification_id to the visit and verify
-HMAC over raw body. For a group event, first create a new test group after an authorized
-multiaccount subscription; match hre.multi_account.changed and verify its HMAC. A test/ping or
+HMAC over raw body. For a group event, first create a new test group after configuring an authorized enabled public HTTPS
+receiver; match hre.multi_account.changed and verify its HMAC. A test/ping or
 synthetic group fixture cannot substitute for a real event.
 
 Report each verified stage separately. Handle routine asynchronous setup waits quietly; save exact

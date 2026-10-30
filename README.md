@@ -11,7 +11,7 @@ This repository is a plugin marketplace named `shieldlabs` with one plugin, `shi
 Claude Code, Cursor and Codex, with Grok metadata retained. The skills also work in OpenCode and any other client
 that reads Agent Skills. New to ShieldLabs? [Start free](https://app.shieldlabs.ai).
 
-Plugin content version: **1.3.0**.
+Plugin content version: **1.3.1**.
 
 ## How it fits
 
@@ -61,6 +61,8 @@ with `codex mcp add` and `codex mcp login` ([MCP setup for Codex](skills/shieldl
 
 ### `npx skills`
 
+The installer requires Node.js 22.20 or later.
+
 ```sh
 npx skills add https://github.com/ShieldLabs-ai/skills
 ```
@@ -86,13 +88,14 @@ cp -R skills-main/skills/* ~/.claude/skills/
 | OpenCode | `~/.config/opencode/skills/` |
 | Other Agent Skills clients | the client's skills directory |
 
-## One-link setup
+## Start setup
 
-Give your coding agent: **Read https://shieldlabs.ai/get-started.md and follow its instructions to install ShieldLabs in this project.**
+After installing, ask your coding agent: **Add ShieldLabs to my website or app.**
+The agent starts with [shieldlabs-setup](skills/shieldlabs-setup/SKILL.md).
 
-The guide and the setup skill use the same workflow: inspect the project, reuse existing integration,
-configure through OAuth MCP by default or the dashboard when chosen, install the matching SDKs and
-verify the first identification and Risk Score. A guided menu then offers unfinished server,
+The setup skill inspects the project, reuses existing integration, configures through OAuth MCP
+by default or the dashboard when chosen, installs the matching SDKs and verifies the first
+identification and Risk Score. A guided menu then offers unfinished server,
 webhook and user-linking stages, or finish. Already selected stages continue without repeated
 approval, and routine file/package changes do not each need a question. Choose one setup path; do not run both. No separate
 ShieldLabs CLI is required. Skills installation and MCP connection are separate operations.
@@ -106,8 +109,7 @@ After installing, open your project and ask the agent:
   and a verification checklist.
 - "Audit our ShieldLabs integration", or run `/shieldlabs:audit`, for a report of problems by
   severity with fixes.
-- "Investigate the ShieldLabs request 6f1c2e8a-3b5d-4c7e-8f9a-0b1c2d3e4f5a" or "Which accounts used
-  this device?", answered with the bundled MCP server.
+- "Investigate the ShieldLabs request 6f1c2e8a-3b5d-4c7e-8f9a-0b1c2d3e4f5a" or "Review the card for this User HID", answered through OAuth MCP.
 
 ## What is covered
 
@@ -197,7 +199,7 @@ Pass the same UUID as MCP `identification_id`. Use the webhook envelope's `event
 deduplication and `data.identification_id` to correlate the identification.
 See [identifiers and payloads](skills/shieldlabs-server/references/sdk-contract.md).
 
-Use [current History and SDK routing](skills/shieldlabs-server/references/current-history.md) for domain UUIDs, flat filters, availability and stack-specific reads. Tested Node examples use `@shieldlabs-ai/node@1.3.0`; the plain browser example uses `@shieldlabs-ai/js@1.1.0`.
+Use [current History and SDK routing](skills/shieldlabs-server/references/current-history.md) for domain UUIDs, flat filters, availability and stack-specific reads. Tested Node examples use `@shieldlabs-ai/node@1.3.2`; the plain browser example uses `@shieldlabs-ai/js@1.1.0`.
 
 
 ## Compatibility

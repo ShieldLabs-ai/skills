@@ -51,7 +51,7 @@ if ($identification !== null && $identification->user_hid !== $expected) {
 ## Read the account's History card
 
 Read the `user` card with the exact generated HID, in the selected public domain UUID.
-Preserve risk, signals, High-Risk Events and nullable related counts. Use card relations for
-linked devices, visitors and countries; follow relation_page_token without changing scope.
+Preserve risk, signals, High-Risk Events and nullable related counts. Fetch additional cards
+only when their IDs are known. Use the application database for its account/device associations.
 See [current History](../../shieldlabs-server/references/current-history.md) and the
 [account-abuse workflow](../../shieldlabs-account-abuse/references/high-risk-events.md).

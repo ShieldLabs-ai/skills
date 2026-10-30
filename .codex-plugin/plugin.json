@@ -1,6 +1,6 @@
 {
   "name": "shieldlabs",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Integrate ShieldLabs identification, risk signals and Risk Score into your website or application: browser identification, server-side verdicts, signed webhooks, risk decisions, account-abuse checks and investigations with the ShieldLabs MCP server.",
   "author": {
     "name": "ShieldLabs",

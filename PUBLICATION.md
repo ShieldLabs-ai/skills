@@ -50,7 +50,7 @@ client; parsing the config alone is not an end-to-end installation test.
 
 ## One-link onboarding release
 
-Publish the canonical https://shieldlabs.ai/get-started.md entry point with the published SDKs.
+Publish the canonical `/get-started.md` entry point on the production landing with the published SDKs.
 Check that it returns HTTP 200 and raw Markdown; the landing Prompt and editor links must use
 that same guide. The guide and setup skill choose OAuth MCP by default or the ShieldLabs dashboard
 fallback, execute one path and verify the same browser identification. Browser-only projects do
