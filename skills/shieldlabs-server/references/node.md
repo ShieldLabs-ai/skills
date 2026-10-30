@@ -6,7 +6,7 @@ Vercel Edge Functions). No runtime dependencies. Use this package directly in Ne
 ## Install and create the client
 
 ```bash
-npm install @shieldlabs-ai/node@1.3.0
+npm install @shieldlabs-ai/node@1.3.2
 ```
 
 ```ts

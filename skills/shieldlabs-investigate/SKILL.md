@@ -56,8 +56,8 @@ total or describe one page as all account activity. Respect truncation and escap
 
 Flat filters include `risk_bands`, HRE thresholds, exact user `ids`, 20 boolean fields,
 `risk_signals`, `source` and `campaign`. Read [exact inputs](references/tools.md#history-filters).
-For linked records, read the entity card with `relation`, `relation_limit` and
-`relation_page_token`. These relation cursors belong to that card/relation/filter set.
+Read related_counts on the card and preserve missing counts. Fetch additional cards only
+when their IDs are known; use the application database for its account/device associations.
 
 Cards are backend records, not client-computed history summaries. Report backend High-Risk Events
 separately from Risk Score. Never fabricate weights, flags, account counts or identity proof.
@@ -72,8 +72,8 @@ installation may include its domain and requested receiver. Signing in alone is 
 - Mutations are never automatically retried. If an answer is lost, read before writing again.
 - Keep credentials masked. Use `include_secret: true` only when an authorized installer needs a
   one-time credential; save it privately and never repeat it in chat, logs or committed files.
-- Create/patch webhook accept `multiaccount`. Omission defaults new subscriptions to false and
-  preserves existing ones. Read the setting back. A subscription is not proof of real delivery.
+- Every enabled public HTTPS webhook receives multi-account group events. The stored
+  `multiaccount` field does not control delivery. Read endpoint state back after a change.
 - Verify sends a signed ping; test sends a sample event. Inspect delivery status even when the
   tool call succeeds. A real scored or group event needs separate matching receiver evidence.
 - Verify HMAC locally with the server SDK over the original body; never paste secrets into MCP.

@@ -143,7 +143,7 @@ ID, while Test can send a UUID. Do not impose a UUID regex on the event key. The
 | `event_type` | When | Payload |
 |---|---|---|
 | `identification.scored` | Every scored identification, and the **Test** button | Verified raw `data` uses `identification_id`, identifiers, score, flags and optional current fields. Keep the verified envelope for correlation and asynchronous processing |
-| `hre.multi_account.changed` | Opt-in group transition | Complete group membership, action and decimal-string revision; no identification UUID or Risk Score |
+| `hre.multi_account.changed` | Group transition delivered to enabled public HTTPS endpoints | Complete group membership, action and decimal-string revision; no identification UUID or Risk Score |
 | `webhook.ping` | The **Verify** button | no `data` |
 | anything else | Event types added later | acknowledge with 2xx; the SDKs return an "unknown event" instead of throwing |
 

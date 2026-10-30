@@ -7,7 +7,7 @@ trap 'rm -rf "$qa_directory"' EXIT
 # These tests use the wrappers' types and a controlled agent module, not full framework builds.
 # Install peers explicitly; Next's runtime is unnecessary for its browser re-export types.
 npm install --prefix "$qa_directory" --ignore-scripts --no-audit --no-fund --legacy-peer-deps \
-  @shieldlabs-ai/node@1.3.0 @shieldlabs-ai/js@1.1.0 \
+  @shieldlabs-ai/node@1.3.2 @shieldlabs-ai/js@1.1.0 \
   @shieldlabs-ai/react@1.0.0 @shieldlabs-ai/next@1.0.0 @shieldlabs-ai/vue@1.0.0 \
   @shieldlabs-ai/angular@1.0.0 @shieldlabs-ai/svelte@1.0.0 \
   react@19 @types/react@19 vue@3 svelte@5 @angular/core@22 @angular/common@22 rxjs@7 \

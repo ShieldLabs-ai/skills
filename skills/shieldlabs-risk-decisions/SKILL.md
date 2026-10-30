@@ -18,7 +18,7 @@ example a payout, for a person or a later job) or **block** (refuse with a gener
 For a current entity card, use `risk.state`, `risk.score`/`risk.band` and `signals.state`/`items`.
 Require available risk and signals, check domain/ID/freshness/replay and account binding, then
 apply this action policy. The SDK helpers below accept their normalized Identification model,
-not a raw entity card. Node 1.3.0 normalizes `identifications.get` results; guard unavailable
+not a raw entity card. Node 1.3.2 normalizes `identifications.get` results; guard unavailable
 risk/signals before calling the helper. Other language helpers can evaluate a verified scored
 webhook model; use the current server reference for raw History cards.
 

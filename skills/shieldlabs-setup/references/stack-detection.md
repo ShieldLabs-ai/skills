@@ -30,7 +30,7 @@ into the page ([environment.md](environment.md#static-pages) shows it for static
 
 | Manifest | Look for | Server SDK |
 |---|---|---|
-| `package.json` | `express`, `fastify`, `koa`, `hono`, `@nestjs/core`, or a full-stack framework (`next`, `nuxt`, `@sveltejs/kit`, Remix) | `@shieldlabs-ai/node` (Next.js server routes: direct `@shieldlabs-ai/node@1.3.0`) |
+| `package.json` | `express`, `fastify`, `koa`, `hono`, `@nestjs/core`, or a full-stack framework (`next`, `nuxt`, `@sveltejs/kit`, Remix) | `@shieldlabs-ai/node` (Next.js server routes: direct `@shieldlabs-ai/node@1.3.2`) |
 | `pyproject.toml`, `requirements*.txt`, `Pipfile`, `setup.py`, `setup.cfg` | `django`, `fastapi`, `flask`, `starlette`, other web frameworks | `shieldlabs` (PyPI) |
 | `go.mod` | the module; `gin`, `echo`, `fiber`, `chi` or plain `net/http` | `github.com/ShieldLabs-ai/shieldlabs-go` |
 | `composer.json` | `laravel/framework`, `symfony/framework-bundle`, `slim/slim` | `shieldlabs/shieldlabs-php` |

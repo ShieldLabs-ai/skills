@@ -82,26 +82,24 @@ appears in the account's history: pass it to the helper instead of scanning the 
 
 ## Read backend evidence
 
-Node.js 1.3.0 reads the account, visitor or device card directly:
+Node.js 1.3.2 reads the account, visitor or device card directly:
 
 ```ts
 const card = await shieldlabs.entities.get(domainId, "user", accountHid);
 // Preserve card.high_risk_events, card.related_counts, card.risk and card.signals.
-const devices = await shieldlabs.entities.get(domainId, "user", accountHid, {
-  relation: "devices", relation_limit: 20,
-});
 ```
 
 Use the backend's HRE status and confidence. For a separately requested reward or ban policy,
 join the application's own accounts/redemptions/bans using domain and identification UUIDs.
-A bounded card or relation page cannot establish that no other linked activity exists.
+A card and its related counts do not provide a complete list of linked account/device IDs.
+Use the application's own stored associations when the requested policy needs those IDs.
 Read [Node.js](references/node.md), [Python](references/python.md), [Go](references/go.md),
 [PHP](references/php.md), [Java](references/java.md) or [.NET](references/dotnet.md) for the matching
 server read and policy boundary. Do not implement detector rules by counting one History page.
 
 ## Cost and limits
 
-Each card/list/relation page is a History API request. Keep windows and page budgets explicit,
+Each card or list page is a History API request. Keep windows and page budgets explicit,
 follow opaque cursors with unchanged constraints, and cache investigative evidence when appropriate.
 History reads do not use included browser identifications. Do not poll with new identify() calls.
 

@@ -18,15 +18,11 @@ or an unavailable History projection must remain distinct. Preserve unfamiliar s
 strings and report unsupported states without turning them into an allow decision. Do not
 confuse an HRE confidence with the trusted/suspicious/dangerous Risk Score bands.
 
-Enable multi-account events only when requested. Through OAuth MCP, pass `multiaccount: true`
-to `shieldlabs_create_webhook` or `shieldlabs_patch_webhook` with the existing domain/webhook
-UUIDs. Read back the saved subscription. Omission preserves an existing subscription;
-`false` opts out of future jobs, without replaying history or cancelling already queued jobs.
-A subscription-only patch preserves endpoint verification; a URL change resets it.
-
-If the API returns an explicit unavailable response, preserve it and verify saved state; never claim success or retry mutations automatically. Saved
-`multiaccount: true`, a Verify ping and a scored Test are three different facts, none proves
-that Core emitted a real group transition. Follow the
+Every enabled webhook endpoint with a public HTTPS URL receives multi-account group events;
+the stored `multiaccount` field does not gate delivery. Create or reuse the authorized receiver
+and verify its endpoint state. A URL change resets verification. Do not retry mutations
+automatically or claim that a Verify ping or scored Test proves an actual group transition.
+Follow the
 [webhook consumer](../../shieldlabs-webhooks/references/high-risk-events.md) and test actual
 detected/updated/resolved deliveries before claiming live group detection is connected.
 

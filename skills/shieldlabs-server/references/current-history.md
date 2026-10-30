@@ -10,7 +10,7 @@ User HIDs on the server with the matching SDK's HMAC helper and pass them after 
 
 - Browser JavaScript: `@shieldlabs-ai/js@1.1.0`, including its IIFE build. Use the matching React,
   Next.js, Vue/Nuxt, Angular or Svelte/SvelteKit package and satisfy its peer dependencies.
-- Node.js, Bun, Deno and compatible edge server: `@shieldlabs-ai/node@1.3.0`. Use it directly in
+- Node.js, Bun, Deno and compatible edge server: `@shieldlabs-ai/node@1.3.2`. Use it directly in
   Next.js route handlers/Server Actions, Nuxt server routes and SvelteKit actions for the History
   examples below. Read options include the domain UUID on every call; it is not a constructor option.
 - Other backends: use the matching official SDK for User HID and webhook helpers. For History,
@@ -43,7 +43,7 @@ or `history.iterate` methods; do not reinterpret an error as an empty history.
 UUIDs identify domains, identifications, visitors and devices. A User HID is exact case-sensitive
 text. Encode an ID once as a path segment. Reject slash/backslash, control characters, empty IDs,
 `.` and `..`. IP cards accept IPv4; normalize IPv4-mapped IPv6, and do not send pure IPv6.
-Session and cookie IDs are available through relations, not standalone card resources.
+Session and cookie IDs can appear on identification cards; they are not standalone card resources.
 
 ## Availability and policy
 
@@ -70,13 +70,13 @@ fourth Risk Score band. An HTTP 429 error code remains `rate_limited`; it is a t
 Do not send `rate_limited` as a History filter. HTTP 402 requires its actual response evidence;
 a missing identification is not proof of exhausted volume.
 
-## Flat filters and relations
+## Flat filters and cards
 
 - Pair RFC3339 `from`/`to` with timezone (inclusive start, exclusive end), or omit both.
 - List `limit`: 1–100; use opaque `page_token`, preserving `snapshot` when provided.
 - `risk_bands`: trusted/suspicious/dangerous; `risk_signals`: codes combined with OR.
 - `hre_min_accounts`: 3–99; `hre_min_devices`: 4–99. These do not change Risk Score.
-- `ids`: exact User HIDs, user lists only. `source` and `campaign`: at most eight values combined.
+- `ids`: one exact User HID string, user lists only. `source` and `campaign`: at most eight values combined.
 - The 20 boolean filters are `is_vpn`, `is_tor`, `is_proxy`, `is_privacy_relay`,
   `network_check_incomplete`, `check_incomplete`, `is_antidetect`, `is_os_mismatch`,
   `is_os_not_detected`, `is_timezone_mismatch`, `is_js_disabled`, `is_browser_automation`,
@@ -89,11 +89,9 @@ Wire signal codes and normalized SDK detection flags have their own names; do no
 name by stripping `is_`. The [MCP tool reference](../../shieldlabs-investigate/references/tools.md)
 contains the corresponding inputs for all 21 tools.
 
-Cards can request `relation`, `relation_limit` (1–100), `relation_page_token` and
-`device_id_source` (`legacy` or `fp21_record`). Relations include visitors, devices, users,
-public_ips, sessions, cookies, local_ips, countries, local_countries, browsers, os, device_types,
-connection_types, risk_signals and high_risk_events. Identification cards reject relation reads.
-Keep the parent card, relation, filters and window fixed when following a relation cursor.
+Cards accept `device_id_source` (`legacy` or `fp21_record`). Inspect the returned
+related_counts without turning unavailable or missing counts into zero. Use known IDs for
+additional card reads and the application's own database for its account/device associations.
 
 ## Quiet setup verification
 

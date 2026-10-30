@@ -7,7 +7,7 @@ prerendering and server-side rendering.
 
 ```bash
 npm install @shieldlabs-ai/svelte @shieldlabs-ai/js@1.1.0
-npm install @shieldlabs-ai/node@1.3.0   # for the SvelteKit server code below
+npm install @shieldlabs-ai/node@1.3.2   # for the SvelteKit server code below
 ```
 
 `.env`:

@@ -41,6 +41,9 @@ Adapt tables/transactions to your application. Put external actions in a transac
 with their own idempotency keys. Retain unprocessable jobs for investigation.
 
 Verify ping delivery, scored Test delivery, and a signed fixture for each detected/updated/resolved
-branch separately. Then verify a real group notification when the deployed Core release profile
-supports emission and the authorized test scenario creates a transition. Never create unrelated
+branch separately. Then verify a real group notification when the authorized test scenario creates a transition. Never create unrelated
 accounts or claim a synthetic fixture proves live detector emission.
+
+All enabled public HTTPS endpoints receive group events, independently of the stored
+`multiaccount` field. In Node.js 1.3.2 dispatch by `String(event.event_type)` and read the
+verified group data from `event.raw.data`; keep the event's original signed envelope.

@@ -11,7 +11,7 @@ When connecting results to orders, promos or other actions, follow the [business
 
 For field names and delivery correlation, see [identifiers and payloads](references/sdk-contract.md).
 
-The backend half of a ShieldLabs integration. Node.js 1.3.0 supplies domain-scoped reads; other language examples use the same public HTTP entity contract with that stack’s client. The page sends a request ID with the protected
+The backend half of a ShieldLabs integration. Node.js 1.3.2 supplies domain-scoped reads; other language examples use the same public HTTP entity contract with that stack’s client. The page sends a request ID with the protected
 action; the backend reads the verdict for it from the **History API**
 (`https://account.shieldlabs.ai`) with the matching SDK or public HTTPS client, then acts on it. Scoring is asynchronous: the
 History row appears about 1 to 3 seconds after the browser call and can be refined for up to
@@ -34,7 +34,7 @@ about 10 seconds. `identifications.get` waits for it with backoff.
 
 | Language | Install | Client | Read one verdict | Policy helper | Reference |
 |---|---|---|---|---|---|
-| Node.js 18+, Bun, Deno, edge runtimes | `npm install @shieldlabs-ai/node@1.3.0` | `new ShieldLabs({ apiKey })` | `await shieldlabs.identifications.get(identificationId, { domainId })` | `evaluateIdentification(identification, options)` | [node.md](references/node.md) |
+| Node.js 18+, Bun, Deno, edge runtimes | `npm install @shieldlabs-ai/node@1.3.2` | `new ShieldLabs({ apiKey })` | `await shieldlabs.identifications.get(identificationId, { domainId })` | `evaluateIdentification(identification, options)` | [node.md](references/node.md) |
 | Python 3.9+ | `pip install shieldlabs` | public HTTP client | domain-scoped identification card | card policy below | [python.md](references/python.md) |
 | Go 1.23+ | `go get github.com/ShieldLabs-ai/shieldlabs-go` | public HTTP client | domain-scoped identification card | card policy below | [go.md](references/go.md) |
 | PHP 8.1+ | `composer require shieldlabs/shieldlabs-php` | public HTTP client | domain-scoped identification card | card policy below | [php.md](references/php.md) |
@@ -84,7 +84,7 @@ app.post('/api/signup', express.json(), async (req, res) => {
 
 ## How `identifications.get` waits
 
-For Node.js 1.3.0, the polling rules are:
+For Node.js 1.3.2, the polling rules are:
 
 - **Total budget.** `timeout` (10 seconds by default; `waitFor` in Java) is the time budget of the
   whole call, counted from the call and including the time the requests take.

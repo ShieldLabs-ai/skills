@@ -7,8 +7,9 @@ account sharing, impossible travel and account takeover can accompany identifica
 
 Use the [Go server integration](../../shieldlabs-server/references/go.md) to
 read the current public domain-scoped History API. Read a `user` card with the exact server-generated
-User HID, or a visitor/device card with its UUID. Request the needed relation and a bounded
-relation_limit; use only its returned relation_page_token to continue with the same window.
+User HID, or a visitor/device card with its UUID. Inspect the returned related_counts and
+availability. Use known IDs for additional card reads; use the application database for its own
+account/device associations.
 Do not use retired unscoped SDK searches or rebuild backend HRE results from a sample of rows.
 
 For a separately requested application policy, query your own scoped accounts, bans or redemptions

@@ -16,11 +16,11 @@ The [input catalog](mcp-catalog.json) contains the registered schemas for all 21
 | `shieldlabs_enable_webhook` | `domain_id`, `webhook_id` | none |
 | `shieldlabs_explain_risk_score` | none | `domain`, `identification_id`, `identification`, `response_format` |
 | `shieldlabs_get_domain` | `domain_id` | none |
-| `shieldlabs_get_history` | `domain`, `resource`, `resource_id` | `response_format`, `from`, `to`, `device_id_source`, `relation`, `relation_limit`, `relation_page_token`, `flat filters (below)` |
+| `shieldlabs_get_history` | `domain`, `resource`, `resource_id` | `response_format`, `from`, `to`, `device_id_source`, `snapshot`, `flat filters (below)` |
 | `shieldlabs_get_identification` | `domain`, `identification_id` | `response_format`, `from`, `to`, `wait` |
 | `shieldlabs_get_webhook` | `domain_id`, `webhook_id` | none |
 | `shieldlabs_list_domains` | none | none |
-| `shieldlabs_list_history` | `domain`, `resource` | `response_format`, `from`, `to`, `limit`, `page_token`, `flat filters (below)` |
+| `shieldlabs_list_history` | `domain`, `resource` | `response_format`, `from`, `to`, `limit`, `page_token`, `snapshot`, `flat filters (below)` |
 | `shieldlabs_list_webhooks` | `domain_id` | none |
 | `shieldlabs_patch_domain` | `domain_id` | `enabled`, `allow_subdomains`, `confirm` |
 | `shieldlabs_patch_webhook` | `domain_id`, `webhook_id` | `name`, `url`, `multiaccount`, `confirm` |
@@ -47,7 +47,7 @@ encoding. Do not use `/`, `.` or `..` as a User HID lookup or reuse truncated di
 - `snapshot`: preserves the API snapshot when supplied. Keep it with the same query.
 - `risk_bands`: an array drawn from `trusted`, `suspicious`, `dangerous`.
 - `hre_min_accounts`: 3–99; `hre_min_devices`: 4–99. These are HRE evidence thresholds, not scores.
-- `ids`: up to 100 exact User HIDs, user lists only.
+- `ids`: one exact User HID string, user lists only.
 - `risk_signals`: public signal codes. Multiple codes combine with OR.
 - `source` and `campaign`: arrays, at most 8 values combined. `_empty` selects no referrer;
   `No campaign` selects visits without a campaign.
@@ -63,10 +63,8 @@ Offset, nested JSON filter, include_total, sort and raw score_from/score_to are 
 Use risk bands rather than converting marker 999 into dangerous risk. Empty results mean no
 matches under this query, not proof of no activity or clean traffic.
 
-Card-only options: `device_id_source` (`legacy` or `fp21_record`), `relation`, `relation_limit`
-(1–100), and opaque `relation_page_token`. Relations are visitors, devices, users, public_ips,
-sessions, cookies, local_ips, countries, local_countries, browsers, os, device_types,
-connection_types, risk_signals and high_risk_events. Identification cards reject relation reads.
+Card-only option: `device_id_source` (`legacy` or `fp21_record`). Read related_counts
+from the card while preserving availability. Fetch further cards only with known IDs.
 
 ## Identification and Explain
 
@@ -86,8 +84,8 @@ changing a webhook URL also needs it. Rotation invalidates the previous credenti
 state and reuse resources. A lost response requires readback before another write, never an
 automatic mutation retry. Secrets stay masked except authorized one-time installation retrieval.
 
-Webhook create/patch accept `multiaccount`; omission preserves existing settings. Read back after
-writes. Verify sends a signed ping. Test reports delivered/status_code/latency_ms/timed_out; check
+Webhook create/patch still accept `multiaccount`, but every enabled public HTTPS endpoint
+receives group events independently of that stored field. Read back after writes. Verify sends a signed ping. Test reports delivered/status_code/latency_ms/timed_out; check
 the endpoint result. Neither proves real identification or hre.multi_account.changed delivery.
 Verify real event signatures in the application's receiver with the SDK and raw body.
 

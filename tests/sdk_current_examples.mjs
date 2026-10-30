@@ -1,6 +1,6 @@
 /** Runtime checks against installed public SDKs and the actual documented policy.
  * SHIELDLABS_SDK_QA_DIR points to a disposable npm prefix containing
- * @shieldlabs-ai/node@1.3.0, @shieldlabs-ai/js@1.1.0 and typescript.
+ * @shieldlabs-ai/node@1.3.2, @shieldlabs-ai/js@1.1.0 and typescript.
  */
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -14,7 +14,7 @@ assert.ok(qa, 'Set SHIELDLABS_SDK_QA_DIR to a clean npm install prefix');
 const require = createRequire(join(qa, 'package.json'));
 const sdk = await import(pathToFileURL(require.resolve('@shieldlabs-ai/node')));
 const ts = require('typescript');
-assert.equal(sdk.VERSION, '1.3.0');
+assert.equal(sdk.VERSION, '1.3.2');
 const domainId = '11111111-1111-4111-8111-111111111111';
 const id = '33333333-3333-4333-8333-333333333333';
 const user = sdk.userHid('account-7', 'a-private-test-secret');
